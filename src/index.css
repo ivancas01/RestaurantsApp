@@ -1,0 +1,158 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #e11d48;
+  --color-primary-dark: #be123c;
+  
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-accent: var(--accent);
+  --color-text-bright: var(--text-bright);
+  --color-text-dim: var(--text-dim);
+
+  --font-serif: "Bebas Neue", sans-serif;
+  --font-sans: "Inter", sans-serif;
+}
+
+:root {
+  --background: #f4f4f5;
+  --surface: #ffffff;
+  --accent: #18181b;
+  --text-bright: #18181b;
+  --text-dim: #52525b;
+}
+
+.dark {
+  --background: #09090b;
+  --surface: #18181b;
+  --accent: #ffffff;
+  --text-bright: #fafafa;
+  --text-dim: #a1a1aa;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-text-dim font-sans antialiased transition-colors duration-200 overflow-x-hidden;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif text-text-bright tracking-wider uppercase leading-[0.9];
+  }
+
+  /* Responsive Typography Base */
+  h1 { @apply text-5xl md:text-8xl lg:text-9xl; }
+  h2 { @apply text-4xl md:text-7xl lg:text-8xl; }
+  h3 { @apply text-2xl md:text-4xl; }
+
+  /* Custom Scrollbar - Urban Style */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-background;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: #e11d48;
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 5px,
+      rgba(255, 255, 255, 0.15) 5px,
+      rgba(255, 255, 255, 0.15) 10px
+    );
+    border-radius: 0px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary-dark;
+  }
+}
+
+@layer components {
+  .container {
+    @apply mx-auto px-4 md:px-8 lg:px-12 max-w-7xl;
+  }
+
+  /* Standardized Buttons - Urban Version */
+  .btn-primary {
+    @apply px-8 md:px-12 py-3 md:py-4 bg-primary text-white font-bold tracking-widest uppercase 
+           transition-all duration-150 hover:bg-primary-dark hover:translate-x-1 hover:-translate-y-1
+           border-r-4 border-b-4 border-primary-dark active:border-0 active:translate-x-0 active:translate-y-0
+           flex items-center justify-center text-sm md:text-base;
+  }
+
+  .btn-outline {
+    @apply px-8 md:px-12 py-3 md:py-4 bg-transparent border-2 border-primary text-primary font-bold 
+           tracking-widest uppercase transition-all duration-150 
+           hover:bg-primary hover:text-white flex items-center justify-center
+           text-sm md:text-base;
+  }
+
+  /* Standardized Inputs - Urban Version */
+  .input-field {
+    @apply w-full px-4 py-4 bg-zinc-100 dark:bg-surface border-2 border-zinc-200 dark:border-zinc-700 
+           rounded-none text-text-bright placeholder:text-text-dim/50
+           focus:outline-none focus:border-primary focus:ring-0 transition-all duration-150
+           text-base; /* Better for mobile to prevent auto-zoom */
+  }
+
+  /* Urban Card */
+  .glass-card {
+    @apply bg-surface dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 p-6 md:p-8 
+           shadow-[8px_8px_0px_0px_rgba(225,29,72,0.1)] transition-all duration-300;
+  }
+
+  /* Animation Utilities */
+  .fade-in-section {
+    @apply opacity-0 translate-y-10 transition-all duration-700;
+  }
+
+  .fade-in-section.is-visible {
+    @apply opacity-100 translate-y-0;
+  }
+}
+
+/* Print Styles */
+@media print {
+  /* Hide navigation, sidebar, and all non-essential UI */
+  nav, aside, footer, .no-print, button, .sidebar, .header-controls {
+    display: none !important;
+  }
+
+  /* Ensure the body and root don't have margins/paddings that cut off the ticket */
+  body, #root {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Target the specific ticket container */
+  .print-ticket {
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    background: white !important;
+    box-shadow: none !important;
+    border: none !important;
+    visibility: visible !important;
+  }
+
+  /* Hide the backdrop/overlay usually associated with modals */
+  .fixed.inset-0 {
+    position: absolute !important;
+    background: white !important;
+    display: block !important;
+  }
+}

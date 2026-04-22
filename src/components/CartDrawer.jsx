@@ -1,0 +1,255 @@
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, ShoppingBag, Plus, Minus, Trash2, Send, MessageSquare } from 'lucide-react';
+import { useCart } from '../context/CartContext';
+import { useAdmin } from '../context/AdminContext';
+import Button from './ui/Button';
+import Input from './ui/Input';
+
+const WHATSAPP_NUMBER = "573024788683";
+
+const CartDrawer = () => {
+  const { cartItems, isCartOpen, total, toggleCart, updateQuantity, updateNotes, removeFromCart, clearCart } = useCart();
+  const { cmsData, addOrder } = useAdmin();
+  const [formData, setFormData] = useState({
+    nombre: '',
+    telefono: '',
+    identificacion: '',
+    direccion: ''
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const formatWhatsAppMessage = () => {
+    let message = `--- PEDIDO: LUMINA URBAN GOURMET ---\n\n`;
+    message += `. CLIENTE: ${formData.nombre}\n`;
+    message += `. TELÉFONO: ${formData.telefono}\n`;
+    message += `. IDENTIFICACIÓN: ${formData.identificacion}\n`;
+    message += `. DIRECCIÓN: ${formData.direccion}\n\n`;
+    message += `--- PRODUCTOS ---\n`;
+
+    cartItems.forEach(item => {
+      message += `- ${item.quantity}x ${item.name} (${item.price})\n`;
+      if (item.notes) {
+        message += `  nota: ${item.notes}\n`;
+      }
+    });
+
+    message += `\n. TOTAL: $${total.toFixed(2)}\n\n`;
+    message += `--- Enviado desde URBAN STREET ---`;
+
+    return encodeURIComponent(message);
+  };
+
+  const handleSendOrder = (e) => {
+    e.preventDefault();
+    if (!formData.nombre || !formData.telefono || !formData.direccion) {
+      alert("Por favor completa los campos básicos para el envío.");
+      return;
+    }
+    const message = formatWhatsAppMessage();
+    
+    // Also save to Admin Context for tracking
+    addOrder({
+      type: 'delivery',
+      customer: formData.nombre,
+      phone: formData.telefono,
+      address: formData.direccion,
+      identificacion: formData.identificacion,
+      items: cartItems,
+      total: total,
+      status: 'Pendiente'
+    });
+
+    const businessPhone = (cmsData.contact.phone || WHATSAPP_NUMBER).replace(/\D/g, '');
+    window.open(`https://wa.me/${businessPhone}?text=${message}`, '_blank');
+    clearCart();
+  };
+
+  return (
+    <AnimatePresence>
+      {isCartOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={toggleCart}
+            className="fixed inset-0 bg-black/80 backdrop-blur-md z-[60]"
+          />
+
+          {/* Drawer */}
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed right-0 top-0 h-full w-full sm:max-w-md bg-surface z-[70] shadow-2xl flex flex-col border-l border-white/5"
+          >
+            {/* Header */}
+            <div className="p-6 border-b border-white/5 flex justify-between items-center bg-background/50">
+              <div className="flex items-center space-x-3">
+                <div className="bg-primary p-2">
+                  <ShoppingBag className="text-white" size={20} />
+                </div>
+                <div>
+                  <h2 className="text-xl md:text-2xl font-serif uppercase tracking-wider text-text-bright leading-none">Tu Bolsa</h2>
+                  <p className="text-[8px] uppercase tracking-widest text-text-dim mt-1 font-bold">Urban Street // Checkout</p>
+                </div>
+                <span className="bg-primary/20 text-primary text-[10px] font-bold px-2 py-0.5 rounded-none ml-2">
+                  {cartItems.length}
+                </span>
+              </div>
+              <button onClick={toggleCart} className="p-2 hover:bg-white/5 transition-colors text-text-dim hover:text-text-bright border border-white/10">
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Cart Items */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-8 scrollbar-hide">
+              {cartItems.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-center space-y-6 opacity-40">
+                  <div className="p-8 border-2 border-dashed border-white/10">
+                    <ShoppingBag size={64} strokeWidth={1} />
+                  </div>
+                  <p className="uppercase tracking-[0.2em] text-[10px] font-bold max-w-[200px]">Tu bolsa táctica está vacía en este momento</p>
+                  <Button variant="outline" onClick={toggleCart} className="text-xs">EMPEZAR A AGREGAR</Button>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-6">
+                    {cartItems.map((item) => (
+                      <div key={item.id} className="group border-b border-white/5 pb-6 last:border-0">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex-1 pr-4">
+                            <h3 className="text-base md:text-lg font-serif uppercase text-text-bright leading-none mb-1">{item.name}</h3>
+                            <p className="text-primary font-bold text-xs md:text-sm tracking-widest">{item.price}</p>
+                          </div>
+                          <button 
+                            onClick={() => removeFromCart(item.id)}
+                            className="text-text-dim hover:text-primary transition-colors p-1"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+
+                        <div className="flex flex-col space-y-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center border border-zinc-200 dark:border-white/10 bg-background">
+                              <button 
+                                onClick={() => updateQuantity(item.id, -1)}
+                                className="w-10 h-10 flex items-center justify-center hover:bg-white/5 transition-colors text-text-dim border-r border-white/5"
+                              >
+                                <Minus size={14} />
+                              </button>
+                              <span className="w-12 text-center font-bold text-text-bright text-sm">{item.quantity}</span>
+                              <button 
+                                onClick={() => updateQuantity(item.id, 1)}
+                                className="w-10 h-10 flex items-center justify-center hover:bg-white/5 transition-colors text-text-dim border-l border-white/5"
+                              >
+                                <Plus size={14} />
+                              </button>
+                            </div>
+                            <span className="text-text-bright font-bold text-base">
+                              ${(parseFloat(item.price.replace('$', '')) * item.quantity).toFixed(2)}
+                            </span>
+                          </div>
+
+                          <div className="relative">
+                            <MessageSquare size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary/40" />
+                            <input 
+                              type="text"
+                              value={item.notes || ''}
+                              onChange={(e) => updateNotes(item.id, e.target.value)}
+                              placeholder="OBSERVACIONES (EJ. SIN CEBOLLA...)"
+                              className="w-full bg-background border border-zinc-200 dark:border-white/10 p-3 pl-9 text-[9px] md:text-[10px] uppercase tracking-widest text-text-bright focus:outline-none focus:border-primary transition-colors placeholder:text-text-dim/40"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Delivery Form */}
+                  <div className="mt-8 space-y-6 pt-12 border-t-2 border-primary/20">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <div className="w-2 h-2 bg-primary animate-pulse"></div>
+                      <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-primary">Logística de Entrega</h3>
+                    </div>
+                    
+                    <form className="space-y-4">
+                      <Input 
+                        label="Nombre de Contacto" 
+                        name="nombre"
+                        placeholder="Quien recibe el pedido..."
+                        value={formData.nombre}
+                        onChange={handleInputChange}
+                        required 
+                      />
+                      <Input 
+                        label="WhatsApp de Enlace" 
+                        name="telefono"
+                        placeholder="+57..."
+                        value={formData.telefono}
+                        onChange={handleInputChange}
+                        required 
+                      />
+                      <Input 
+                        label="Identificación (ID / CC)" 
+                        name="identificacion"
+                        placeholder="Para facturación interna..."
+                        value={formData.identificacion}
+                        onChange={handleInputChange}
+                      />
+                      <div className="flex flex-col space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-primary">Dirección de Desembarco</label>
+                        <textarea 
+                          name="direccion"
+                          value={formData.direccion}
+                          onChange={handleInputChange}
+                          className="input-field min-h-[100px] text-[11px]"
+                          placeholder="Calle, Número, Apto, Barrio..."
+                        />
+                      </div>
+                    </form>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Footer */}
+            {cartItems.length > 0 && (
+              <div className="p-6 md:p-8 border-t border-white/5 bg-background/90 backdrop-blur-md">
+                <div className="flex justify-between items-end mb-6">
+                  <div>
+                    <p className="text-[9px] uppercase tracking-widest text-text-dim font-bold">Total a Transferir</p>
+                    <p className="text-[8px] text-primary font-bold uppercase tracking-tighter mt-1">Tarifa de envío según cobertura</p>
+                  </div>
+                  <p className="text-3xl md:text-4xl font-serif text-text-bright">${total.toFixed(2)}</p>
+                </div>
+                
+                <Button 
+                  onClick={handleSendOrder}
+                  className="w-full py-5 text-lg md:text-xl flex items-center justify-center space-x-3 bg-[#25D366] hover:bg-[#128C7E] border-none shadow-[8px_8px_0px_0px_rgba(37,211,102,0.2)]"
+                >
+                  <MessageSquare size={18} />
+                  <span>PEDIR POR WHATSAPP</span>
+                </Button>
+                
+                <p className="text-center mt-4 text-[7px] md:text-[8px] uppercase tracking-[0.3em] text-text-dim">
+                   Urban Street // Secure Logistical Hub
+                </p>
+              </div>
+            )}
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
+
+export default CartDrawer;
