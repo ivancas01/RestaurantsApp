@@ -29,7 +29,14 @@ const AdminLayout = () => {
   const [isMobile, setIsMobile] = React.useState(window.innerWidth < 1280);
   const [notifOpen, setNotifOpen] = React.useState(false);
   const [userMenuOpen, setUserMenuOpen] = React.useState(false);
-  const { hasPermission, PERMISSIONS, currentUser, groups, notifications, clearNotification, darkMode, setDarkMode } = useAdmin();
+  const { hasPermission, PERMISSIONS, currentUser, groups, notifications, clearNotification, darkMode, setDarkMode, logout, cmsData } = useAdmin();
+  const brand = cmsData?.brand || { name: 'URBAN', tagline: 'Control Center' };
+
+  React.useEffect(() => {
+    if (!currentUser && !localStorage.getItem('urban_token')) {
+      navigate('/login');
+    }
+  }, [currentUser, navigate]);
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -41,7 +48,11 @@ const AdminLayout = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const userGroup = groups.find(g => g.id === currentUser?.groupId);
+  const userGroup = groups.find(g => 
+    g.id === currentUser?.groupId || 
+    g.id.toString() === currentUser?.groupId?.toString() || 
+    g.slug === currentUser?.groupId
+  );
 
   const menuItems = [
     { name: 'Dashboard', path: '/hidden-admin', icon: <BarChart size={20} />, permission: PERMISSIONS.DASHBOARD_VIEW },
@@ -82,7 +93,7 @@ const AdminLayout = () => {
             >
               <div className="p-8 md:p-10 border-b-2 border-primary/20 flex justify-between items-center bg-black/5">
                 <div className="text-2xl md:text-3xl font-serif text-primary font-bold tracking-[0.1em] uppercase">
-                  URBAN <span className="text-text-bright block text-[9px] md:text-[10px] tracking-[0.3em] font-sans">Control Center</span>
+                  {brand.name} <span className="text-text-bright block text-[9px] md:text-[10px] tracking-[0.3em] font-sans">{brand.tagline}</span>
                 </div>
                 <button onClick={() => setSidebarOpen(false)} className="xl:hidden text-primary p-2 hover:bg-primary/10 transition-colors">
                    <X size={28} />
@@ -119,7 +130,7 @@ const AdminLayout = () => {
 
               <div className="p-6 border-t-2 border-zinc-200 dark:border-zinc-900 bg-black/10">
                 <button 
-                  onClick={() => navigate('/')}
+                  onClick={() => { logout(); navigate('/'); }}
                   className="flex items-center space-x-3 text-text-dim hover:text-primary p-3 w-full transition-all uppercase tracking-widest text-[10px] font-bold"
                 >
                   <LogOut size={16} />
@@ -152,8 +163,8 @@ const AdminLayout = () => {
           <div className="flex items-center space-x-2 md:space-x-6">
             {/* Theme Toggle */}
             <button 
-              onClick={() => setDarkMode(!darkMode)}
-              className="p-2 text-text-dim hover:text-primary transition-all rounded-full hover:bg-black/5 dark:hover:bg-white/5"
+              onClick={() => setDarkMode(prev => !prev)}
+              className="p-2 text-text-dim hover:text-primary transition-all rounded-full hover:bg-black/5 dark:hover:bg-white/5 active:scale-90"
               title={darkMode ? 'Modo Claro' : 'Modo Oscuro'}
             >
                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
@@ -268,7 +279,7 @@ const AdminLayout = () => {
                         <div className="border-t border-zinc-100 dark:border-zinc-900 my-1"></div>
                         
                         <button 
-                          onClick={() => { setUserMenuOpen(false); navigate('/login'); }}
+                          onClick={() => { setUserMenuOpen(false); logout(); navigate('/login'); }}
                           className="w-full text-left px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-accent hover:bg-accent/10 transition-all flex items-center space-x-3"
                         >
                           <LogOut size={14} />

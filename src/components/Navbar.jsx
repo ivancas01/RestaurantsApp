@@ -4,10 +4,14 @@ import { Link, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import ThemeToggle from './ThemeToggle';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAdmin } from '../context/AdminContext';
 
 const Navbar = () => {
   const location = useLocation();
   const { cartItems, toggleCart } = useCart();
+  const { cmsData } = useAdmin();
+  const brand = cmsData?.brand || { name: 'URBAN STREET' };
+  const brandParts = brand.name.split(' ');
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -35,7 +39,7 @@ const Navbar = () => {
     >
       <div className="container flex justify-between items-center h-full">
         <Link to="/" className="text-xl md:text-2xl font-serif text-primary tracking-[0.2em] font-bold whitespace-nowrap">
-          URBAN <span className="text-text-bright">STREET</span>
+          {brandParts[0]} <span className="text-text-bright">{brandParts.slice(1).join(' ')}</span>
         </Link>
 
         {/* Desktop Menu */}

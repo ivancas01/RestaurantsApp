@@ -2,14 +2,14 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-
-import { menuCategories } from '../data/menu';
-
-// Extract first 3 items for the home page preview
-const dishes = menuCategories.flatMap(c => c.items).slice(0, 3);
+import { useAdmin } from '../context/AdminContext';
 
 const MenuSection = () => {
   const { addToCart } = useCart();
+  const { menu = [] } = useAdmin();
+  
+  // Extract first 3 products for the home page preview
+  const dishes = menu.flatMap(c => c.products || []).slice(0, 3);
 
   return (
     <section id="carta" className="py-20 md:py-32 bg-background relative overflow-hidden">

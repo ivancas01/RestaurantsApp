@@ -9,7 +9,7 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmLabel
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[800] flex items-center justify-center p-6">
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6">
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -42,7 +42,7 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmLabel
                     onConfirm();
                     onClose();
                  }} 
-                 className={`flex-1 text-[10px] uppercase font-bold ${isDanger ? 'bg-accent border-accent text-white hover:bg-accent-dark' : ''}`}
+                 className={`flex-1 text-[10px] uppercase font-bold ${isDanger ? 'bg-accent border-accent text-zinc-900 dark:text-zinc-900 hover:bg-accent/90' : ''}`}
                >
                   {confirmLabel}
                </Button>

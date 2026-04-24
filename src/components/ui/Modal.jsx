@@ -6,7 +6,7 @@ const Modal = ({ isOpen, onClose, title, subtitle, children, maxWidth = 'max-w-4
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[800] flex items-center justify-center p-4 lg:p-10 pointer-events-none">
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 lg:p-10 pointer-events-none">
           {/* Backdrop */}
           <motion.div 
             initial={{ opacity: 0 }}

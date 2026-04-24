@@ -21,13 +21,21 @@ const Dashboard = () => {
   const { orders, reservations, tables, notifications } = useAdmin();
 
   // Metrics Logic
-  const totalRevenue = orders
-    .filter(o => o.status === 'Pagado')
-    .reduce((acc, o) => acc + o.total, 0);
+  const today = new Date().toISOString().split('T')[0];
+  
+  const todayOrders = orders.filter(o => o.created_at?.split('T')[0] === today);
+  const todayRevenue = todayOrders
+    .filter(o => o.status === 'Pagado' || o.isPaid)
+    .reduce((acc, o) => acc + parseFloat(String(o.total || 0).replace('$', '').replace(',', '')), 0);
 
-  const pendingOrders = orders.filter(o => ['Pendiente', 'Preparando', 'Listo'].includes(o.status)).length;
+  const pendingOrders = orders.filter(o => ['Pendiente', 'Preparando', 'En Lista', 'Confirmado'].includes(o.status)).length;
   const occupiedTables = tables.filter(t => t.status === 'Ocupada').length;
-  const todayReservations = reservations.filter(r => r.status === 'Confirmado').length;
+  const todayReservationsCount = reservations.filter(r => r.date === today).length;
+
+  // Calculate trends (Simple mock based on real counts vs thresholds for visual impact)
+  const resTrend = todayReservationsCount > 5 ? "+15%" : "+5%";
+  const orderTrend = pendingOrders > 10 ? "+22%" : "+8%";
+  const salesTrend = todayRevenue > 500 ? "+30%" : "+12%";
 
   const quickActions = [
     { label: 'Tomar Pedido', icon: <ShoppingCart />, path: '/hidden-admin/orders', color: 'bg-primary' },
@@ -40,10 +48,10 @@ const Dashboard = () => {
     <div className="space-y-6 md:space-y-10 uppercase">
       {/* Metrics Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        <StatCard title="Reservas Hoy" value={todayReservations} icon={<Calendar />} trend="+12%" />
+        <StatCard title="Reservas Hoy" value={todayReservationsCount} icon={<Calendar />} trend={resTrend} />
         <StatCard title="Mesas Ocupadas" value={occupiedTables} icon={<MapPin />} trend="+2" />
-        <StatCard title="Pedidos Activos" value={pendingOrders} icon={<ShoppingCart />} trend="+18%" />
-        <StatCard title="Ventas del Día" value={`$${totalRevenue.toFixed(0)}`} icon={<DollarSign />} trend="+24%" />
+        <StatCard title="Pedidos Activos" value={pendingOrders} icon={<ShoppingCart />} trend={orderTrend} />
+        <StatCard title="Ventas del Día" value={`$${todayRevenue.toFixed(0)}`} icon={<DollarSign />} trend={salesTrend} />
       </div>
 
       {/* Quick Actions Grid */}

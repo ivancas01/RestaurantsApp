@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, ArrowRight } from 'lucide-react';
+import { TrendingUp, ArrowRight, ShoppingCart } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import Button from '../components/ui/Button';
 
@@ -8,11 +9,33 @@ import Button from '../components/ui/Button';
 const PRODUCT_IMAGE = "file:///C:/Users/ivanc/.gemini/antigravity/brain/f538c209-2d5b-4265-9bff-70cef98c35f9/urban_hero_burger_1776653580173.png";
 
 const HeroSection = () => {
-  const { cmsData, getMostOrderedProduct } = useAdmin();
-  const { hero } = cmsData;
+  const { menu = [], cmsData = {} } = useAdmin() || {};
+  
+  const allProducts = React.useMemo(() => menu.flatMap(cat => cat.products || []), [menu]);
+  const [randomProduct, setRandomProduct] = React.useState(null);
 
-  const topProduct = getMostOrderedProduct();
-  const featured = topProduct || {
+  React.useEffect(() => {
+    if (allProducts.length > 0 && !randomProduct) {
+      const random = allProducts[Math.floor(Math.random() * allProducts.length)];
+      setRandomProduct(random);
+    }
+  }, [allProducts, randomProduct]);
+
+  const hero = cmsData?.hero || {
+    title: "Sabor Urbano, Alma // Gourmet",
+    subtitle: "Donde la calle se encuentra con la alta cocina.",
+    cta_menu: "Ver Carta Completa",
+    cta_reserva: "Reservar Mesa",
+    featured_name: "The Architect",
+    featured_price: "22",
+    featured_desc: "Wagyu A5, Cheddar Envejecido, Cebolla al Bourbon y pan brioche artesanal.",
+    stats_label: "Trending",
+    stats_value: "+124 Pedidos",
+    established: `${cmsData?.brand?.name || 'Urban Street'} // Established 2026`,
+    featured_image: PRODUCT_IMAGE
+  };
+
+  const featured = randomProduct || {
     name: hero.featured_name,
     price: hero.featured_price,
     description: hero.featured_desc,
@@ -21,7 +44,8 @@ const HeroSection = () => {
   };
 
   // Formatting title: "Main Part // Italic Part"
-  const [mainTitle, italicTitle] = hero.title.split('//').map(t => t.trim());
+  const safeTitle = hero.title || "Sabor Urbano, Alma // Gourmet";
+  const [mainTitle, italicTitle] = safeTitle.includes('//') ? safeTitle.split('//').map(t => t.trim()) : [safeTitle, ''];
 
   return (
     <section id="inicio" className="relative min-h-screen w-full overflow-hidden flex items-center bg-background pt-32 md:pt-0">
@@ -85,8 +109,12 @@ const HeroSection = () => {
             transition={{ duration: 0.5, delay: 0.5 }}
             className="flex flex-col sm:flex-row gap-4 md:gap-6"
           >
-            <Button variant="primary" className="text-base md:text-xl w-full sm:w-auto">{hero.cta_menu}</Button>
-            <Button variant="outline" className="text-base md:text-xl w-full sm:w-auto">{hero.cta_reserva}</Button>
+            <Link to="/menu" className="w-full sm:w-auto">
+              <Button variant="primary" className="text-base md:text-xl w-full">{hero.cta_menu}</Button>
+            </Link>
+            <a href="#reserva" className="w-full sm:w-auto">
+              <Button variant="outline" className="text-base md:text-xl w-full">{hero.cta_reserva}</Button>
+            </a>
           </motion.div>
         </motion.div>
 
@@ -107,11 +135,18 @@ const HeroSection = () => {
             </div>
 
             <div className="aspect-square overflow-hidden mb-6 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
-              <img 
-                src={featured.image} 
-                alt={featured.name} 
-                className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 scale-110 group-hover:scale-100"
-              />
+              {featured.image ? (
+                <img 
+                  src={featured.image} 
+                  alt={featured.name} 
+                  className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 scale-110 group-hover:scale-100"
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-text-dim/20 p-8 text-center">
+                  <ShoppingCart size={48} strokeWidth={1} className="mb-2" />
+                  <p className="text-[8px] uppercase tracking-widest font-bold">Selecciona un plato en el menú para destacar</p>
+                </div>
+              )}
             </div>
 
             <div className="space-y-3 lg:space-y-4">

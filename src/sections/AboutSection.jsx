@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAdmin } from '../context/AdminContext';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
 
 const RESTAURANT_PHOTOS = [
   "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=800&auto=format&fit=crop",
@@ -12,9 +12,22 @@ const RESTAURANT_PHOTOS = [
 ];
 
 const AboutSection = () => {
-  const { cmsData } = useAdmin();
-  const { about } = cmsData;
-  const [titleMain, titleItalic] = about.title.split('//').map(s => s.trim());
+  const { cmsData = {} } = useAdmin() || {};
+  const about = cmsData?.about || {
+    title: "Nuestra // Historia",
+    desc_1: "Nacimos en el asfalto, inspirados por el ruido y la energía inagotable de la ciudad. No creemos en mesas con manteles blancos ni en etiquetas aburridas.",
+    desc_2: "Aquí, la alta cocina se ensucia las manos. Tomamos ingredientes locales de la más alta calidad y los pasamos por el fuego puro de nuestras parrillas urbanas.",
+    years_label: "Years on the street",
+    years_value: "10",
+    feature_1_title: "RAW MATERIALS",
+    feature_1_desc: "Solo ingredientes frescos y directos de origen local.",
+    feature_2_title: "URBAN SOUL",
+    feature_2_desc: "Ambiente diseñado para la ciudad que nunca duerme.",
+    images: RESTAURANT_PHOTOS,
+    content: "Lumina Urban Gourmet nació en las calles vibrantes de la ciudad, donde el arte y la gastronomía convergen. No solo servimos comida, creamos experiencias sensoriales que desafían lo convencional."
+  };
+  const safeTitle = about.title || "Nuestra // Historia";
+  const [titleMain, titleItalic] = safeTitle.includes('//') ? safeTitle.split('//').map(s => s.trim()) : [safeTitle, ''];
   
   const [currentPhoto, setCurrentPhoto] = useState(0);
 
@@ -29,7 +42,9 @@ const AboutSection = () => {
   return (
     <section id="nosotros" className="py-20 md:py-32 bg-surface text-text-bright relative overflow-hidden group/section">
       {/* Background Graphic Element */}
-      <div className="absolute -left-10 md:-left-20 top-0 text-[8rem] md:text-[15rem] font-serif opacity-[0.02] select-none uppercase pointer-events-none">URBAN</div>
+      <div className="absolute -left-10 md:-left-20 top-0 text-[8rem] md:text-[15rem] font-serif opacity-[0.02] select-none uppercase pointer-events-none">
+        {cmsData?.brand?.name?.split(' ')[0] || 'URBAN'}
+      </div>
       
       <div className="container grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-20 items-center">
         <motion.div 
@@ -43,50 +58,61 @@ const AboutSection = () => {
             {/* Background Decorative Square */}
             <div className="aspect-square bg-primary/10 absolute -inset-2 md:-inset-4 border-2 border-primary/20 translate-x-4 translate-y-4 md:translate-x-8 md:translate-y-8"></div>
             
-            <div className="relative aspect-square overflow-hidden border-2 border-white/5 shadow-2xl bg-zinc-900">
-              <AnimatePresence mode="wait">
-                <motion.img 
-                   key={currentPhoto}
-                   src={about.images[currentPhoto]} 
-                   alt={`Urban Restaurant View ${currentPhoto + 1}`} 
-                   initial={{ opacity: 0, scale: 1.1 }}
-                   animate={{ opacity: 1, scale: 1 }}
-                   exit={{ opacity: 0, scale: 0.95 }}
-                   transition={{ duration: 0.5 }}
-                   className="w-full h-full object-cover grayscale group-hover/section:grayscale-0 transition-all duration-700"
-                />
-              </AnimatePresence>
-
-              {/* Navigation Controls */}
-              <div className="absolute inset-0 flex items-center justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-                <button 
-                  onClick={prevPhoto}
-                  className="w-12 h-12 bg-primary/20 backdrop-blur-md border border-white/10 flex items-center justify-center text-white hover:bg-primary transition-all"
-                >
-                  <ChevronLeft size={24} />
-                </button>
-                <button 
-                  onClick={nextPhoto}
-                  className="w-12 h-12 bg-primary/20 backdrop-blur-md border border-white/10 flex items-center justify-center text-white hover:bg-primary transition-all"
-                >
-                  <ChevronRight size={24} />
-                </button>
-              </div>
-
-              {/* Photo Counter */}
-              <div className="absolute top-4 left-4 bg-background/50 backdrop-blur-sm px-3 py-1 text-[10px] font-bold uppercase tracking-widest border border-white/5 z-20">
-                SCENE 0{currentPhoto + 1} / 0{about.images.length}
-              </div>
-              
-              {/* Progress Dots */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 z-20">
-                {about.images.map((_, i) => (
-                   <div 
-                     key={i} 
-                     className={`w-1.5 h-1.5 transition-all duration-300 ${i === currentPhoto ? 'bg-primary w-6' : 'bg-white/30'}`}
+             <div className="relative aspect-square overflow-hidden border-2 border-white/5 shadow-2xl bg-zinc-900">
+               <AnimatePresence mode="wait">
+                 {about.images && about.images.length > 0 ? (
+                   <motion.img 
+                     key={currentPhoto}
+                     src={about.images[currentPhoto]} 
+                     alt={`Urban Restaurant View ${currentPhoto + 1}`} 
+                     initial={{ opacity: 0, scale: 1.1 }}
+                     animate={{ opacity: 1, scale: 1 }}
+                     exit={{ opacity: 0, scale: 0.95 }}
+                     transition={{ duration: 0.5 }}
+                     className="w-full h-full object-cover grayscale group-hover/section:grayscale-0 transition-all duration-700"
                    />
-                ))}
-              </div>
+                 ) : (
+                   <div className="w-full h-full flex flex-col items-center justify-center text-primary/30 p-12 text-center bg-zinc-900">
+                     <ImageIcon size={64} strokeWidth={1} className="mb-4" />
+                     <p className="text-[10px] uppercase tracking-[0.3em] font-bold">Carga fotos de tu local en el panel de control</p>
+                   </div>
+                 )}
+               </AnimatePresence>
+ 
+               {/* Navigation Controls */}
+               {about.images && about.images.length > 1 && (
+                 <div className="absolute inset-0 flex items-center justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                   <button 
+                     onClick={prevPhoto}
+                     className="w-12 h-12 bg-primary/20 backdrop-blur-md border border-white/10 flex items-center justify-center text-white hover:bg-primary transition-all"
+                   >
+                     <ChevronLeft size={24} />
+                   </button>
+                   <button 
+                     onClick={nextPhoto}
+                     className="w-12 h-12 bg-primary/20 backdrop-blur-md border border-white/10 flex items-center justify-center text-white hover:bg-primary transition-all"
+                   >
+                     <ChevronRight size={24} />
+                   </button>
+                 </div>
+               )}
+ 
+               {/* Photo Counter */}
+               {about.images && about.images.length > 0 && (
+                 <div className="absolute top-4 left-4 bg-background/50 backdrop-blur-sm px-3 py-1 text-[10px] font-bold uppercase tracking-widest border border-white/5 z-20">
+                   SCENE 0{currentPhoto + 1} / 0{about.images.length}
+                 </div>
+               )}
+               
+               {/* Progress Dots */}
+               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 z-20">
+                 {about.images && about.images.map((_, i) => (
+                    <div 
+                      key={i} 
+                      className={`w-1.5 h-1.5 transition-all duration-300 ${i === currentPhoto ? 'bg-primary w-6' : 'bg-white/30'}`}
+                    />
+                 ))}
+               </div>
             </div>
 
             {/* Floating Badge */}

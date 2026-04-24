@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Coffee, Plus, Trash2, Edit2, Tag, DollarSign, Image as ImageIcon, Check, X, Upload } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
-import { fileToBase64 } from '../utils/fileUtils';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Modal from '../components/ui/Modal';
@@ -10,7 +9,7 @@ import ConfirmModal from '../components/ui/ConfirmModal';
 import { useNotification } from '../context/NotificationContext';
 
 const ProductsManager = () => {
-  const { menu, updateMenu } = useAdmin();
+  const { menu, addCategory, editCategory, removeCategory, addProduct, editProduct, removeProduct } = useAdmin();
   const { showNotification } = useNotification();
   const [selectedCategoryId, setSelectedCategoryId] = useState(menu[0]?.id || null);
   const [isEditing, setIsEditing] = useState(null); // { catId, itemId } or { catId, isNew: true }
@@ -23,78 +22,60 @@ const ProductsManager = () => {
 
   const selectedCategory = menu.find(c => c.id === selectedCategoryId);
 
-  const handleToggleStatus = (catId, itemId) => {
-    const newMenu = menu.map(cat => {
-      if (cat.id === catId) {
-        return {
-          ...cat,
-          items: cat.items.map(item => 
-            item.id === itemId ? { ...item, available: !item.available } : item
-          )
-        };
-      }
-      return cat;
-    });
-    updateMenu(newMenu);
-    showNotification("Estado del producto actualizado");
+  const handleToggleStatus = async (catId, itemId) => {
+    const category = menu.find(c => c.id === catId);
+    const item = category?.products.find(p => p.id === itemId);
+    if (item) {
+      await editProduct(catId, itemId, { is_available: !item.is_available });
+      showNotification("Estado del producto actualizado");
+    }
   };
 
-  const deleteItem = () => {
+  const deleteItem = async () => {
     if (!itemToDelete) return;
     const { catId, itemId } = itemToDelete;
-    const newMenu = menu.map(cat => {
-      if (cat.id === catId) {
-        return { ...cat, items: cat.items.filter(item => item.id !== itemId) };
-      }
-      return cat;
-    });
-    updateMenu(newMenu);
+    await removeProduct(catId, itemId);
     setItemToDelete(null);
     showNotification("Producto eliminado correctamente");
   };
 
-  const [editForm, setEditForm] = useState({ name: '', price: '', description: '', image: '', available: true });
+  const [editForm, setEditForm] = useState({ name: '', price: '', description: '', image: '', is_available: true });
 
   const startEdit = (catId, item = null) => {
     if (item) {
       setIsEditing({ catId, itemId: item.id });
-      setEditForm({ ...item });
+      setEditForm({ ...item, image_preview: item.image });
     } else {
       setIsEditing({ catId, isNew: true });
-      setEditForm({ name: '', price: '$', description: '', image: '', available: true });
+      setEditForm({ name: '', price: '$', description: '', image: '', image_preview: '', image_file: null, is_available: true });
     }
   };
 
-  const handleFileChange = async (e) => {
+  const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      try {
-        const base64 = await fileToBase64(file);
-        setEditForm({ ...editForm, image: base64 });
-      } catch (err) {
-        console.error("Error cargando imagen:", err);
-      }
+      const previewUrl = URL.createObjectURL(file);
+      setEditForm({ ...editForm, image_file: file, image_preview: previewUrl });
     }
   };
 
-  const saveEdit = () => {
-    const newMenu = menu.map(cat => {
-      if (cat.id === isEditing.catId) {
-        if (isEditing.isNew) {
-          const newItem = { ...editForm, id: `prod_${Date.now()}` };
-          return { ...cat, items: [...cat.items, newItem] };
-        } else {
-          return {
-            ...cat,
-            items: cat.items.map(item => item.id === isEditing.itemId ? { ...editForm, id: item.id } : item)
-          };
-        }
-      }
-      return cat;
-    });
-    updateMenu(newMenu);
+  const saveEdit = async () => {
+    if (!editForm.name.trim()) {
+      showNotification("El nombre del producto es obligatorio", "error");
+      return;
+    }
+    if (!editForm.price) {
+      showNotification("El precio es obligatorio", "error");
+      return;
+    }
+    if (isEditing.isNew) {
+      await addProduct(isEditing.catId, editForm);
+      showNotification("Nuevo producto registrado");
+    } else {
+      await editProduct(isEditing.catId, isEditing.itemId, editForm);
+      showNotification("Producto actualizado correctamente");
+    }
     setIsEditing(null);
-    showNotification(isEditing.isNew ? "Nuevo producto registrado" : "Producto actualizado correctamente");
   };
 
   // Category Logic
@@ -108,31 +89,28 @@ const ProductsManager = () => {
     }
   };
 
-  const saveCategory = () => {
-    if (!categoryForm.name.trim()) return;
+  const saveCategory = async () => {
+    if (!categoryForm.name.trim()) {
+      showNotification("El nombre de la categoría es obligatorio", "error");
+      return;
+    }
     
     if (isEditingCategory.isNew) {
-      const newCat = {
-        id: `cat_${Date.now()}`,
-        name: categoryForm.name,
-        items: []
-      };
-      updateMenu([...menu, newCat]);
-      setSelectedCategoryId(newCat.id);
+      const newCat = await addCategory({ name: categoryForm.name });
+      if (newCat) setSelectedCategoryId(newCat.id);
       showNotification("Nueva categoría añadida");
     } else {
-      updateMenu(menu.map(c => c.id === isEditingCategory.id ? { ...c, name: categoryForm.name } : c));
+      await editCategory(isEditingCategory.id, { name: categoryForm.name });
       showNotification("Categoría actualizada");
     }
     setIsEditingCategory(null);
   };
 
-  const deleteCategory = () => {
+  const deleteCategory = async () => {
     if (!categoryToDelete) return;
-    const newMenu = menu.filter(c => c.id !== categoryToDelete.id);
-    updateMenu(newMenu);
+    await removeCategory(categoryToDelete.id);
     if (selectedCategoryId === categoryToDelete.id) {
-      setSelectedCategoryId(newMenu[0]?.id || null);
+      setSelectedCategoryId(menu[0]?.id || null);
     }
     setCategoryToDelete(null);
   };
@@ -158,8 +136,8 @@ const ProductsManager = () => {
                     <label className="text-[10px] font-bold uppercase tracking-widest text-primary">Imagen del Platillo</label>
                     <div className="flex items-center space-x-4">
                        <div className="w-20 h-20 bg-background border-2 border-zinc-800 flex items-center justify-center overflow-hidden">
-                          {editForm.image ? (
-                            <img src={editForm.image} alt="Preview" className="w-full h-full object-cover" />
+                          {editForm.image_preview ? (
+                            <img src={editForm.image_preview} alt="Preview" className="w-full h-full object-cover" />
                           ) : (
                             <ImageIcon size={24} className="text-text-dim/30" />
                           )}
@@ -176,18 +154,18 @@ const ProductsManager = () => {
               <div className="pt-4 flex flex-col space-y-4">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-primary">Disponibilidad en Carta</label>
                 <div 
-                  onClick={() => setEditForm({...editForm, available: !editForm.available})}
+                  onClick={() => setEditForm({...editForm, is_available: !editForm.is_available})}
                   className="flex items-center space-x-4 cursor-pointer group"
                 >
-                    <div className={`w-12 h-6 rounded-full transition-colors relative flex items-center px-1 ${editForm.available !== false ? 'bg-green-500' : 'bg-zinc-800'}`}>
+                    <div className={`w-12 h-6 rounded-full transition-colors relative flex items-center px-1 ${editForm.is_available !== false ? 'bg-green-500' : 'bg-zinc-800'}`}>
                        <motion.div 
                          layout
                          className="w-4 h-4 bg-white rounded-full shadow-sm"
-                         animate={{ x: editForm.available !== false ? 20 : 0 }}
+                         animate={{ x: editForm.is_available !== false ? 20 : 0 }}
                        />
                     </div>
-                    <span className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${editForm.available !== false ? 'text-text-bright' : 'text-text-dim'}`}>
-                       {editForm.available !== false ? 'Disponible para Venta' : 'Fuera de Stock / Agotado'}
+                    <span className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${editForm.is_available !== false ? 'text-text-bright' : 'text-text-dim'}`}>
+                       {editForm.is_available !== false ? 'Disponible para Venta' : 'Fuera de Stock / Agotado'}
                     </span>
                 </div>
               </div>
@@ -304,11 +282,11 @@ const ProductsManager = () => {
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
-            {selectedCategory?.items.map((item) => (
-              <div key={item.id} className="bg-surface border-2 border-zinc-200 dark:border-zinc-900 p-6 md:p-8 flex flex-col sm:flex-row gap-6 md:gap-8 group hover:border-primary transition-all relative">
+            {(selectedCategory?.products || []).map((item, idx) => (
+              <div key={item.id || `prod-${idx}`} className="bg-surface border-2 border-zinc-200 dark:border-zinc-900 p-6 md:p-8 flex flex-col sm:flex-row gap-6 md:gap-8 group hover:border-primary transition-all relative">
                 <div className="w-full sm:w-32 h-48 sm:h-32 bg-zinc-100 dark:bg-zinc-800 border border-white/5 flex-shrink-0 relative overflow-hidden">
                    <img src={item.image} alt={item.name} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
-                   {!item.available && (
+                   {!item.is_available && (
                       <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
                          <span className="text-[10px] font-bold uppercase tracking-widest text-white -rotate-12 bg-accent px-2">Agotado</span>
                       </div>
@@ -332,17 +310,17 @@ const ProductsManager = () => {
                    <div className="pt-2 md:pt-4 flex items-center justify-between sm:justify-start sm:space-x-6 border-t border-white/5 sm:border-0">
                       <button 
                         onClick={() => handleToggleStatus(selectedCategoryId, item.id)}
-                        className={`flex items-center space-x-2 text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] transition-colors py-2 ${item.available !== false ? 'text-green-500 hover:text-primary' : 'text-text-dim hover:text-green-500'}`}
+                        className={`flex items-center space-x-2 text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] transition-colors py-2 ${item.is_available !== false ? 'text-green-500 hover:text-primary' : 'text-text-dim hover:text-green-500'}`}
                       >
-                         {item.available !== false ? <Check size={14}/> : <X size={14}/>}
-                         <span>{item.available !== false ? 'Disponible' : 'Fuera de Stock'}</span>
+                         {item.is_available !== false ? <Check size={14}/> : <X size={14}/>}
+                         <span>{item.is_available !== false ? 'Disponible' : 'Fuera de Stock'}</span>
                       </button>
                    </div>
                 </div>
               </div>
             ))}
 
-            {selectedCategory && selectedCategory.items.length === 0 && (
+            {selectedCategory && (selectedCategory.products || []).length === 0 && (
               <div className="xl:col-span-2 h-64 border-2 border-dashed border-zinc-200 dark:border-zinc-900 flex flex-col items-center justify-center opacity-30 text-text-bright">
                 <Coffee size={48} strokeWidth={1} />
                 <p className="uppercase tracking-[0.3em] font-bold text-xs mt-4">No hay productos en esta categoría</p>

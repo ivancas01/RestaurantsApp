@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Users, Plus, Hash, Layers, Trash2, CheckCircle2, Clock, Edit2, Upload, Image as ImageIcon, QrCode, Download, X, Printer } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
-import { fileToBase64 } from '../utils/fileUtils';
 import { useNotification } from '../context/NotificationContext';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -10,7 +9,7 @@ import Modal from '../components/ui/Modal';
 import ConfirmModal from '../components/ui/ConfirmModal';
 
 const VenueManager = () => {
-  const { locations, tables, addLocation, addTable, setTables, setLocations } = useAdmin();
+  const { locations, tables, addLocation, addTable, removeLocation, removeTable } = useAdmin();
   const { showNotification } = useNotification();
   const [selectedLocation, setSelectedLocation] = useState(locations[0]?.id || null);
   
@@ -19,7 +18,7 @@ const VenueManager = () => {
   const [isEditingTable, setIsEditingTable] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null); // { type: 'table'|'location', id, name }
 
-  const [newLoc, setNewLoc] = useState({ name: '', image: '' });
+  const [newLoc, setNewLoc] = useState({ name: '', image_preview: '', image_file: null });
   const [newTable, setNewTable] = useState({ number: '', capacity: 4 });
   const [selectedTableForQr, setSelectedTableForQr] = useState(null);
 
@@ -32,29 +31,36 @@ const VenueManager = () => {
     return `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encodeURIComponent(url)}`;
   };
 
-  const handleFileChange = async (e) => {
+  const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      try {
-        const base64 = await fileToBase64(file);
-        setNewLoc({ ...newLoc, image: base64 });
-      } catch (err) {
-        console.error("Error cargando imagen:", err);
-      }
+      const previewUrl = URL.createObjectURL(file);
+      setNewLoc({ ...newLoc, image_file: file, image_preview: previewUrl });
     }
   };
 
-  const handleAddLocation = () => {
-    if (!newLoc.name) return;
-    addLocation(newLoc);
-    setNewLoc({ name: '', image: '' });
+  const handleAddLocation = async () => {
+    if (!newLoc.name.trim()) {
+      showNotification("El nombre de la zona es obligatorio", "error");
+      return;
+    }
+    const added = await addLocation(newLoc);
+    if (added) setSelectedLocation(added.id);
+    setNewLoc({ name: '', image_preview: '', image_file: null });
     setIsEditingLocation(false);
     showNotification("Zona de servicio creada exitosamente");
   };
 
-  const handleAddTable = () => {
-    if (!newTable.number || !selectedLocation) return;
-    addTable({
+  const handleAddTable = async () => {
+    if (!newTable.number) {
+      showNotification("El número de mesa es obligatorio", "error");
+      return;
+    }
+    if (!selectedLocation) {
+      showNotification("Debes seleccionar una zona primero", "error");
+      return;
+    }
+    await addTable({
       number: newTable.number,
       capacity: newTable.capacity,
       locationId: selectedLocation,
@@ -65,18 +71,18 @@ const VenueManager = () => {
     showNotification(`Mesa ${newTable.number} registrada en el sistema`);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!itemToDelete) return;
     const { type, id } = itemToDelete;
     if (type === 'table') {
-      setTables(tables.filter(t => t.id !== id));
+      await removeTable(id);
     } else {
       if (tables.some(t => t.locationId === id)) {
-        alert("No se puede eliminar una ubicación que tiene mesas asignadas.");
+        showNotification("No se puede eliminar una ubicación que tiene mesas asignadas.", "error");
         setItemToDelete(null);
         return;
       }
-      setLocations(locations.filter(l => l.id !== id));
+      await removeLocation(id);
       if (selectedLocation === id) setSelectedLocation(locations[0]?.id || null);
       showNotification("Ubicación eliminada");
     }
@@ -113,8 +119,8 @@ const VenueManager = () => {
               <label className="text-[10px] font-bold uppercase tracking-widest text-primary">Imagen de la Zona</label>
               <div className="flex items-center space-x-4">
                  <div className="w-16 h-16 bg-background border-2 border-zinc-800 flex items-center justify-center overflow-hidden">
-                    {newLoc.image ? (
-                      <img src={newLoc.image} alt="Preview" className="w-full h-full object-cover" />
+                    {newLoc.image_preview ? (
+                      <img src={newLoc.image_preview} alt="Preview" className="w-full h-full object-cover" />
                     ) : (
                       <ImageIcon size={20} className="text-text-dim/30" />
                     )}

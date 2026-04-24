@@ -2,14 +2,22 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, Camera, Link, Send, User, MessageSquare } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
+import { useNotification } from '../context/NotificationContext';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 
 const WHATSAPP_NUMBER = "573024788683";
 
 const ContactSection = () => {
-  const { cmsData } = useAdmin();
-  const { contact } = cmsData;
+  const { cmsData = {} } = useAdmin() || {};
+  const { showNotification } = useNotification();
+  const contact = cmsData?.contact || {
+    address: "Calle 42 # 8s-12, Sector Industrial",
+    phone: "+57 302 478 8683",
+    email: "hola@luminagourmet.com",
+    instagram: "@luminagourmet",
+    whatsapp_prefix: "57"
+  };
 
   const [formData, setFormData] = useState({
     nombre: '',
@@ -26,12 +34,13 @@ const ContactSection = () => {
 
   const handleSendWhatsApp = (e) => {
     e.preventDefault();
-    if (!formData.nombre || !formData.telefono || !formData.motivo) {
-      alert("Por favor completa los campos requeridos (Nombre, Teléfono y Motivo).");
+    if (!formData.nombre?.trim() || !formData.telefono?.trim() || !formData.motivo?.trim()) {
+      showNotification("Por favor completa los campos requeridos (Nombre, Teléfono y Motivo).", "error");
       return;
     }
 
-    let message = `🛸 *MENSAJE DE CONTACTO - URBAN STREET*\n\n`;
+    const brandName = cmsData?.brand?.name || 'URBAN STREET';
+    let message = `🛸 *MENSAJE DE CONTACTO - ${brandName}*\n\n`;
     message += `👤 *NOMBRE:* ${formData.nombre}\n`;
     message += `📞 *TELÉFONO:* ${formData.telefono}\n`;
     message += `📧 *CORREO:* ${formData.correo || 'No especificado'}\n`;

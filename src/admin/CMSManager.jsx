@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Monitor, Layout, Type, Phone, Save, RotateCcw, AlertTriangle, Upload, X, Star } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
+import { useNotification } from '../context/NotificationContext';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 
@@ -90,14 +91,17 @@ const CMSManager = () => {
   const { cmsData, updateCMS, getMostOrderedProduct } = useAdmin();
   
   // Local states for each section to avoid unnecessary context re-renders while typing
+  const [brand, setBrand] = useState(cmsData.brand || { name: 'URBAN STREET', tagline: 'Control Center' });
   const [hero, setHero] = useState(cmsData.hero);
   const [about, setAbout] = useState(cmsData.about);
   const [contact, setContact] = useState(cmsData.contact);
   const [resText, setResText] = useState(cmsData.reservations);
 
+  const { showNotification } = useNotification();
+
   const saveSection = (section, data) => {
     updateCMS(section, data);
-    alert(`Sección ${section.toUpperCase()} actualizada correctamente.`);
+    showNotification(`Sección ${section.toUpperCase()} actualizada correctamente.`);
   };
 
   return (
@@ -121,6 +125,22 @@ const CMSManager = () => {
       </div>
 
       <div className="space-y-10">
+        {/* Brand Section */}
+        <CMSSection 
+          title="Identidad y Marca" 
+          icon={<Star className="text-primary" size={24} />}
+          onSave={() => saveSection('brand', brand)}
+          onReset={() => setBrand(cmsData.brand || { name: 'URBAN STREET', tagline: 'Control Center' })}
+        >
+           <div className="space-y-4">
+              <Input label="Nombre del Restaurante" value={brand.name} onChange={(e) => setBrand({...brand, name: e.target.value.toUpperCase()})} />
+              <Input label="Eslogan Administrativo" value={brand.tagline} onChange={(e) => setBrand({...brand, tagline: e.target.value})} />
+           </div>
+           <div className="flex items-center justify-center border-2 border-dashed border-zinc-200 dark:border-zinc-800 p-8 opacity-50">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-center">El nombre se reflejará en facturas, tickets y encabezados</p>
+           </div>
+        </CMSSection>
+
         {/* Hero Section */}
         <CMSSection 
           title="Sección Hero // Principal" 
@@ -244,12 +264,6 @@ const CMSManager = () => {
            </div>
         </CMSSection>
 
-        <div className="pt-10 flex justify-center">
-           <Button className="flex items-center space-x-4 shadow-[8px_8px_0px_0px_rgba(225,29,72,1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all">
-              <Monitor size={24} />
-              <span>Publicar Todos los Cambios</span>
-           </Button>
-        </div>
       </div>
     </div>
   );

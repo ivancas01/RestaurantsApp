@@ -6,9 +6,14 @@ import Input from '../components/ui/Input';
 import { MapPin, Info, CheckCircle } from 'lucide-react';
 
 const ReservationSection = () => {
-  const { cmsData, locations, addReservation } = useAdmin();
-  const { reservations: cmsReservations } = cmsData;
-  const [titleMain, titleItalic] = cmsReservations.title.split('//').map(s => s.trim());
+  const { cmsData = {}, locations = [], addReservation } = useAdmin() || {};
+  const cmsReservations = cmsData?.reservations || {
+    title: "Reserva // Tu Espacio",
+    subtitle: "Únete a la energía de la ciudad. Sin pretensiones, solo buen sabor y mejor ambiente.",
+    help_text: "Para grupos de más de 8 personas, por favor contáctanos directamente vía telefónica."
+  };
+  const safeTitle = cmsReservations.title || "Reserva // Tu Espacio";
+  const [titleMain, titleItalic] = safeTitle.includes('//') ? safeTitle.split('//').map(s => s.trim()) : [safeTitle, ''];
 
   const [formData, setFormData] = useState({
     name: '',
@@ -67,7 +72,7 @@ const ReservationSection = () => {
     }
   };
 
-  const selectedLocation = locations.find(l => l.id === formData.locationId);
+  const selectedLocation = locations.find(l => String(l.id) === String(formData.locationId));
 
   return (
     <section id="reserva" className="py-20 md:py-32 bg-background relative overflow-hidden">
@@ -94,31 +99,43 @@ const ReservationSection = () => {
                   {cmsReservations.subtitle}
                 </p>
                 
-                {/* Location Preview Card */}
-                <div className="mt-8 border-2 border-zinc-200 dark:border-zinc-800 p-3 bg-background transition-all group overflow-hidden">
-                   <div className="aspect-video bg-zinc-200 dark:bg-zinc-900 mb-4 overflow-hidden relative">
+                {/* Visualizador de Ubicación */}
+                <div className="mt-8 border-2 border-primary/30 p-4 bg-background relative group overflow-hidden shadow-[4px_4px_0px_0px_rgba(225,29,72,0.1)]">
+                   <div className="absolute top-0 right-0 p-2 text-[8px] font-bold text-primary opacity-50 tracking-widest uppercase">Visualizer v1.0</div>
+                   <div className="aspect-video bg-zinc-200 dark:bg-zinc-900 mb-6 overflow-hidden relative border border-white/5">
                       {selectedLocation?.image ? (
                         <motion.img 
                           key={selectedLocation.id}
-                          initial={{ opacity: 0, scale: 1.1 }}
-                          animate={{ opacity: 1, scale: 1 }}
+                          initial={{ opacity: 0, scale: 1.2, filter: 'blur(10px)' }}
+                          animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
                           src={selectedLocation.image} 
-                          className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" 
+                          className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" 
                         />
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center opacity-20">
-                           <MapPin size={32} />
-                           <p className="text-[8px] font-bold uppercase mt-2">Selecciona una Zona</p>
+                           <MapPin size={40} strokeWidth={1} />
+                           <p className="text-[10px] font-bold uppercase mt-4 tracking-[0.3em]">Selecciona una Zona</p>
                         </div>
                       )}
-                      <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-all"></div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                    </div>
-                   <h4 className="text-xs md:text-sm font-bold uppercase tracking-widest text-primary mb-1">
-                      {selectedLocation ? selectedLocation.name : 'Ubicación Sugerida'}
-                   </h4>
-                   <p className="text-[9px] md:text-[10px] text-text-dim uppercase tracking-widest leading-relaxed">
-                      {selectedLocation ? 'Zona optimizada para tu grupo.' : 'Elije en el formulario para previsualizar.'}
-                   </p>
+                   
+                   <div className="space-y-3 relative z-10">
+                      <div className="flex justify-between items-end">
+                         <h4 className="text-sm md:text-lg font-serif uppercase tracking-widest text-primary leading-none">
+                            {selectedLocation ? selectedLocation.name : 'Sector No Asignado'}
+                         </h4>
+                         {selectedLocation && (
+                           <span className="text-[8px] font-bold text-green-500 uppercase tracking-tighter animate-pulse">● En Línea</span>
+                         )}
+                      </div>
+                      <div className="h-px bg-primary/20 w-full"></div>
+                      <p className="text-[10px] text-text-dim uppercase tracking-widest leading-relaxed">
+                         {selectedLocation 
+                           ? `Ubicación verificada. Capacidad táctica optimizada para ${formData.persons} agentes.` 
+                           : 'Pendiente de selección de zona para visualización de coordenadas.'}
+                      </p>
+                   </div>
                 </div>
 
                 <div className="mt-8 md:mt-12 space-y-4 hidden lg:block">

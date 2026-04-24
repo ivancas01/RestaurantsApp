@@ -31,12 +31,12 @@ const KitchenDisplay = () => {
     // 3. Search term check
     if (searchTerm.trim() === '') return true;
     const searchLower = searchTerm.toLowerCase();
-    const tableNum = tables.find(t => t.id === o.tableId)?.number?.toString() || '';
+    const tableNum = tables.find(t => t.id === o.table)?.number?.toString() || '';
     
-    return (o.customer || '').toLowerCase().includes(searchLower) || 
+    return (o.customer_name || '').toLowerCase().includes(searchLower) || 
            (o.id || '').toLowerCase().includes(searchLower) ||
            tableNum.includes(searchLower);
-  }).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   const handleNextStatus = (orderId, currentStatus) => {
     const order = orders.find(o => o.id === orderId);
@@ -139,7 +139,7 @@ const KitchenDisplay = () => {
           <AnimatePresence mode="popLayout">
             {filteredOrders.map((order) => {
               const statusInfo = getStatusLabel(order.status);
-              const orderTime = new Date(order.timestamp);
+              const orderTime = new Date(order.created_at || order.timestamp || new Date());
               const minutesElapsed = Math.floor((new Date() - orderTime) / 60000);
               const isDelivery = order.type === 'delivery';
 
@@ -155,7 +155,7 @@ const KitchenDisplay = () => {
                 >
                   <div className={`p-4 ${statusInfo.color} text-white flex justify-between items-center relative overflow-hidden`}>
                     <div className="flex items-center space-x-2 relative z-10">
-                       <span className="font-serif text-2xl tracking-tighter">#{order.id.split('_')[1]}</span>
+                                               <span className="font-serif text-2xl tracking-tighter">#{String(order.id).split('_').pop()}</span>
                        <div className="flex items-center space-x-1 bg-black/20 px-2 py-0.5 rounded text-[8px] font-bold uppercase">
                           {statusInfo.icon}
                           <span>{statusInfo.label}</span>
@@ -173,11 +173,11 @@ const KitchenDisplay = () => {
                   <div className={`p-4 border-b border-zinc-200 dark:border-zinc-800 ${isDelivery ? 'bg-amber-500/10' : 'bg-zinc-50 dark:bg-black/20'}`}>
                     <div className="flex flex-col items-end relative z-10">
                        <span className="text-[10px] font-black uppercase tracking-widest leading-none">
-                         {isDelivery ? 'Domicilio' : `Mesa ${tables.find(t => t.id === order.tableId)?.number || '??'}`}
+                         {isDelivery ? 'Domicilio' : `Mesa ${tables.find(t => t.id === order.table)?.number || '??'}`}
                        </span>
                        {!isDelivery && (
                          <span className="text-[8px] font-bold uppercase opacity-80 mt-1">
-                           {locations.find(l => l.id === tables.find(t => t.id === order.tableId)?.locationId)?.name || 'General'}
+                           {locations.find(l => l.id === tables.find(t => t.id === order.table)?.locationId)?.name || 'General'}
                          </span>
                        )}
                     </div>
@@ -190,11 +190,23 @@ const KitchenDisplay = () => {
                   </div>
 
                   <div className="flex-1 p-3 md:p-4 space-y-3 md:space-y-4 overflow-y-auto scrollbar-hide bg-white dark:bg-transparent">
+                     {order.notes && (
+                       <div className="bg-primary/10 p-3 border-l-4 border-primary mb-4">
+                          <p className="text-[8px] font-bold text-primary mb-1 uppercase tracking-widest italic">Observaciones Generales</p>
+                          <p className="text-[10px] font-bold text-text-bright uppercase leading-tight">"{order.notes}"</p>
+                       </div>
+                     )}
+                     
                      {order.items.map((item, idx) => (
                        <div key={idx} className="pb-3 md:pb-4 border-b border-dashed border-zinc-200 dark:border-zinc-800 last:border-0">
                           <div className="flex justify-between items-start">
                              <span className="text-xl md:text-2xl font-serif text-primary mr-2 md:mr-3">{item.quantity}x</span>
-                             <p className="flex-1 text-xs md:text-sm font-bold text-text-bright uppercase leading-tight">{item.name}</p>
+                             <div className="flex-1">
+                                <p className="text-xs md:text-sm font-bold text-text-bright uppercase leading-tight">{item.product_name || item.name}</p>
+                                {item.notes && (
+                                   <p className="text-[8px] text-accent font-bold mt-1 uppercase italic bg-accent/10 px-1 inline-block">-- {item.notes}</p>
+                                )}
+                             </div>
                           </div>
                        </div>
                      ))}
@@ -209,7 +221,7 @@ const KitchenDisplay = () => {
                      </button>
                      <button
                        onClick={() => handleNextStatus(order.id, order.status)}
-                       disabled={order.status === 'Listo' || order.status === 'Completado'}
+                        disabled={order.status === 'Listo' || order.status === 'Completado'}
                        className={`py-3 transition-all flex items-center justify-center space-x-2 rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] active:shadow-none translate-y-0 active:translate-y-1 ${ (order.status === 'Listo' || order.status === 'Completado') ? 'bg-emerald-500 text-white opacity-80 cursor-not-allowed' : 'bg-primary text-white hover:bg-primary-dark'}`}
                      >
                         <span className="text-[10px] font-bold uppercase tracking-widest">

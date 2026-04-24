@@ -4,20 +4,23 @@ import { Truck, Search, Trash2, Printer, MapPin, Phone, CheckCircle, XCircle, Cr
 import { useAdmin } from '../context/AdminContext';
 import Button from '../components/ui/Button';
 import { useNotification } from '../context/NotificationContext';
+import ConfirmModal from '../components/ui/ConfirmModal';
 
 const DeliveryManager = () => {
-  const { orders, updateOrderStatus, deleteOrder, updateOrder } = useAdmin();
+  const { orders, updateOrderStatus, deleteOrder, updateOrder, cmsData } = useAdmin();
+  const brand = cmsData?.brand || { name: 'URBAN STREET', tagline: 'Gourmet Command Center' };
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [showInvoice, setShowInvoice] = useState(false);
   const { showNotification } = useNotification();
+  const [orderToDelete, setOrderToDelete] = useState(null);
   
   const handlePrint = (order) => {
     const printWindow = window.open('', '_blank', 'width=450,height=600');
-    const itemsHtml = order.items.map(item => `
+    const itemsHtml = (order.items || []).map(item => `
       <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; font-family: 'Courier New', Courier, monospace;">
-        <span>${item.quantity}x ${item.name.toUpperCase()}</span>
-        <span>$${(parseFloat(item.price.replace('$', '')) * item.quantity).toFixed(2)}</span>
+        <span>${item.quantity}x ${(item.product_name || 'ITEM').toUpperCase()}</span>
+        <span>$${(parseFloat(String(item.price_at_order).replace('$', '')) * item.quantity).toFixed(2)}</span>
       </div>
     `).join('');
 
@@ -41,20 +44,20 @@ const DeliveryManager = () => {
         </head>
         <body>
           <div class="header">
-            <h1>LUMINA URBAN</h1>
-            <p>Gourmet Command Center // Web</p>
+            <h1>${brand.name}</h1>
+            <p>${brand.tagline} // Web</p>
           </div>
           <div class="meta">
-            <div><span>ID:</span> <span>#${order.id.split('_')[1]}</span></div>
+            <div><span>ID:</span> <span>#${String(order.id).split('_').pop()}</span></div>
             <div><span>Fecha:</span> <span>${new Date().toLocaleDateString()}</span></div>
-            <div><span>Cliente:</span> <span>${order.customer}</span></div>
-            <div><span>Dir:</span> <span>${order.address}</span></div>
-            <div><span>Tel:</span> <span>${order.phone}</span></div>
+            <div><span>Cliente:</span> <span>${order.customer_name}</span></div>
+            <div><span>Dir:</span> <span>${order.customer_address}</span></div>
+            <div><span>Tel:</span> <span>${order.customer_phone || order.phone}</span></div>
           </div>
           <div class="items">${itemsHtml}</div>
           <div class="total">
             <span>TOTAL PAGADO</span>
-            <span>$${order.total.toFixed(2)}</span>
+            <span>${order.total}</span>
           </div>
           <div class="footer">¡Gracias por pedir! // Urban Street</div>
           <script>
@@ -78,17 +81,22 @@ const DeliveryManager = () => {
   
   const filteredOrders = deliveryOrders.filter(o => {
     const searchLower = searchTerm.toLowerCase();
-    return (o.customer || '').toLowerCase().includes(searchLower) || 
-           (o.address || '').toLowerCase().includes(searchLower) ||
+    return (o.customer_name || '').toLowerCase().includes(searchLower) || 
+           (o.customer_address || '').toLowerCase().includes(searchLower) ||
            (o.id || '').toLowerCase().includes(searchLower);
-  }).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   const selectedOrder = orders.find(o => o.id === selectedOrderId);
 
   const handleDelete = (id) => {
-    if (window.confirm('¿Deseas eliminar este registro de domicilio?')) {
-      deleteOrder(id);
+    setOrderToDelete(id);
+  };
+
+  const confirmDeleteOrder = () => {
+    if (orderToDelete) {
+      deleteOrder(orderToDelete);
       setSelectedOrderId(null);
+      setOrderToDelete(null);
       showNotification('Registro eliminado');
     }
   };
@@ -166,11 +174,13 @@ const DeliveryManager = () => {
                                  >
                                     <td className="p-4">
                                        <div className="space-y-1">
-                                          <p className="text-sm font-serif text-text-bright">{order.customer}</p>
-                                          <p className="text-[8px] text-text-dim tracking-widest">{order.phone}</p>
+                                          <p className="text-sm font-serif text-text-bright">{order.customer_name || <span className="text-accent opacity-50 italic">Sin Nombre</span>}</p>
+                                          <p className="text-[8px] text-text-dim tracking-widest">{order.customer_phone || order.phone || <span className="text-accent opacity-50 italic">Sin Contacto</span>}</p>
                                        </div>
                                     </td>
-                                    <td className="p-4 truncate max-w-[250px] text-text-dim lowercase font-normal italic">{order.address}</td>
+                                    <td className="p-4 truncate max-w-[250px] text-text-dim lowercase font-normal italic">
+                                       {order.customer_address || <span className="text-accent opacity-50 italic">Sin Dirección Registrada</span>}
+                                    </td>
                                     <td className="p-4">
                                        {isKitchenReady ? (
                                           <span className="flex items-center space-x-1 text-green-500 font-bold text-[8px] animate-pulse">
@@ -231,7 +241,7 @@ const DeliveryManager = () => {
                      <div className="p-6 bg-black/5 dark:bg-white/5 border-b-2 border-zinc-200 dark:border-zinc-900 flex justify-between items-start">
                         <div className="space-y-1">
                            <p className="text-[8px] font-bold text-primary tracking-widest">// EXPEDIENTE WEB</p>
-                           <h2 className="text-2xl font-serif text-text-bright uppercase">{selectedOrder.customer}</h2>
+                           <h2 className="text-2xl font-serif text-text-bright uppercase">{selectedOrder.customer_name}</h2>
                            <p className="text-[10px] text-text-dim font-bold tracking-tighter">ID: {selectedOrder.id}</p>
                         </div>
                         <button onClick={() => setSelectedOrderId(null)} className="p-1 text-text-dim hover:text-primary"><X size={20}/></button>
@@ -243,14 +253,14 @@ const DeliveryManager = () => {
                               <MapPin size={16} className="text-primary flex-shrink-0 mt-1" />
                               <div className="space-y-1">
                                  <p className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Dirección de Entrega</p>
-                                 <p className="text-xs font-bold text-text-bright uppercase leading-relaxed">{selectedOrder.address}</p>
+                                 <p className="text-xs font-bold text-text-bright uppercase leading-relaxed">{selectedOrder.customer_address}</p>
                               </div>
                            </div>
                            <div className="flex items-start space-x-3">
                               <Phone size={16} className="text-primary flex-shrink-0 mt-1" />
                               <div className="space-y-1">
                                  <p className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Canal de Enlace</p>
-                                 <p className="text-xs font-bold text-text-bright">{selectedOrder.phone}</p>
+                                 <p className="text-xs font-bold text-text-bright">{selectedOrder.customer_phone || selectedOrder.phone}</p>
                               </div>
                            </div>
                         </div>
@@ -258,17 +268,17 @@ const DeliveryManager = () => {
                         <div className="border-t border-zinc-100 dark:border-zinc-900 pt-4">
                            <p className="text-[9px] font-bold text-primary tracking-[0.2em] uppercase mb-4">Ítems Solicitados</p>
                            <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
-                              {selectedOrder.items.map((item, i) => (
-                                 <div key={i} className="flex justify-between items-center text-[10px] font-bold border-b border-zinc-100 dark:border-zinc-900 pb-2 last:border-0">
-                                    <span>{item.quantity}x {item.name}</span>
-                                    <span className="text-text-dim">${(parseFloat(item.price.replace('$', '')) * item.quantity).toFixed(2)}</span>
-                                 </div>
-                              ))}
-                           </div>
-                           <div className="mt-4 flex justify-between items-center text-xl font-serif text-text-bright border-t-2 border-primary pt-2">
-                              <span>TOTAL</span>
-                              <span className="text-primary">${selectedOrder.total.toFixed(2)}</span>
-                           </div>
+                               { (selectedOrder.items || []).map((item, i) => (
+                                  <div key={i} className="flex justify-between items-center text-[10px] font-bold border-b border-zinc-100 dark:border-zinc-900 pb-2 last:border-0">
+                                     <span>{item.quantity}x {item.product_name}</span>
+                                     <span className="text-text-dim">${(parseFloat(String(item.price_at_order).replace('$', '')) * item.quantity).toFixed(2)}</span>
+                                  </div>
+                               ))}
+                            </div>
+                            <div className="mt-4 flex justify-between items-center text-xl font-serif text-text-bright border-t-2 border-primary pt-2">
+                               <span>TOTAL</span>
+                               <span className="text-primary">{selectedOrder.total}</span>
+                            </div>
                         </div>
 
                         <div className="space-y-3 pt-4">
@@ -354,24 +364,24 @@ const DeliveryManager = () => {
                className="bg-white text-zinc-900 w-[95%] max-w-sm p-6 md:p-8 font-mono relative shadow-2xl print-ticket overflow-hidden"
              >
                 <div className="text-center border-b-2 border-dashed border-zinc-300 pb-6 mb-6 font-bold">
-                  <h2 className="text-xl">Lumina Urban</h2>
-                  <p className="text-[10px] tracking-widest uppercase">Gourmet Command Center // Web</p>
+                  <h2 className="text-xl">{brand.name}</h2>
+                  <p className="text-[10px] tracking-widest uppercase">{brand.tagline} // Web</p>
                 </div>
                 
                 <div className="space-y-1 mb-8 text-[10px] uppercase">
-                   <div className="flex justify-between"><span>FACTURA:</span><span className="font-bold">#WEB_{selectedOrder.id.split('_')[1]}</span></div>
+                   <div className="flex justify-between"><span>FACTURA:</span><span className="font-bold">#WEB_{String(selectedOrder.id).includes('_') ? selectedOrder.id.split('_')[1] : selectedOrder.id}</span></div>
                    <div className="flex justify-between"><span>FECHA:</span><span>{new Date().toLocaleDateString()}</span></div>
-                   <div className="flex justify-between"><span>CLIENTE:</span><span className="font-bold">{selectedOrder.customer}</span></div>
-                   <div className="flex justify-between"><span>DIRECCIÓN:</span><span className="font-bold truncate max-w-[150px]">{selectedOrder.address}</span></div>
+                   <div className="flex justify-between"><span>CLIENTE:</span><span className="font-bold">{selectedOrder.customer_name}</span></div>
+                   <div className="flex justify-between"><span>DIRECCIÓN:</span><span className="font-bold truncate max-w-[150px]">{selectedOrder.customer_address}</span></div>
                 </div>
 
                 <div className="border-b border-zinc-200 mb-6 pb-4">
                    <div className="flex justify-between text-[10px] font-bold mb-4"><span>DESC</span><span>TOTAL</span></div>
                    <div className="space-y-2">
-                     {selectedOrder.items.map((item, i) => (
+                     {(selectedOrder.items || []).map((item, i) => (
                        <div key={i} className="flex justify-between text-[10px]">
-                         <span className="max-w-[70%]">{item.quantity}x {item.name.toUpperCase()}</span>
-                         <span>${(parseFloat(item.price.replace('$', '')) * item.quantity).toFixed(2)}</span>
+                         <span className="max-w-[70%]">{item.quantity}x {(item.product_name || 'ITEM').toUpperCase()}</span>
+                         <span>${(parseFloat(String(item.price_at_order).replace('$', '')) * item.quantity).toFixed(2)}</span>
                        </div>
                      ))}
                    </div>
@@ -379,7 +389,7 @@ const DeliveryManager = () => {
 
                 <div className="flex justify-between text-lg font-bold border-t-2 border-zinc-900 pt-2 mb-10">
                    <span>TOTAL:</span>
-                   <span>${selectedOrder.total.toFixed(2)}</span>
+                   <span>{selectedOrder.total}</span>
                 </div>
 
                 <div className="flex space-x-2 no-print">
@@ -394,6 +404,14 @@ const DeliveryManager = () => {
            </div>
          )}
       </AnimatePresence>
+
+      <ConfirmModal
+        isOpen={!!orderToDelete}
+        onClose={() => setOrderToDelete(null)}
+        onConfirm={confirmDeleteOrder}
+        title="Eliminar Domicilio"
+        message="¿Estás seguro de que deseas eliminar este registro? Esta acción no se puede deshacer."
+      />
     </div>
   );
 };

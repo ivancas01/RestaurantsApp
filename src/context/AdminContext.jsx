@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { menuCategories as INITIAL_MENU } from '../data/menu';
 import { auditStorage } from '../utils/storageAudit';
+import { api } from '../services/api';
 
 const AdminContext = createContext();
 
@@ -54,19 +55,14 @@ const DEFAULT_USERS = [
 ];
 
 export const AdminProvider = ({ children }) => {
-  const [users, setUsers] = useState(() => {
-    const saved = localStorage.getItem('urban_admin_users');
-    return saved ? JSON.parse(saved) : DEFAULT_USERS;
-  });
-
-  const [groups, setGroups] = useState(() => {
-    const saved = localStorage.getItem('urban_admin_groups');
-    return saved ? JSON.parse(saved) : DEFAULT_GROUPS;
-  });
-
+  const [users, setUsers] = useState([]);
+  const [groups, setGroups] = useState([]);
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = localStorage.getItem('urban_current_user');
-    return saved ? JSON.parse(saved) : DEFAULT_USERS[0];
+    // If it's the old default admin with string groupId, return null to force re-auth or refresh
+    const parsed = saved ? JSON.parse(saved) : null;
+    if (parsed && parsed.groupId === 'super_admin') return null;
+    return parsed;
   });
 
   // Menu Data
@@ -96,7 +92,8 @@ export const AdminProvider = ({ children }) => {
 
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('urban_theme');
-    return saved === 'dark';
+    if (saved) return saved === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
   useEffect(() => {
@@ -109,153 +106,141 @@ export const AdminProvider = ({ children }) => {
   }, [darkMode]);
 
   // Orders & Reservations
-  const [orders, setOrders] = useState(() => {
-    const saved = localStorage.getItem('urban_orders');
-    return saved ? JSON.parse(saved) : [
-      { id: 'ord_1', type: 'delivery', customer: 'Ivan C.', items: [], total: 45.0, status: 'Pendiente', timestamp: new Date().toISOString() },
-      { id: 'ord_2', type: 'table', tableId: 'table_1', items: [], total: 22.0, status: 'Preparando', timestamp: new Date().toISOString() }
-    ];
-  });
-
-  const [reservations, setReservations] = useState(() => {
-    const saved = localStorage.getItem('urban_reservations');
-    return saved ? JSON.parse(saved) : [
-      { 
-        id: 'res_1', 
-        name: 'Sofia Loren', 
-        identification: '12345678',
-        phone: '3001234567',
-        email: 'sofia@example.com',
-        time: '20:30', 
-        date: '2026-04-20', 
-        persons: 2, 
-        locationId: 'loc_1',
-        instructions: 'Mesa cerca de la ventana por favor.',
-        status: 'Confirmado', 
-        method: 'web' 
-      },
-      { 
-        id: 'res_2', 
-        name: 'Marcus V.', 
-        identification: '87654321',
-        phone: '3109876543',
-        email: 'marcus@example.com',
-        time: '21:00', 
-        date: '2026-04-20', 
-        persons: 4, 
-        locationId: 'loc_2',
-        instructions: 'Es un aniversario.',
-        status: 'Pendiente', 
-        method: 'admin' 
-      }
-    ];
-  });
+  const [orders, setOrders] = useState([]);
+  const [reservations, setReservations] = useState([]);
 
   const DEFAULT_CMS = {
+    brand: {
+      name: "URBAN STREET",
+      tagline: "Control Center"
+    },
     hero: {
-      title: "Sabor Urbano, Alma // Gourmet",
-      subtitle: "Donde la calle se encuentra con la alta cocina.",
-      cta_menu: "Ver Carta Completa",
-      cta_reserva: "Reservar Mesa",
-      featured_image: "https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?q=80&w=800&auto=format&fit=crop",
-      featured_name: "The Architect",
-      featured_price: "22",
-      featured_desc: "Wagyu A5, Cheddar Envejecido, Cebolla al Bourbon y pan brioche artesanal.",
-      stats_label: "Trending",
-      stats_value: "+124 Pedidos",
-      established: "Urban Street // Established 2026"
+      title: "",
+      subtitle: "",
+      cta_menu: "Ver Carta",
+      cta_reserva: "Reservar",
+      featured_image: "",
+      featured_name: "",
+      featured_price: "",
+      featured_desc: ""
     },
     about: {
-      title: "Nuestra // Historia",
-      content: "Lumina Urban Gourmet nació en las calles vibrantes de la ciudad, donde el arte y la gastronomía convergen. No solo servimos comida, creamos experiencias sensoriales que desafían lo convencional.",
-      images: [
-        "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=800&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=800&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=800&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=800&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?q=80&w=800&auto=format&fit=crop"
-      ],
-      years_label: "Years on the street",
-      years_value: "10",
-      feature_1_title: "RAW MATERIALS",
-      feature_1_desc: "Solo ingredientes frescos y directos de origen local.",
-      feature_2_title: "URBAN SOUL",
-      feature_2_desc: "Ambiente diseñado para la ciudad que nunca duerme."
+      title: "",
+      subtitle: "",
+      description: "",
+      stats: []
     },
     contact: {
-      address: "Calle 42 # 8s-12, Sector Industrial",
-      phone: "+57 302 478 8683",
-      email: "hola@luminagourmet.com",
-      instagram: "@luminagourmet",
-      whatsapp_prefix: "57"
+      address: "",
+      phone: "",
+      email: "",
+      hours: []
     },
     reservations: {
-      title: "Reserva // Tu Espacio",
-      subtitle: "Únete a la energía de la ciudad. Sin pretensiones, solo buen sabor y mejor ambiente.",
-      help_text: "Para grupos de más de 8 personas, por favor contáctanos directamente vía telefónica."
+      title: "Reserva tu Mesa",
+      subtitle: "",
+      help_text: ""
     }
   };
 
-  const [cmsData, setCmsData] = useState(() => {
-    const saved = localStorage.getItem('urban_cms');
-    if (!saved) return DEFAULT_CMS;
-    
-    // Merge saved data with defaults to ensure new properties exist
-    const parsed = JSON.parse(saved);
-    return {
-      ...DEFAULT_CMS,
-      ...parsed,
-      hero: { ...DEFAULT_CMS.hero, ...parsed.hero },
-      about: { ...DEFAULT_CMS.about, ...parsed.about },
-      contact: { ...DEFAULT_CMS.contact, ...parsed.contact },
-      reservations: { ...DEFAULT_CMS.reservations, ...parsed.reservations }
-    };
-  });
+  const [cmsData, setCmsData] = useState(DEFAULT_CMS);
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const [notifications, setNotifications] = useState(() => {
-    const saved = localStorage.getItem('urban_notifications');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const refreshData = async () => {
+    setLoading(true);
+    try {
+      // 1. Fetch Public Data (Menu, Locations, CMS)
+      const [menuData, locData, heroRes, aboutRes, contactRes, resvRes, brandRes] = await Promise.all([
+        api.getCategories(),
+        api.getLocations(),
+        api.getCmsSection('hero').catch(() => null),
+        api.getCmsSection('about').catch(() => null),
+        api.getCmsSection('contact').catch(() => null),
+        api.getCmsSection('reservations').catch(() => null),
+        api.getCmsSection('brand').catch(() => null)
+      ]);
 
-  // Granular Persistence Effects
-  useEffect(() => { localStorage.setItem('urban_admin_users', JSON.stringify(users)); }, [users]);
-  useEffect(() => { localStorage.setItem('urban_admin_groups', JSON.stringify(groups)); }, [groups]);
-  useEffect(() => { localStorage.setItem('urban_current_user', JSON.stringify(currentUser)); }, [currentUser]);
-  useEffect(() => { localStorage.setItem('urban_menu', JSON.stringify(menu)); }, [menu]);
-  useEffect(() => { localStorage.setItem('urban_locations', JSON.stringify(locations)); }, [locations]);
-  useEffect(() => { localStorage.setItem('urban_tables', JSON.stringify(tables)); }, [tables]);
-  useEffect(() => { localStorage.setItem('urban_orders', JSON.stringify(orders)); }, [orders]);
-  useEffect(() => { localStorage.setItem('urban_reservations', JSON.stringify(reservations)); }, [reservations]);
-  useEffect(() => { localStorage.setItem('urban_cms', JSON.stringify(cmsData)); }, [cmsData]);
-  useEffect(() => { localStorage.setItem('urban_notifications', JSON.stringify(notifications)); }, [notifications]);
+      if (Array.isArray(menuData)) setMenu(menuData);
+      if (Array.isArray(locData)) {
+        setLocations(locData);
+        setTables(locData.flatMap(l => l.tables || []));
+      }
 
-  // Sync permissions migration
+      const updatedCms = { ...DEFAULT_CMS };
+      if (heroRes?.content) updatedCms.hero = heroRes.content;
+      if (aboutRes?.content) updatedCms.about = aboutRes.content;
+      if (contactRes?.content) updatedCms.contact = contactRes.content;
+      if (resvRes?.content) updatedCms.reservations = resvRes.content;
+      if (brandRes?.content) updatedCms.brand = brandRes.content;
+      setCmsData(updatedCms);
+
+      // 2. Fetch Private Data (if logged in)
+      if (localStorage.getItem('urban_token')) {
+        const [ordData, resData, userData, roleData, profileData] = await Promise.all([
+          api.getOrders(),
+          api.getReservations(),
+          api.getUsers(),
+          api.getRoles(),
+          api.getCurrentUser().catch(() => null)
+        ]);
+
+        setOrders(Array.isArray(ordData) ? ordData : []);
+        setReservations(Array.isArray(resData) ? resData : []);
+        setUsers(Array.isArray(userData) ? userData : []);
+        setGroups(Array.isArray(roleData) ? roleData : []);
+        if (profileData) setCurrentUser(profileData);
+      }
+    } catch (err) {
+      console.error("Failed to refresh data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial Data Fetch
   useEffect(() => {
+    refreshData();
+  }, []);
+
+  // Persistence Effects (Only for local UI state like theme and current user)
+  useEffect(() => { localStorage.setItem('urban_current_user', JSON.stringify(currentUser)); }, [currentUser]);
+  useEffect(() => { localStorage.setItem('urban_theme', darkMode ? 'dark' : 'light'); }, [darkMode]);
+
+  useEffect(() => {
+    // Only run if we have groups
+    if (groups.length === 0) return;
+
     const allPerms = Object.values(PERMISSIONS);
-    const superAdmin = groups.find(g => g.id === 'super_admin');
+    const superAdmin = groups.find(g => g.slug === 'super_admin');
     if (superAdmin) {
-      const allPerms = Object.values(PERMISSIONS);
-      // Force update if any permission is missing
+      // Check if super admin has all permissions
       const hasAll = allPerms.every(p => superAdmin.permissions.includes(p));
       if (!hasAll) {
-        setGroups(prev => prev.map(g => g.id === 'super_admin' ? { ...g, permissions: allPerms } : g));
+        // In a real app we'd update via API here
       }
-    }
-    
-    const waiter = groups.find(g => g.id === 'waiter');
-    if (waiter && !waiter.permissions.includes(PERMISSIONS.DELIVERY_MANAGE)) {
-      setGroups(prev => prev.map(g => g.id === 'waiter' ? { ...g, permissions: [...g.permissions, PERMISSIONS.DELIVERY_MANAGE] } : g));
     }
 
     // Phase 3: Initial storage audit report
     auditStorage();
-  }, []);
+  }, [groups]);
 
   const hasPermission = (permission) => {
     if (!currentUser) return false;
-    if (currentUser.groupId === 'super_admin') return true;
-    const userGroup = groups.find(g => g.id === currentUser.groupId);
+
+    // Ultimate Fail-safe: Django Superuser or hardcoded admin username/group
+    if (currentUser.is_superuser || currentUser.username === 'admin' || currentUser.groupId === 'super_admin') return true;
+
+    // Find group by ID or slug (handles both integer IDs and string slugs)
+    const userGroup = groups.find(g =>
+      g.id === currentUser.groupId ||
+      g.id.toString() === currentUser.groupId?.toString() ||
+      g.slug === currentUser.groupId
+    );
+
     if (!userGroup) return false;
+
+    if (userGroup.slug === 'super_admin') return true;
     return userGroup.permissions.includes(permission);
   };
 
@@ -264,7 +249,7 @@ export const AdminProvider = ({ children }) => {
     if (user) setCurrentUser(user);
   };
 
-  const logout = () => setCurrentUser(null);
+
 
   // Notification Management
   const addNotification = (notif) => {
@@ -278,97 +263,334 @@ export const AdminProvider = ({ children }) => {
 
   // Menu Management
   const updateMenu = (newMenu) => setMenu(newMenu);
-  
-  // Group Management
-  const addGroup = (group) => setGroups([...groups, { ...group, id: `group_${Date.now()}` }]);
-  
+
+  const addCategory = async (categoryData) => {
+    try {
+      const newCategory = await api.createCategory(categoryData);
+      setMenu([...menu, { ...newCategory, products: [] }]);
+      return newCategory;
+    } catch (err) {
+      console.error("Error creating category:", err);
+    }
+  };
+
+  const editCategory = async (id, categoryData) => {
+    try {
+      const updatedCategory = await api.updateCategory(id, categoryData);
+      setMenu(menu.map(c => c.id === id ? { ...c, ...updatedCategory } : c));
+    } catch (err) {
+      console.error("Error updating category:", err);
+    }
+  };
+
+  const removeCategory = async (id) => {
+    try {
+      await api.deleteCategory(id);
+      setMenu(menu.filter(c => c.id !== id));
+    } catch (err) {
+      console.error("Error deleting category:", err);
+    }
+  };
+
+  const addProduct = async (catId, productData) => {
+    try {
+      let dataToSend = productData;
+      if (productData.image_file) {
+        dataToSend = new FormData();
+        dataToSend.append('category', catId);
+        Object.keys(productData).forEach(key => {
+          if (key === 'image_file') {
+            dataToSend.append('image', productData[key]);
+          } else if (key !== 'image') { // Don't send the old base64/url if there is a new file
+            dataToSend.append(key, productData[key]);
+          }
+        });
+      } else {
+        dataToSend = { ...productData, category: catId };
+        delete dataToSend.image_file;
+      }
+
+      const newProduct = await api.createProduct(dataToSend);
+      setMenu(menu.map(c => c.id === catId ? { ...c, products: [...c.products, newProduct] } : c));
+      return newProduct;
+    } catch (err) {
+      console.error("Error creating product:", err);
+    }
+  };
+
+  const editProduct = async (catId, prodId, productData) => {
+    try {
+      // Clean data for API
+      let dataToSend;
+      const cleanData = { ...productData };
+      delete cleanData.image_preview;
+      delete cleanData.image_file;
+
+      if (productData.image_file) {
+        dataToSend = new FormData();
+        Object.keys(cleanData).forEach(key => {
+          dataToSend.append(key, cleanData[key]);
+        });
+        dataToSend.append('image', productData.image_file);
+      } else {
+        if (typeof cleanData.image === 'string') delete cleanData.image;
+        dataToSend = cleanData;
+      }
+
+      const updatedProduct = await api.updateProduct(prodId, dataToSend);
+      setMenu(menu.map(c => c.id === catId ? {
+        ...c,
+        products: c.products.map(p => p.id === prodId ? updatedProduct : p)
+      } : c));
+    } catch (err) {
+      console.error("Error updating product:", err);
+    }
+  };
+
+  const removeProduct = async (catId, prodId) => {
+    try {
+      await api.deleteProduct(prodId);
+      setMenu(menu.map(c => c.id === catId ? {
+        ...c,
+        products: c.products.filter(p => p.id !== prodId)
+      } : c));
+    } catch (err) {
+      console.error("Error deleting product:", err);
+    }
+  };
+
+  // User Management
+  const addUser = async (userData) => {
+    try {
+      const newUser = await api.createUser(userData);
+      setUsers([...users, newUser]);
+      return newUser;
+    } catch (err) {
+      console.error("Error creating user:", err);
+    }
+  };
+
+  const updateUser = async (id, userData) => {
+    try {
+      const updated = await api.updateUser(id, userData);
+      setUsers(users.map(u => u.id === id ? updated : u));
+    } catch (err) {
+      console.error("Error updating user:", err);
+    }
+  };
+
+  const deleteUser = async (id) => {
+    try {
+      await api.deleteUser(id);
+      setUsers(users.filter(u => u.id !== id));
+    } catch (err) {
+      console.error("Error deleting user:", err);
+    }
+  };
+
   // Location/Table Management
-  const addLocation = (locData) => setLocations([...locations, { ...locData, id: `loc_${Date.now()}` }]);
-  const addTable = (table) => setTables([...tables, { ...table, id: `table_${Date.now()}` }]);
+  const addLocation = async (locData) => {
+    try {
+      let dataToSend = locData;
+      if (locData.image_file) {
+        dataToSend = new FormData();
+        dataToSend.append('name', locData.name);
+        dataToSend.append('image', locData.image_file);
+      } else {
+        dataToSend = { name: locData.name };
+      }
+      const newLoc = await api.createLocation(dataToSend);
+      setLocations([...locations, { ...newLoc, tables: [] }]);
+      return newLoc;
+    } catch (err) {
+      console.error("Error creating location:", err);
+    }
+  };
+
+  const removeLocation = async (id) => {
+    try {
+      await api.deleteLocation(id);
+      setLocations(locations.filter(l => l.id !== id));
+    } catch (err) {
+      console.error("Error deleting location:", err);
+    }
+  };
+
+  const addTable = async (tableData) => {
+    try {
+      const newTable = await api.createTable(tableData);
+      setTables([...tables, newTable]);
+      return newTable;
+    } catch (err) {
+      console.error("Error creating table:", err);
+    }
+  };
+
+  const removeTable = async (id) => {
+    try {
+      await api.deleteTable(id);
+      setTables(tables.filter(t => t.id !== id));
+    } catch (err) {
+      console.error("Error deleting table:", err);
+    }
+  };
 
   // Orders & Reservations Management
-  const addOrder = (order) => {
-    const newId = `ord_${Date.now()}`;
-    const orderData = { ...order, id: newId, status: 'Pendiente', timestamp: new Date().toISOString() };
-    setOrders([...orders, orderData]);
-    
-    // Auto-occupy table if it's an onsite order
-    if (order.type === 'table' && order.tableId) {
-      setTables(prev => prev.map(t => t.id === order.tableId ? { ...t, status: 'Ocupada' } : t));
-    }
+  const addOrder = async (order) => {
+    try {
+      const orderData = {
+        ...order,
+        items: order.items.map(item => ({
+          product: item.id,
+          quantity: item.quantity,
+          price_at_order: String(item.price).replace('$', ''),
+          notes: item.notes || ''
+        }))
+      };
+      const newOrder = await api.createOrder(orderData);
+      setOrders([newOrder, ...orders]);
 
-    addNotification({
-      type: 'INFO',
-      title: 'Nuevo Pedido',
-      message: `${order.type === 'delivery' ? 'Domicilio' : 'Mesa ' + (tables.find(t => t.id === order.tableId)?.number || '??')} - ${order.customer || 'Sin Nombre'}`
-    });
-  };
-
-  const updateOrderStatus = (orderId, status, reason = null) => {
-    const order = orders.find(o => o.id === orderId);
-    if (!order) return;
-
-    setOrders(orders.map(o => o.id === orderId ? { ...o, status, cancelReason: reason || o.cancelReason } : o));
-
-    // Release table only on Pagado or Cancelado
-    if (order.type === 'table' && order.tableId) {
-      if (['Pagado', 'Cancelado'].includes(status)) {
-        setTables(prev => prev.map(t => t.id === order.tableId ? { ...t, status: 'Disponible' } : t));
+      if (order.type === 'table' && order.table) {
+        setTables(prev => prev.map(t => String(t.id) === String(order.table) ? { ...t, status: 'Ocupada' } : t));
+        await api.updateTable(order.table, { status: 'Ocupada' });
       }
-    }
 
-    // Phase 3 Notifications
-    if (status === 'Listo') {
-      addNotification({
-        type: 'SUCCESS',
-        title: 'Pedido Listo',
-        message: `La comanda #${order.id.split('_')[1]} está lista para ser retirada.`
-      });
-    } else if (status === 'Enviado') {
       addNotification({
         type: 'INFO',
-        title: 'Domicilio en Camino',
-        message: `El pedido de ${order.customer} ha salido para entrega.`
+        title: 'Nuevo Pedido',
+        message: `Pedido #${newOrder.id} creado correctamente.`
       });
+      return newOrder;
+    } catch (err) {
+      console.error("Error creating order:", err);
+      throw err;
     }
   };
 
-  const updateOrder = (orderId, updatedOrder) => {
-    setOrders(orders.map(o => o.id === orderId ? { ...o, ...updatedOrder } : o));
+  const updateOrderStatus = async (orderId, status, reason = null) => {
+    try {
+      const order = orders.find(o => o.id === orderId);
+      if (!order) return;
+
+      const updated = await api.updateOrderStatus(orderId, status);
+      setOrders(orders.map(o => o.id === orderId ? { ...o, status, cancelReason: reason || o.cancelReason } : o));
+
+      // Release table only on Pagado or Cancelado
+      if (order.type === 'table' && order.table) {
+        if (['Pagado', 'Cancelado'].includes(status)) {
+          setTables(prev => prev.map(t => String(t.id) === String(order.table) ? { ...t, status: 'Disponible' } : t));
+          await api.updateTable(order.table, { status: 'Disponible' });
+        }
+      }
+
+      // Notifications
+      if (status === 'Listo') {
+        addNotification({
+          type: 'SUCCESS',
+          title: 'Pedido Listo',
+          message: `La comanda #${order.id} está lista para ser retirada.`
+        });
+      }
+    } catch (err) {
+      console.error("Error updating order status:", err);
+    }
   };
 
-  const deleteOrder = (orderId) => {
-    setOrders(prev => prev.filter(o => o.id !== orderId));
+  const updateOrder = async (orderId, partialOrder) => {
+    try {
+      const existingOrder = orders.find(o => o.id === orderId);
+      if (!existingOrder) return;
+
+      const orderData = {
+        ...existingOrder,
+        ...partialOrder
+      };
+
+      // Only map items if they are present in the update OR use existing ones
+      const itemsToProcess = partialOrder.items || existingOrder.items || [];
+      orderData.items = itemsToProcess.map(item => ({
+        product: item.product || item.id,
+        quantity: item.quantity,
+        price_at_order: String(item.price_at_order || item.price || '0').replace('$', ''),
+        notes: item.notes || ''
+      }));
+
+      const savedOrder = await api.updateOrder(orderId, orderData);
+      setOrders(orders.map(o => o.id === orderId ? savedOrder : o));
+    } catch (err) {
+      console.error("Error updating order:", err);
+    }
   };
 
-  const addReservation = (res) => {
-    const newId = `res_${Date.now()}`;
-    setReservations([...reservations, { ...res, id: newId }]);
-    addNotification({
-      type: 'INFO',
-      title: 'Nueva Reserva',
-      message: `${res.name} para las ${res.time} (${res.persons}p)`
-    });
+  const deleteOrder = async (orderId) => {
+    try {
+      await api.deleteOrder(orderId);
+      setOrders(prev => prev.filter(o => o.id !== orderId));
+    } catch (err) {
+      console.error("Error deleting order:", err);
+    }
   };
 
-  const updateReservationStatus = (resId, status) => {
-    setReservations(reservations.map(r => r.id === resId ? { ...r, status } : r));
+  const addReservation = async (res) => {
+    try {
+      const newRes = await api.createReservation(res);
+      setReservations([...reservations, newRes]);
+      addNotification({
+        type: 'INFO',
+        title: 'Nueva Reserva',
+        message: `${res.name} para las ${res.time} (${res.persons}p)`
+      });
+    } catch (err) {
+      console.error("Error creating reservation:", err);
+    }
   };
 
-  const updateCMS = (section, data) => {
-    setCmsData(prev => ({
-      ...prev,
-      [section]: { ...prev[section], ...data }
-    }));
+  const updateReservationStatus = async (resId, status) => {
+    try {
+      const updatedRes = await api.updateReservation(resId, { status });
+      setReservations(reservations.map(r => r.id === resId ? updatedRes : r));
+    } catch (err) {
+      console.error("Error updating reservation status:", err);
+    }
+  };
+
+  const deleteReservation = async (resId) => {
+    try {
+      await api.deleteReservation(resId);
+      setReservations(reservations.filter(r => r.id !== resId));
+    } catch (err) {
+      console.error("Error deleting reservation:", err);
+    }
+  };
+
+  const updateCMS = async (section, data) => {
+    try {
+      const updatedSection = await api.updateCmsSection(section, { content: data });
+      setCmsData(prev => ({
+        ...prev,
+        [section]: updatedSection.content
+      }));
+    } catch (err) {
+      console.error("Error updating CMS:", err);
+      // Fallback to local only if API fails
+      setCmsData(prev => ({
+        ...prev,
+        [section]: { ...prev[section], ...data }
+      }));
+    }
   };
 
   const getMostOrderedProduct = () => {
     const itemCounts = {};
-    orders.forEach(order => {
-      order.items.forEach(item => {
-        itemCounts[item.name] = (itemCounts[item.name] || 0) + item.quantity;
+    if (Array.isArray(orders)) {
+      orders.forEach(order => {
+        if (Array.isArray(order.items)) {
+          order.items.forEach(item => {
+            itemCounts[item.name] = (itemCounts[item.name] || 0) + item.quantity;
+          });
+        }
       });
-    });
+    }
 
     const sorted = Object.entries(itemCounts).sort((a, b) => b[1] - a[1]);
     const topItemName = sorted[0]?.[0];
@@ -378,12 +600,25 @@ export const AdminProvider = ({ children }) => {
 
     // Find the product details in the menu
     let topProduct = null;
-    menu.forEach(cat => {
-      const found = cat.items.find(i => i.name === topItemName);
-      if (found) topProduct = found;
-    });
+    if (Array.isArray(menu)) {
+      menu.forEach(cat => {
+        if (Array.isArray(cat.items)) {
+          const found = cat.items.find(i => i.name === topItemName);
+          if (found) topProduct = found;
+        }
+      });
+    }
 
     return topProduct ? { ...topProduct, totalOrders: topItemQuantity } : null;
+  };
+
+  const logout = () => {
+    localStorage.removeItem('urban_token');
+    localStorage.removeItem('urban_refresh_token');
+    localStorage.removeItem('urban_current_user');
+    setCurrentUser(null);
+    setOrders([]);
+    setReservations([]);
   };
 
   return (
@@ -403,13 +638,25 @@ export const AdminProvider = ({ children }) => {
         hasPermission,
         loginAs,
         logout,
+        setCurrentUser,
         addNotification,
         clearNotification,
         updateMenu,
-        addGroup,
-        setGroups,
+        addCategory,
+        editCategory,
+        removeCategory,
+        addProduct,
+        editProduct,
+        removeProduct,
+        addUser,
+        updateUser,
+        deleteUser,
+        logout,
         addLocation,
+        removeLocation,
         addTable,
+        removeTable,
+        setGroups,
         setUsers,
         setLocations,
         setTables,
@@ -420,6 +667,9 @@ export const AdminProvider = ({ children }) => {
         setOrders,
         addReservation,
         updateReservationStatus,
+        deleteReservation,
+        refreshData,
+        logout,
         setReservations,
         updateCMS,
         getMostOrderedProduct,

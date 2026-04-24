@@ -8,7 +8,7 @@ import Modal from '../components/ui/Modal';
 import ConfirmModal from '../components/ui/ConfirmModal';
 
 const ReservationsManager = () => {
-  const { reservations, updateReservationStatus, addReservation, locations, setReservations } = useAdmin();
+  const { reservations, updateReservationStatus, addReservation, deleteReservation: apiDeleteReservation, locations, setReservations } = useAdmin();
   const [isAdding, setIsAdding] = useState(false);
   const [editingResId, setEditingResId] = useState(null);
   const [viewingResId, setViewingResId] = useState(null);
@@ -62,9 +62,9 @@ const ReservationsManager = () => {
     }
   };
 
-  const deleteReservation = () => {
+  const deleteReservation = async () => {
     if (!resToDelete) return;
-    setReservations(reservations.filter(r => r.id !== resToDelete.id));
+    await apiDeleteReservation(resToDelete.id);
     setResToDelete(null);
   };
 
@@ -283,7 +283,7 @@ const ReservationsManager = () => {
                              </td>
                              <td className="p-5">
                                 <p className="text-sm font-bold text-text-bright uppercase">{res.name}</p>
-                                <p className="text-[8px] text-text-dim mt-0.5 tracking-tighter">ID: #{res.id.split('_')[1]}</p>
+                                <p className="text-[8px] text-text-dim mt-0.5 tracking-tighter">ID: #{String(res.id).split('_').pop()}</p>
                              </td>
                              <td className="p-5">
                                 {(() => {

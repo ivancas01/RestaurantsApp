@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShoppingBag, Plus, Minus, Trash2, Send, MessageSquare } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAdmin } from '../context/AdminContext';
+import { useNotification } from '../context/NotificationContext';
 import Button from './ui/Button';
 import Input from './ui/Input';
 
@@ -11,6 +12,7 @@ const WHATSAPP_NUMBER = "573024788683";
 const CartDrawer = () => {
   const { cartItems, isCartOpen, total, toggleCart, updateQuantity, updateNotes, removeFromCart, clearCart } = useCart();
   const { cmsData, addOrder } = useAdmin();
+  const { showNotification } = useNotification();
   const [formData, setFormData] = useState({
     nombre: '',
     telefono: '',
@@ -24,7 +26,8 @@ const CartDrawer = () => {
   };
 
   const formatWhatsAppMessage = () => {
-    let message = `--- PEDIDO: LUMINA URBAN GOURMET ---\n\n`;
+    const brand = cmsData?.brand || { name: 'URBAN STREET' };
+    let message = `--- PEDIDO: ${brand.name} ---\n\n`;
     message += `. CLIENTE: ${formData.nombre}\n`;
     message += `. TELÉFONO: ${formData.telefono}\n`;
     message += `. IDENTIFICACIÓN: ${formData.identificacion}\n`;
@@ -39,34 +42,48 @@ const CartDrawer = () => {
     });
 
     message += `\n. TOTAL: $${total.toFixed(2)}\n\n`;
-    message += `--- Enviado desde URBAN STREET ---`;
+    message += `--- Enviado desde ${brand.name} ---`;
 
     return encodeURIComponent(message);
   };
 
-  const handleSendOrder = (e) => {
+  const handleSendOrder = async (e) => {
     e.preventDefault();
-    if (!formData.nombre || !formData.telefono || !formData.direccion) {
-      alert("Por favor completa los campos básicos para el envío.");
+
+    if (!formData.nombre.trim() || !formData.telefono.trim() || !formData.direccion.trim()) {
+      showNotification("Por favor completa los campos obligatorios (Nombre, Teléfono y Dirección).", "error");
       return;
     }
-    const message = formatWhatsAppMessage();
-    
-    // Also save to Admin Context for tracking
-    addOrder({
-      type: 'delivery',
-      customer: formData.nombre,
-      phone: formData.telefono,
-      address: formData.direccion,
-      identificacion: formData.identificacion,
-      items: cartItems,
-      total: total,
-      status: 'Pendiente'
-    });
+    if (formData.telefono.replace(/\D/g, '').length < 7) {
+      showNotification("Por favor ingresa un número de teléfono válido.", "error");
+      return;
+    }
 
-    const businessPhone = (cmsData.contact.phone || WHATSAPP_NUMBER).replace(/\D/g, '');
-    window.open(`https://wa.me/${businessPhone}?text=${message}`, '_blank');
-    clearCart();
+    try {
+      showNotification("Registrando pedido en el sistema...", "info");
+      
+      // 1. Wait for backend to confirm
+      await addOrder({
+        type: 'delivery',
+        customer_name: formData.nombre,
+        customer_phone: formData.telefono,
+        customer_address: formData.direccion,
+        identification: formData.identificacion,
+        items: cartItems,
+        total: total,
+        status: 'Pendiente'
+      });
+
+      // 2. Only if successful, open WhatsApp
+      const message = formatWhatsAppMessage();
+      const businessPhone = (cmsData.contact.phone || WHATSAPP_NUMBER).replace(/\D/g, '');
+      window.open(`https://wa.me/${businessPhone}?text=${message}`, '_blank');
+      
+      clearCart();
+    } catch (err) {
+      showNotification("No se pudo registrar el pedido en el sistema. Intenta de nuevo.", "error");
+      console.error(err);
+    }
   };
 
   return (
@@ -129,7 +146,7 @@ const CartDrawer = () => {
                             <h3 className="text-base md:text-lg font-serif uppercase text-text-bright leading-none mb-1">{item.name}</h3>
                             <p className="text-primary font-bold text-xs md:text-sm tracking-widest">{item.price}</p>
                           </div>
-                          <button 
+                          <button
                             onClick={() => removeFromCart(item.id)}
                             className="text-text-dim hover:text-primary transition-colors p-1"
                           >
@@ -140,14 +157,14 @@ const CartDrawer = () => {
                         <div className="flex flex-col space-y-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center border border-zinc-200 dark:border-white/10 bg-background">
-                              <button 
+                              <button
                                 onClick={() => updateQuantity(item.id, -1)}
                                 className="w-10 h-10 flex items-center justify-center hover:bg-white/5 transition-colors text-text-dim border-r border-white/5"
                               >
                                 <Minus size={14} />
                               </button>
                               <span className="w-12 text-center font-bold text-text-bright text-sm">{item.quantity}</span>
-                              <button 
+                              <button
                                 onClick={() => updateQuantity(item.id, 1)}
                                 className="w-10 h-10 flex items-center justify-center hover:bg-white/5 transition-colors text-text-dim border-l border-white/5"
                               >
@@ -161,7 +178,7 @@ const CartDrawer = () => {
 
                           <div className="relative">
                             <MessageSquare size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary/40" />
-                            <input 
+                            <input
                               type="text"
                               value={item.notes || ''}
                               onChange={(e) => updateNotes(item.id, e.target.value)}
@@ -180,26 +197,26 @@ const CartDrawer = () => {
                       <div className="w-2 h-2 bg-primary animate-pulse"></div>
                       <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-primary">Logística de Entrega</h3>
                     </div>
-                    
+
                     <form className="space-y-4">
-                      <Input 
-                        label="Nombre de Contacto" 
+                      <Input
+                        label="Nombre de Contacto"
                         name="nombre"
                         placeholder="Quien recibe el pedido..."
                         value={formData.nombre}
                         onChange={handleInputChange}
-                        required 
+                        required
                       />
-                      <Input 
-                        label="WhatsApp de Enlace" 
+                      <Input
+                        label="WhatsApp de Enlace"
                         name="telefono"
                         placeholder="+57..."
                         value={formData.telefono}
                         onChange={handleInputChange}
-                        required 
+                        required
                       />
-                      <Input 
-                        label="Identificación (ID / CC)" 
+                      <Input
+                        label="Identificación (ID / CC)"
                         name="identificacion"
                         placeholder="Para facturación interna..."
                         value={formData.identificacion}
@@ -207,7 +224,7 @@ const CartDrawer = () => {
                       />
                       <div className="flex flex-col space-y-2">
                         <label className="text-[10px] font-bold uppercase tracking-widest text-primary">Dirección de Desembarco</label>
-                        <textarea 
+                        <textarea
                           name="direccion"
                           value={formData.direccion}
                           onChange={handleInputChange}
@@ -231,17 +248,17 @@ const CartDrawer = () => {
                   </div>
                   <p className="text-3xl md:text-4xl font-serif text-text-bright">${total.toFixed(2)}</p>
                 </div>
-                
-                <Button 
+
+                <Button
                   onClick={handleSendOrder}
                   className="w-full py-5 text-lg md:text-xl flex items-center justify-center space-x-3 bg-[#25D366] hover:bg-[#128C7E] border-none shadow-[8px_8px_0px_0px_rgba(37,211,102,0.2)]"
                 >
                   <MessageSquare size={18} />
                   <span>PEDIR POR WHATSAPP</span>
                 </Button>
-                
+
                 <p className="text-center mt-4 text-[7px] md:text-[8px] uppercase tracking-[0.3em] text-text-dim">
-                   Urban Street // Secure Logistical Hub
+                  Urban Street // Secure Logistical Hub
                 </p>
               </div>
             )}

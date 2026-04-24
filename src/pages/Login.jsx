@@ -4,19 +4,52 @@ import { motion } from 'framer-motion';
 import { ShieldCheck, User, Lock, ArrowLeft } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
+import { api } from '../services/api';
+import { useAdmin } from '../context/AdminContext';
 
 const Login = () => {
   const navigate = useNavigate();
+  const { setCurrentUser, refreshData } = useAdmin();
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    setLoading(true);
-    // Simulate auth delay
-    setTimeout(() => {
-      setLoading(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  // Redirect if already logged in
+  React.useEffect(() => {
+    if (localStorage.getItem('urban_token')) {
       navigate('/hidden-admin');
-    }, 1500);
+    }
+  }, [navigate]);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    if (!username.trim() || !password.trim()) {
+      setError('Por favor completa todos los campos');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    
+    try {
+      const data = await api.login(username, password);
+      localStorage.setItem('urban_token', data.access);
+      localStorage.setItem('urban_refresh_token', data.refresh);
+      
+      // Fetch profile and update context
+      const profile = await api.getCurrentUser();
+      setCurrentUser(profile);
+      await refreshData();
+      
+      navigate('/hidden-admin');
+    } catch (err) {
+      setError('Credenciales inválidas o error de conexión');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -64,9 +97,11 @@ const Login = () => {
 
           <form onSubmit={handleLogin} className="space-y-6">
             <Input 
-              label="Identificación / Email" 
+              label="Usuario" 
               icon={User}
-              placeholder="ID-0000" 
+              placeholder="admin" 
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               required
             />
             
@@ -75,8 +110,12 @@ const Login = () => {
               icon={Lock}
               type="password" 
               placeholder="••••••••" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               required
             />
+
+            {error && <p className="text-red-500 text-[10px] uppercase font-bold text-center">{error}</p>}
 
             <div className="pt-4">
               <Button 

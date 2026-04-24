@@ -3,13 +3,14 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, ShoppingBag } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAdmin } from '../context/AdminContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import QRSection from '../sections/QRSection';
-import { menuCategories } from '../data/menu';
 
 const FullMenu = () => {
   const { addToCart } = useCart();
+  const { menu = [] } = useAdmin();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -42,7 +43,7 @@ const FullMenu = () => {
 
           {/* Categories */}
           <div className="space-y-20 md:space-y-32">
-            {menuCategories.map((category, catIndex) => (
+            {menu.map((category, catIndex) => (
               <div key={category.id} id={category.id}>
                 <motion.div 
                    initial={{ opacity: 0, y: 20 }}
@@ -56,7 +57,7 @@ const FullMenu = () => {
                 </motion.div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1 bg-zinc-200 dark:bg-white/5 border border-zinc-200 dark:border-white/5">
-                  {category.items.map((item, index) => (
+                  {(category.products || []).map((item, index) => (
                     <motion.div
                       key={item.id}
                       initial={{ opacity: 0 }}

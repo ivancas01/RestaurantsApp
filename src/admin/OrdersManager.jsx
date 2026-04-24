@@ -9,7 +9,8 @@ import ConfirmModal from '../components/ui/ConfirmModal';
 import { useNotification } from '../context/NotificationContext';
 
 const OrdersManager = () => {
-  const { orders, updateOrderStatus, updateOrder, tables, reservations, menu, addOrder, locations } = useAdmin();
+  const { orders, updateOrderStatus, updateOrder, tables, reservations, menu, addOrder, locations, updateReservationStatus, cmsData } = useAdmin();
+  const brand = cmsData?.brand || { name: 'URBAN STREET', tagline: 'Gourmet Command Center' };
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [selectedOrderId, setSelectedOrderId] = useState(null);
@@ -36,24 +37,24 @@ const OrdersManager = () => {
     if (sidebarSearch.trim() === '') return true;
     const searchLower = sidebarSearch.toLowerCase();
     
-    const customerName = (o.customer || '').toLowerCase();
+    const customerName = (o.customer_name || '').toLowerCase();
     const orderId = (o.id || '').toLowerCase();
-    const tableNum = tables.find(t => t.id === o.tableId)?.number?.toString() || '';
+    const tableNum = tables.find(t => t.id === o.table)?.number?.toString() || '';
 
     return customerName.includes(searchLower) || 
            orderId.includes(searchLower) ||
            tableNum.includes(searchLower);
-  }).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   const selectedOrder = orders.find(o => o.id === selectedOrderId);
 
   const [newOrder, setNewOrder] = useState({
-    customer: '',
-    phone: '',
+    customer_name: '',
+    customer_phone: '',
     identification: '',
     items: [],
     type: 'table',
-    tableId: '',
+    table: '',
     reservationId: '',
     notes: ''
   });
@@ -64,7 +65,7 @@ const OrdersManager = () => {
       const tableExists = tables.find(t => t.id === tableIdFromUrl);
       if (tableExists) {
         const timer = setTimeout(() => {
-          setNewOrder(prev => ({ ...prev, tableId: tableIdFromUrl }));
+          setNewOrder(prev => ({ ...prev, table: tableIdFromUrl }));
           setIsAddingOrder(true);
           showNotification(`Mesa ${tableExists.number} seleccionada vía QR`, 'info');
           // Clear params from URL
@@ -90,12 +91,15 @@ const OrdersManager = () => {
   const handleLinkRes = (res) => {
     setNewOrder({
       ...newOrder,
-      customer: res.name,
-      phone: res.phone,
+      customer_name: res.name,
+      customer_phone: res.phone,
       identification: res.identification,
       reservationId: res.id
     });
+    // Mark reservation as completed automatically
+    updateReservationStatus(res.id, 'Completada');
     setResSearch('');
+    showNotification(`Reserva de ${res.name} vinculada y completada`, 'success');
   };
 
   const addToCart = (product) => {
@@ -132,14 +136,14 @@ const OrdersManager = () => {
     });
   };
 
-  const calculateTotal = (items) => items.reduce((acc, i) => acc + (parseFloat(i.price.replace('$', '')) * i.quantity), 0);
+  const calculateTotal = (items) => items.reduce((acc, i) => acc + (parseFloat(String(i.price_at_order || i.price || '0').replace('$', '')) * i.quantity), 0);
 
   const handlePrint = (order) => {
     const printWindow = window.open('', '_blank', 'width=450,height=600');
     const itemsHtml = order.items.map(item => `
       <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; font-family: 'Courier New', Courier, monospace;">
-        <span>${item.quantity}x ${item.name.toUpperCase()}</span>
-        <span>$${(parseFloat(item.price.replace('$', '')) * item.quantity).toFixed(2)}</span>
+        <span>${item.quantity}x ${(item.product_name || item.name).toUpperCase()}</span>
+        <span>$${(parseFloat(String(item.price_at_order || item.price || '0').replace('$', '')) * item.quantity).toFixed(2)}</span>
       </div>
     `).join('');
 
@@ -163,15 +167,15 @@ const OrdersManager = () => {
         </head>
         <body>
           <div class="header">
-            <h1>LUMINA URBAN</h1>
-            <p>Gourmet Command Center</p>
+            <h1>${brand.name}</h1>
+            <p>${brand.tagline}</p>
           </div>
           <div class="meta">
-            <div><span>ID:</span> <span>#${order.id.includes('_') ? order.id.split('_')[1] : order.id}</span></div>
+            <div><span>ID:</span> <span>#${String(order.id).split('_').pop()}</span></div>
             <div><span>Fecha:</span> <span>${new Date().toLocaleDateString()}</span></div>
             <div><span>Hora:</span> <span>${new Date().toLocaleTimeString()}</span></div>
-            <div><span>Cliente:</span> <span>${order.customer}</span></div>
-            ${order.tableId ? `<div><span>Mesa:</span> <span>${tables.find(t => t.id === order.tableId)?.number || 'N/A'}</span></div>` : ''}
+            <div><span>Cliente:</span> <span>${order.customer_name}</span></div>
+            ${order.table ? `<div><span>Mesa:</span> <span>${tables.find(t => t.id === order.table)?.number || 'N/A'}</span></div>` : ''}
           </div>
           <div class="items">${itemsHtml}</div>
           <div class="total">
@@ -196,7 +200,7 @@ const OrdersManager = () => {
   };
 
   const handleSaveOrder = () => {
-    if (!newOrder.customer || newOrder.items.length === 0) return;
+    if (!newOrder.customer_name || newOrder.items.length === 0) return;
     
     if (editingOrderId) {
       const updatedData = {
@@ -218,18 +222,27 @@ const OrdersManager = () => {
     }
     
     setIsAddingOrder(false);
-    setNewOrder({ customer: '', phone: '', identification: '', items: [], type: 'table', tableId: '', reservationId: '', notes: '' });
+    setNewOrder({
+      customer_name: '',
+      customer_phone: '',
+      identification: '',
+      items: [],
+      type: 'table',
+      table: '',
+      reservationId: '',
+      notes: ''
+    });
   };
 
   const handleEditClick = (order) => {
     setEditingOrderId(order.id);
     setNewOrder({
-      customer: order.customer,
-      phone: order.phone || '',
+      customer_name: order.customer_name,
+      customer_phone: order.customer_phone || '',
       identification: order.identification || '',
       items: [...order.items],
       type: order.type,
-      tableId: order.tableId || '',
+      table: order.table || '',
       reservationId: order.reservationId || '',
       notes: order.notes || ''
     });
@@ -305,20 +318,25 @@ const OrdersManager = () => {
                       )}
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-                      <input type="text" placeholder="NOMBRE COMPLETO" value={newOrder.customer} onChange={e => setNewOrder({...newOrder, customer: e.target.value.toUpperCase()})} className="bg-background border-2 border-zinc-800 p-3 text-[10px] font-bold outline-none focus:border-primary w-full" />
-                      <input type="text" placeholder="TELÉFONO" value={newOrder.phone} onChange={e => setNewOrder({...newOrder, phone: e.target.value})} className="bg-background border-2 border-zinc-800 p-3 text-[10px] font-bold outline-none focus:border-primary w-full" />
+                      <input type="text" placeholder="NOMBRE COMPLETO" value={newOrder.customer_name} onChange={e => setNewOrder({...newOrder, customer_name: e.target.value.toUpperCase()})} className="bg-background border-2 border-zinc-800 p-3 text-[10px] font-bold outline-none focus:border-primary w-full" />
+                      <input type="text" placeholder="TELÉFONO" value={newOrder.customer_phone} onChange={e => setNewOrder({...newOrder, customer_phone: e.target.value})} className="bg-background border-2 border-zinc-800 p-3 text-[10px] font-bold outline-none focus:border-primary w-full" />
                       <select 
-                        value={newOrder.tableId} 
-                        onChange={e => setNewOrder({...newOrder, tableId: e.target.value})}
+                        value={newOrder.table} 
+                        onChange={e => setNewOrder({...newOrder, table: e.target.value})}
                         className="bg-background border-2 border-zinc-800 p-3 text-[10px] font-bold outline-none focus:border-primary uppercase w-full col-span-1 sm:col-span-2 md:col-span-1"
                       >
                         <option value="">-- SELECCIONAR MESA --</option>
-                        {tables.filter(t => t.status === 'Disponible' || t.id === newOrder.tableId).map(t => {
-                          const location = locations.find(l => l.id === t.locationId)?.name || 'AREA';
+                        {locations.map(loc => {
+                          const locationTables = tables.filter(t => (t.locationId === loc.id) && (t.status === 'Disponible' || String(t.id) === String(newOrder.table)));
+                          if (locationTables.length === 0) return null;
                           return (
-                            <option key={t.id} value={t.id}>
-                              MESA {t.number} ({location})
-                            </option>
+                            <optgroup key={loc.id} label={loc.name.toUpperCase()} className="bg-background text-primary font-black">
+                              {locationTables.map(t => (
+                                <option key={t.id} value={t.id} className="bg-background text-text-bright font-bold">
+                                  ID:{t.id} - MESA {t.number}
+                                </option>
+                              ))}
+                            </optgroup>
                           );
                         })}
                       </select>
@@ -332,8 +350,8 @@ const OrdersManager = () => {
                       ))}
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 max-h-[40vh] lg:max-h-none overflow-y-auto pr-2 custom-scrollbar">
-                      {menu.find(c => c.id === activeMenuCat)?.items.filter(item => item.available !== false).map(item => (
-                        <button key={item.id} onClick={() => addToCart(item)} className="flex justify-between items-center p-4 border-2 border-zinc-900 hover:border-primary bg-black/5 text-left font-bold uppercase text-[10px] transition-colors group"><div><p className="group-hover:text-primary transition-colors">{item.name}</p><p className="text-primary mt-1 font-mono">{item.price}</p></div><Plus size={16} className="text-primary" /></button>
+                      {(menu.find(c => c.id === activeMenuCat)?.products || []).filter(item => item.is_available !== false).map(item => (
+                        <button key={item.id} onClick={() => addToCart(item)} className="flex justify-between items-center p-4 border-2 border-zinc-900 hover:border-primary bg-black/5 text-left font-bold uppercase text-[10px] transition-colors group"><div><p className="group-hover:text-primary transition-colors">{item.name}</p><p className="text-primary mt-1 font-mono">${item.price}</p></div><Plus size={16} className="text-primary" /></button>
                       ))}
                   </div>
                 </div>
@@ -346,10 +364,10 @@ const OrdersManager = () => {
                   ) : (
                     newOrder.items.map(item => (
                       <div key={item.id} className="flex flex-col border-b border-zinc-800 pb-4">
-                          <div className="flex justify-between items-start font-bold text-[10px] text-text-bright pr-4"><span>{item.name}</span><button onClick={() => removeFromCart(item.id)} className="text-accent opacity-50 hover:opacity-100"><Trash2 size={14}/></button></div>
+                          <div className="flex justify-between items-start font-bold text-[10px] text-text-bright pr-4"><span>{item.product_name || item.name}</span><button onClick={() => removeFromCart(item.id)} className="text-accent opacity-50 hover:opacity-100"><Trash2 size={14}/></button></div>
                           <div className="flex justify-between items-center mt-3">
                             <div className="flex items-center space-x-3 bg-background border border-zinc-800 px-2 py-1"><button onClick={() => updateQty(item.id, -1)} className="text-primary font-bold px-2 hover:bg-primary/10 transition-colors">-</button><span className="font-mono text-xs">{item.quantity}</span><button onClick={() => updateQty(item.id, 1)} className="text-primary font-bold px-2 hover:bg-primary/10 transition-colors">+</button></div>
-                            <span className="text-xs font-mono font-bold text-text-bright">${(parseFloat(item.price.replace('$', '')) * item.quantity).toFixed(2)}</span>
+                            <span className="text-xs font-mono font-bold text-text-bright">${(parseFloat(String(item.price_at_order || item.price || '0').replace('$', '')) * item.quantity).toFixed(2)}</span>
                           </div>
                       </div>
                     ))
@@ -368,7 +386,7 @@ const OrdersManager = () => {
 
                 <div className="border-t-4 border-primary pt-6 space-y-6">
                   <div className="flex justify-between items-center text-text-bright"><span className="text-[10px] font-bold uppercase tracking-widest">Total comanda</span><span className="text-2xl md:text-3xl font-serif text-primary tracking-tighter">${calculateTotal(newOrder.items).toFixed(2)}</span></div>
-                  <Button onClick={handleSaveOrder} className="w-full text-xs font-bold uppercase tracking-[0.2em] py-5 md:py-4 shadow-[8px_8px_0px_0px_rgba(225,29,72,0.2)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all" disabled={newOrder.items.length === 0 || !newOrder.customer}>{editingOrderId ? 'Guardar Cambios' : 'Procesar Pedido'}</Button>
+                  <Button onClick={handleSaveOrder} className="w-full text-xs font-bold uppercase tracking-[0.2em] py-5 md:py-4 shadow-[8px_8px_0px_0px_rgba(225,29,72,0.2)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all" disabled={newOrder.items.length === 0 || !newOrder.customer_name}>{editingOrderId ? 'Guardar Cambios' : 'Procesar Pedido'}</Button>
                 </div>
             </div>
         </div>
@@ -379,7 +397,7 @@ const OrdersManager = () => {
         onClose={() => {setOrderToCancel(null); setCancelReason('');}}
         onConfirm={handleCancelConfirm}
         title="Cancelar Pedido"
-        message={`¿Estás seguro de que deseas cancelar el pedido de ${tables.find(t => t.id === orderToCancel?.tableId)?.number || 'esta mesa'}? Esta acción anulará el servicio.`}
+        message={`¿Estás seguro de que deseas cancelar el pedido de ${tables.find(t => t.id === orderToCancel?.table)?.number || 'esta mesa'}? Esta acción anulará el servicio.`}
         confirmLabel="Anular Servicio"
       >
         <div className="space-y-3">
@@ -398,17 +416,17 @@ const OrdersManager = () => {
          {showInvoice && lastSavedOrder && (
            <div className="fixed inset-0 w-screen h-screen z-[700] flex items-center justify-center p-6 bg-black/95 backdrop-blur-xl">
              <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="bg-white text-zinc-900 w-[95%] max-w-sm p-6 md:p-8 font-mono relative shadow-2xl print-ticket overflow-hidden">
-                <div className="text-center border-b-2 border-dashed border-zinc-300 pb-6 mb-6 font-bold"><h2 className="text-xl">Lumina Urban</h2><p className="text-[10px] tracking-widest">Gourmet Command Center</p></div>
+                <div className="text-center border-b-2 border-dashed border-zinc-300 pb-6 mb-6 font-bold"><h2 className="text-xl">{brand.name}</h2><p className="text-[10px] tracking-widest uppercase">{brand.tagline}</p></div>
                 <div className="space-y-1 mb-8 text-[10px] uppercase">
                    <div className="flex justify-between"><span>FACTURA:</span><span className="font-bold">#ORD_{Date.now().toString().slice(-6)}</span></div>
                    <div className="flex justify-between"><span>FECHA:</span><span>{new Date().toLocaleDateString()}</span></div>
-                   <div className="flex justify-between"><span>CLI:</span><span className="font-bold">{lastSavedOrder.customer}</span></div>
+                   <div className="flex justify-between"><span>CLI:</span><span className="font-bold">{lastSavedOrder.customer_name}</span></div>
                 </div>
                 <div className="border-b border-zinc-200 mb-6 pb-4">
                    <div className="flex justify-between text-[10px] font-bold mb-4"><span>DESC</span><span>TOTAL</span></div>
-                   <div className="space-y-2">{lastSavedOrder.items.map((item, i) => (<div key={i} className="flex justify-between text-[10px]"><span className="max-w-[70%]">{item.quantity}x {item.name.toUpperCase()}</span><span>${(parseFloat(item.price.replace('$', '')) * item.quantity).toFixed(2)}</span></div>))}</div>
+                                       <div className="space-y-2">{lastSavedOrder.items.map((item, i) => (<div key={i} className="flex justify-between text-[10px]"><span className="max-w-[70%]">{item.quantity}x {(item.product_name || item.name).toUpperCase()}</span><span>${(parseFloat(String(item.price_at_order || item.price || '0').replace('$', '')) * item.quantity).toFixed(2)}</span></div>))}</div>
                 </div>
-                <div className="flex justify-between text-lg font-bold border-t-2 border-zinc-900 pt-2 mb-10"><span>TOTAL:</span><span>${lastSavedOrder.total.toFixed(2)}</span></div>
+                <div className="flex justify-between text-lg font-bold border-t-2 border-zinc-900 pt-2 mb-10"><span>TOTAL:</span><span>${typeof lastSavedOrder.total === 'number' ? lastSavedOrder.total.toFixed(2) : parseFloat(String(lastSavedOrder.total).replace('$', '')).toFixed(2)}</span></div>
                 <div className="flex space-x-2 no-print">
                    <Button onClick={() => setShowInvoice(false)} className="flex-1 text-xs">Cerrar</Button>
                    <Button onClick={() => handlePrint(lastSavedOrder)} variant="outline" className="px-6 border-zinc-900 text-zinc-900">
@@ -500,7 +518,7 @@ const OrdersManager = () => {
                            </tr>
                         ) : (
                            filteredSidebarOrders.map((order) => {
-                              const table = tables.find(t => t.id === order.tableId);
+                              const table = tables.find(t => t.id === order.table);
                               const isSelected = selectedOrderId === order.id;
                               
                               return (
@@ -512,15 +530,18 @@ const OrdersManager = () => {
                                     <td className="p-4">
                                        <div className="flex items-center space-x-2">
                                           <MapPin size={10} className="text-primary" />
-                                          <span className="text-sm font-serif">MESA {table?.number || '??'}</span>
+                                           <div className="flex flex-col">
+                                              <span className="text-sm font-serif">Mesa {tables.find(t => String(t.id) === String(order.table))?.number || '??'}</span>
+                                              <span className="text-[8px] font-bold text-text-dim uppercase">{locations.find(l => l.id === tables.find(t => String(t.id) === String(order.table))?.locationId)?.name || 'AREA'}</span>
+                                           </div>
                                        </div>
                                     </td>
-                                    <td className="p-4 truncate max-w-[120px]">{order.customer}</td>
-                                    <td className="p-4 text-primary">${order.total.toFixed(2)}</td>
+                                    <td className="p-4 truncate max-w-[120px]">{order.customer_name}</td>
+                                    <td className="p-4 text-primary">${typeof order.total === 'number' ? order.total.toFixed(2) : parseFloat(String(order.total).replace('$', '')).toFixed(2)}</td>
                                     <td className="p-4">
                                        <span className={`px-2 py-0.5 border text-[8px] ${getStatusColor(order.status)}`}>{order.status}</span>
                                     </td>
-                                    <td className="p-4 text-right text-text-dim text-[9px]">#{order.id.split('_')[1]}</td>
+                                     <td className="p-4 text-right text-text-dim text-[9px]">#{String(order.id).split('_').pop()}</td>
                                  </tr>
                               );
                            })
@@ -545,8 +566,11 @@ const OrdersManager = () => {
                      <div className="p-6 bg-black/5 dark:bg-white/5 border-b-2 border-zinc-200 dark:border-zinc-900 flex justify-between items-start">
                         <div className="space-y-1">
                            <p className="text-[8px] font-bold text-primary tracking-widest">// DETALLE COMANDA</p>
-                           <h2 className="text-2xl font-serif text-text-bright uppercase">Mesa {tables.find(t => t.id === selectedOrder.tableId)?.number || '??'}</h2>
-                           <p className="text-[10px] text-text-dim font-bold tracking-tighter">ORD_#{selectedOrder.id.split('_')[1]} • {new Date(selectedOrder.timestamp).toLocaleTimeString()}</p>
+                           <h2 className="text-2xl font-serif text-text-bright uppercase">
+                              Mesa {tables.find(t => String(t.id) === String(selectedOrder.table))?.number || '??'} 
+                              <span className="text-[10px] text-primary italic ml-2">({locations.find(l => l.id === tables.find(t => String(t.id) === String(selectedOrder.table))?.locationId)?.name || 'AREA'})</span>
+                           </h2>
+                           <p className="text-[10px] text-text-dim font-bold tracking-tighter">ORD_#{selectedOrder.id} • {new Date(selectedOrder.created_at).toLocaleTimeString()}</p>
                         </div>
                         <button onClick={() => setSelectedOrderId(null)} className="p-1 text-text-dim hover:text-primary"><X size={20}/></button>
                      </div>
@@ -555,10 +579,10 @@ const OrdersManager = () => {
                         <div className="flex justify-between items-end border-b border-zinc-100 dark:border-zinc-900 pb-4">
                            <div className="space-y-1">
                               <p className="text-[9px] font-bold text-text-dim uppercase tracking-widest">Cliente</p>
-                              <p className="text-sm font-bold text-text-bright uppercase">{selectedOrder.customer}</p>
+                              <p className="text-sm font-bold text-text-bright uppercase">{selectedOrder.customer_name}</p>
                            </div>
                            <div className="text-right">
-                              <p className="text-2xl font-serif text-primary font-bold">${selectedOrder.total.toFixed(2)}</p>
+                              <p className="text-2xl font-serif text-primary font-bold">${typeof selectedOrder.total === 'number' ? selectedOrder.total.toFixed(2) : parseFloat(String(selectedOrder.total).replace('$', '')).toFixed(2)}</p>
                               <span className={`text-[8px] font-bold uppercase px-2 py-0.5 border ${getStatusColor(selectedOrder.status)}`}>{selectedOrder.status}</span>
                            </div>
                         </div>
@@ -575,9 +599,9 @@ const OrdersManager = () => {
                                  <div key={i} className="flex justify-between items-center text-xs md:text-sm font-bold border-b border-zinc-100 dark:border-zinc-900 pb-3 last:border-0 group hover:bg-primary/5 transition-all px-2">
                                     <div className="flex items-center space-x-4">
                                        <span className="text-lg md:text-xl font-serif text-primary w-8">{item.quantity}x</span>
-                                       <span className="text-text-bright uppercase tracking-wide">{item.name}</span>
+                                       <span className="text-text-bright uppercase tracking-wide">{item.product_name || item.name}</span>
                                     </div>
-                                    <span className="text-text-dim font-serif text-xs">${(parseFloat(item.price.replace('$', '')) * item.quantity).toFixed(2)}</span>
+                                    <span className="text-text-dim font-serif text-xs">${(parseFloat(String(item.price_at_order || item.price || '0').replace('$', '')) * item.quantity).toFixed(2)}</span>
                                  </div>
                               ))}
                            </div>
