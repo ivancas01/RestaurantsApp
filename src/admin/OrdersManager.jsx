@@ -141,9 +141,9 @@ const OrdersManager = () => {
   const handlePrint = (order) => {
     const printWindow = window.open('', '_blank', 'width=450,height=600');
     const itemsHtml = order.items.map(item => `
-      <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; font-family: 'Courier New', Courier, monospace;">
-        <span>${item.quantity}x ${(item.product_name || item.name).toUpperCase()}</span>
-        <span>$${(parseFloat(String(item.price_at_order || item.price || '0').replace('$', '')) * item.quantity).toFixed(2)}</span>
+      <div class="item-row">
+        <span class="item-name">${item.quantity}x ${(item.product_name || item.name)}</span>
+        <span class="item-price">$${(parseFloat(String(item.price_at_order || item.price || '0').replace('$', '')) * item.quantity).toFixed(2)}</span>
       </div>
     `).join('');
 
@@ -153,16 +153,25 @@ const OrdersManager = () => {
           <title>Ticket #${order.id}</title>
           <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
           <style>
-            body { padding: 30px; color: black; background: white; width: 300px; margin: auto; }
+            * { box-sizing: border-box; }
+            body { padding: 20px; color: black; background: white; width: 280px; margin: 0 auto; overflow-x: hidden; }
             .header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 15px; margin-bottom: 15px; }
             .header h1 { font-family: 'Bebas Neue', sans-serif; font-size: 32px; margin: 0; line-height: 1; }
             .header p { font-family: 'Courier New', Courier, monospace; font-size: 10px; margin: 5px 0 0; letter-spacing: 2px; text-transform: uppercase; }
             .meta { font-family: 'Courier New', Courier, monospace; font-size: 11px; text-transform: uppercase; margin-bottom: 20px; }
-            .meta div { display: flex; justify-content: space-between; margin-bottom: 4px; }
+            .meta div { display: flex; justify-content: space-between; margin-bottom: 4px; gap: 10px; }
+            .meta div span:first-child { flex-shrink: 0; }
+            .meta div span:last-child { text-align: right; word-break: break-all; }
             .items { border-bottom: 1px solid #000; padding-bottom: 10px; margin-bottom: 10px; }
-            .total { font-family: 'Courier New', Courier, monospace; display: flex; justify-content: space-between; font-size: 20px; font-weight: bold; border-top: 2px solid black; padding-top: 8px; }
-            .footer { font-family: 'Courier New', Courier, monospace; text-align: center; margin-top: 40px; font-size: 9px; text-transform: uppercase; letter-spacing: 2px; }
-            @media print { body { padding: 10px; width: 100%; } .no-print { display: none; } }
+            .item-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 5px; font-family: 'Courier New', Courier, monospace; gap: 10px; }
+            .item-name { flex: 1; text-align: left; text-transform: uppercase; }
+            .item-price { flex-shrink: 0; text-align: right; }
+            .total { font-family: 'Courier New', Courier, monospace; display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; border-top: 2px solid black; padding-top: 8px; }
+            .footer { font-family: 'Courier New', Courier, monospace; text-align: center; margin-top: 30px; font-size: 9px; text-transform: uppercase; letter-spacing: 2px; line-height: 1.4; }
+            @media print { 
+              body { padding: 5px; width: 260px; margin: 0; } 
+              .no-print { display: none; } 
+            }
           </style>
         </head>
         <body>
@@ -216,8 +225,10 @@ const OrdersManager = () => {
         status: 'Pendiente',
         timestamp: new Date().toISOString()
       };
-      addOrder(finalOrder);
-      setLastSavedOrder(finalOrder);
+      addOrder(finalOrder).then(savedOrder => {
+        setLastSavedOrder(savedOrder || finalOrder);
+        setShowInvoice(true);
+      });
       showNotification("Pedido procesado exitosamente");
     }
     
@@ -413,29 +424,37 @@ const OrdersManager = () => {
       </ConfirmModal>
 
       <AnimatePresence>
-         {showInvoice && lastSavedOrder && (
-           <div className="fixed inset-0 w-screen h-screen z-[700] flex items-center justify-center p-6 bg-black/95 backdrop-blur-xl">
+        {showInvoice && lastSavedOrder && (
+          <div className="fixed inset-0 w-screen h-screen z-[1100] flex items-center justify-center p-6 bg-black/95 backdrop-blur-xl">
              <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="bg-white text-zinc-900 w-[95%] max-w-sm p-6 md:p-8 font-mono relative shadow-2xl print-ticket overflow-hidden">
                 <div className="text-center border-b-2 border-dashed border-zinc-300 pb-6 mb-6 font-bold"><h2 className="text-xl">{brand.name}</h2><p className="text-[10px] tracking-widest uppercase">{brand.tagline}</p></div>
                 <div className="space-y-1 mb-8 text-[10px] uppercase">
-                   <div className="flex justify-between"><span>FACTURA:</span><span className="font-bold">#ORD_{Date.now().toString().slice(-6)}</span></div>
+                   <div className="flex justify-between"><span>FACTURA:</span><span className="font-bold">#ORD_{String(lastSavedOrder.id).split('_').pop()}</span></div>
+                   <div className="flex justify-between"><span>ID REGISTRO:</span><span className="font-bold text-[8px]">{lastSavedOrder.id}</span></div>
                    <div className="flex justify-between"><span>FECHA:</span><span>{new Date().toLocaleDateString()}</span></div>
                    <div className="flex justify-between"><span>CLI:</span><span className="font-bold">{lastSavedOrder.customer_name}</span></div>
                 </div>
                 <div className="border-b border-zinc-200 mb-6 pb-4">
                    <div className="flex justify-between text-[10px] font-bold mb-4"><span>DESC</span><span>TOTAL</span></div>
-                                       <div className="space-y-2">{lastSavedOrder.items.map((item, i) => (<div key={i} className="flex justify-between text-[10px]"><span className="max-w-[70%]">{item.quantity}x {(item.product_name || item.name).toUpperCase()}</span><span>${(parseFloat(String(item.price_at_order || item.price || '0').replace('$', '')) * item.quantity).toFixed(2)}</span></div>))}</div>
+                   <div className="space-y-2">{lastSavedOrder.items.map((item, i) => (<div key={i} className="flex justify-between text-[10px]"><span className="max-w-[70%]">{item.quantity}x {(item.product_name || item.name).toUpperCase()}</span><span>${(parseFloat(String(item.price_at_order || item.price || '0').replace('$', '')) * item.quantity).toFixed(2)}</span></div>))}</div>
                 </div>
                 <div className="flex justify-between text-lg font-bold border-t-2 border-zinc-900 pt-2 mb-10"><span>TOTAL:</span><span>${typeof lastSavedOrder.total === 'number' ? lastSavedOrder.total.toFixed(2) : parseFloat(String(lastSavedOrder.total).replace('$', '')).toFixed(2)}</span></div>
-                <div className="flex space-x-2 no-print">
-                   <Button onClick={() => setShowInvoice(false)} className="flex-1 text-xs">Cerrar</Button>
-                   <Button onClick={() => handlePrint(lastSavedOrder)} variant="outline" className="px-6 border-zinc-900 text-zinc-900">
-                      <Printer size={16} />
-                   </Button>
+                <div className="flex flex-col space-y-3 no-print">
+                   <div className="grid grid-cols-2 gap-2">
+                      <Button onClick={() => handlePrint(lastSavedOrder)} className="text-[10px] space-x-2">
+                         <Printer size={14} />
+                         <span>IMPRIMIR</span>
+                      </Button>
+                      <Button onClick={() => handlePrint(lastSavedOrder)} variant="outline" className="text-[10px] border-zinc-900 text-zinc-900 space-x-2">
+                         <ShoppingBag size={14} />
+                         <span>DESCARGAR</span>
+                      </Button>
+                   </div>
+                   <Button variant="outline" onClick={() => setShowInvoice(false)} className="w-full text-[10px] border-zinc-300 text-zinc-400">Cerrar</Button>
                 </div>
              </motion.div>
-           </div>
-         )}
+          </div>
+        )}
       </AnimatePresence>
 
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8 border-l-8 border-primary pl-6 md:pl-8 mb-10">

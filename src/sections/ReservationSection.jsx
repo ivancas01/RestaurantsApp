@@ -91,8 +91,8 @@ const ReservationSection = () => {
               exit={{ opacity: 0 }}
               className="flex flex-col lg:flex-row gap-12 lg:gap-16"
             >
-              <div className="lg:w-1/3">
-                <h2 className="mb-6 leading-none">
+              <div className="lg:w-[40%]">
+                <h2 className="text-4xl md:text-6xl lg:text-7xl mb-6 leading-[0.8] break-words">
                   {titleMain} <br /> <span className="text-primary italic">{titleItalic}</span>
                 </h2>
                 <p className="text-text-dim uppercase tracking-widest text-[10px] md:text-xs leading-relaxed mb-8 md:mb-10">

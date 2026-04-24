@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShoppingBag, Plus, Minus, Trash2, Send, MessageSquare } from 'lucide-react';
 import { useCart } from '../context/CartContext';
@@ -10,7 +11,8 @@ import Input from './ui/Input';
 const WHATSAPP_NUMBER = "573024788683";
 
 const CartDrawer = () => {
-  const { cartItems, isCartOpen, total, toggleCart, updateQuantity, updateNotes, removeFromCart, clearCart } = useCart();
+  const navigate = useNavigate();
+  const { cartItems, cartCount, isCartOpen, total, toggleCart, updateQuantity, updateNotes, removeFromCart, clearCart } = useCart();
   const { cmsData, addOrder } = useAdmin();
   const { showNotification } = useNotification();
   const [formData, setFormData] = useState({
@@ -118,7 +120,7 @@ const CartDrawer = () => {
                   <p className="text-[8px] uppercase tracking-widest text-text-dim mt-1 font-bold">Urban Street // Checkout</p>
                 </div>
                 <span className="bg-primary/20 text-primary text-[10px] font-bold px-2 py-0.5 rounded-none ml-2">
-                  {cartItems.length}
+                  {cartCount}
                 </span>
               </div>
               <button onClick={toggleCart} className="p-2 hover:bg-white/5 transition-colors text-text-dim hover:text-text-bright border border-white/10">
@@ -134,7 +136,16 @@ const CartDrawer = () => {
                     <ShoppingBag size={64} strokeWidth={1} />
                   </div>
                   <p className="uppercase tracking-[0.2em] text-[10px] font-bold max-w-[200px]">Tu bolsa táctica está vacía en este momento</p>
-                  <Button variant="outline" onClick={toggleCart} className="text-xs">EMPEZAR A AGREGAR</Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      toggleCart();
+                      navigate('/menu');
+                    }} 
+                    className="text-xs"
+                  >
+                    EMPEZAR A AGREGAR
+                  </Button>
                 </div>
               ) : (
                 <>

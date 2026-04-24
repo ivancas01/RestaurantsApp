@@ -48,17 +48,16 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
-# Python / Django
+# Databases
+*.sqlite3
+
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
 venv/
+.venv/
 env/
-ENV/
-.env
-db.sqlite3
-media/
+.env/
 urban_backend/venv/
-urban_backend/__pycache__/
-urban_backend/db.sqlite3
 urban_backend/media/

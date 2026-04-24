@@ -18,9 +18,9 @@ const DeliveryManager = () => {
   const handlePrint = (order) => {
     const printWindow = window.open('', '_blank', 'width=450,height=600');
     const itemsHtml = (order.items || []).map(item => `
-      <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; font-family: 'Courier New', Courier, monospace;">
-        <span>${item.quantity}x ${(item.product_name || 'ITEM').toUpperCase()}</span>
-        <span>$${(parseFloat(String(item.price_at_order).replace('$', '')) * item.quantity).toFixed(2)}</span>
+      <div class="item-row">
+        <span class="item-name">${item.quantity}x ${(item.product_name || 'ITEM')}</span>
+        <span class="item-price">$${(parseFloat(String(item.price_at_order).replace('$', '')) * item.quantity).toFixed(2)}</span>
       </div>
     `).join('');
 
@@ -30,16 +30,25 @@ const DeliveryManager = () => {
           <title>Ticket Web #${order.id}</title>
           <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
           <style>
-            body { padding: 30px; color: black; background: white; width: 300px; margin: auto; }
+            * { box-sizing: border-box; }
+            body { padding: 20px; color: black; background: white; width: 280px; margin: 0 auto; overflow-x: hidden; }
             .header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 15px; margin-bottom: 15px; }
             .header h1 { font-family: 'Bebas Neue', sans-serif; font-size: 32px; margin: 0; line-height: 1; }
             .header p { font-family: 'Courier New', Courier, monospace; font-size: 10px; margin: 5px 0 0; letter-spacing: 2px; text-transform: uppercase; }
             .meta { font-family: 'Courier New', Courier, monospace; font-size: 11px; text-transform: uppercase; margin-bottom: 20px; }
-            .meta div { display: flex; justify-content: space-between; margin-bottom: 4px; }
+            .meta div { display: flex; justify-content: space-between; margin-bottom: 4px; gap: 10px; }
+            .meta div span:first-child { flex-shrink: 0; }
+            .meta div span:last-child { text-align: right; word-break: break-all; }
             .items { border-bottom: 1px solid #000; padding-bottom: 10px; margin-bottom: 10px; }
-            .total { font-family: 'Courier New', Courier, monospace; display: flex; justify-content: space-between; font-size: 20px; font-weight: bold; border-top: 2px solid black; padding-top: 8px; }
-            .footer { font-family: 'Courier New', Courier, monospace; text-align: center; margin-top: 40px; font-size: 9px; text-transform: uppercase; letter-spacing: 2px; }
-            @media print { body { padding: 10px; width: 100%; } .no-print { display: none; } }
+            .item-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 5px; font-family: 'Courier New', Courier, monospace; gap: 10px; }
+            .item-name { flex: 1; text-align: left; text-transform: uppercase; }
+            .item-price { flex-shrink: 0; text-align: right; }
+            .total { font-family: 'Courier New', Courier, monospace; display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; border-top: 2px solid black; padding-top: 8px; }
+            .footer { font-family: 'Courier New', Courier, monospace; text-align: center; margin-top: 30px; font-size: 9px; text-transform: uppercase; letter-spacing: 2px; line-height: 1.4; }
+            @media print { 
+              body { padding: 5px; width: 260px; margin: 0; } 
+              .no-print { display: none; } 
+            }
           </style>
         </head>
         <body>
@@ -356,7 +365,7 @@ const DeliveryManager = () => {
       {/* Invoice Modal */}
       <AnimatePresence>
          {showInvoice && selectedOrder && (
-           <div className="fixed inset-0 w-screen h-screen z-[700] flex items-center justify-center p-6 bg-black/95 backdrop-blur-xl">
+           <div className="fixed inset-0 w-screen h-screen z-[1100] flex items-center justify-center p-6 bg-black/95 backdrop-blur-xl">
              <motion.div 
                initial={{ opacity: 0, y: 50 }} 
                animate={{ opacity: 1, y: 0 }} 
@@ -369,7 +378,8 @@ const DeliveryManager = () => {
                 </div>
                 
                 <div className="space-y-1 mb-8 text-[10px] uppercase">
-                   <div className="flex justify-between"><span>FACTURA:</span><span className="font-bold">#WEB_{String(selectedOrder.id).includes('_') ? selectedOrder.id.split('_')[1] : selectedOrder.id}</span></div>
+                   <div className="flex justify-between"><span>FACTURA:</span><span className="font-bold">#WEB_{String(selectedOrder.id).split('_').pop()}</span></div>
+                   <div className="flex justify-between"><span>ID REGISTRO:</span><span className="font-bold text-[8px]">{selectedOrder.id}</span></div>
                    <div className="flex justify-between"><span>FECHA:</span><span>{new Date().toLocaleDateString()}</span></div>
                    <div className="flex justify-between"><span>CLIENTE:</span><span className="font-bold">{selectedOrder.customer_name}</span></div>
                    <div className="flex justify-between"><span>DIRECCIÓN:</span><span className="font-bold truncate max-w-[150px]">{selectedOrder.customer_address}</span></div>
@@ -392,11 +402,18 @@ const DeliveryManager = () => {
                    <span>{selectedOrder.total}</span>
                 </div>
 
-                <div className="flex space-x-2 no-print">
-                   <Button onClick={() => setShowInvoice(false)} className="flex-1 text-xs">Cerrar</Button>
-                   <Button onClick={() => handlePrint(selectedOrder)} variant="outline" className="px-6 border-zinc-900 text-zinc-900">
-                      <Printer size={16} />
-                   </Button>
+                <div className="flex flex-col space-y-3 no-print">
+                   <div className="grid grid-cols-2 gap-2">
+                      <Button onClick={() => handlePrint(selectedOrder)} className="text-[10px] space-x-2">
+                         <Printer size={14} />
+                         <span>IMPRIMIR</span>
+                      </Button>
+                      <Button onClick={() => handlePrint(selectedOrder)} variant="outline" className="text-[10px] border-zinc-900 text-zinc-900 space-x-2">
+                         <Truck size={14} />
+                         <span>DESCARGAR</span>
+                      </Button>
+                   </div>
+                   <Button variant="outline" onClick={() => setShowInvoice(false)} className="w-full text-[10px] border-zinc-300 text-zinc-400">Cerrar</Button>
                 </div>
                 
                 <p className="text-center mt-8 text-[8px] opacity-40 uppercase tracking-[0.3em]">Urban Street // Digital Receipt</p>

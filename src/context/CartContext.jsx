@@ -47,7 +47,6 @@ export const CartProvider = ({ children }) => {
       }
       return [...prevItems, { ...product, quantity: 1, notes: '' }];
     });
-    setIsCartOpen(true);
   };
 
   const removeFromCart = (productId) => {
@@ -80,11 +79,13 @@ export const CartProvider = ({ children }) => {
   };
 
   const toggleCart = () => setIsCartOpen((prev) => !prev);
+  const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
     <CartContext.Provider
       value={{
         cartItems,
+        cartCount,
         isCartOpen,
         total,
         addToCart,

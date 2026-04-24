@@ -8,7 +8,7 @@ import { useAdmin } from '../context/AdminContext';
 
 const Navbar = () => {
   const location = useLocation();
-  const { cartItems, toggleCart } = useCart();
+  const { cartItems, cartCount, toggleCart } = useCart();
   const { cmsData } = useAdmin();
   const brand = cmsData?.brand || { name: 'URBAN STREET' };
   const brandParts = brand.name.split(' ');
@@ -60,9 +60,9 @@ const Navbar = () => {
               className="text-text-bright hover:text-primary transition-colors relative group"
             >
               <ShoppingBag size={20} />
-              {cartItems.length > 0 && (
+              {cartCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-primary text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-none shadow-lg">
-                  {cartItems.length}
+                  {cartCount}
                 </span>
               )}
             </button>
@@ -76,9 +76,9 @@ const Navbar = () => {
             className="text-text-bright hover:text-primary transition-colors relative"
           >
             <ShoppingBag size={22} />
-            {cartItems.length > 0 && (
+            {cartCount > 0 && (
               <span className="absolute -top-2 -right-2 bg-primary text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-none">
-                {cartItems.length}
+                {cartCount}
               </span>
             )}
           </button>

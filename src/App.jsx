@@ -27,10 +27,10 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/menu" element={<FullMenu />} />
-          
+
           {/* Hidden Admin Routes */}
-          <Route 
-            path="/hidden-admin" 
+          <Route
+            path="/hidden-admin"
             element={
               <React.Suspense fallback={<div className="bg-background h-screen"></div>}>
                 <AdminLayout />

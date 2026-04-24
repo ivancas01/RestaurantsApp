@@ -77,7 +77,7 @@ def import_venue():
             Table.objects.get_or_create(
                 location=loc,
                 number=str(i),
-                defaults={'capacity': 4, 'x': i * 100, 'y': 100}
+                defaults={'capacity': 4}
             )
     print("Venue data imported successfully.")
 

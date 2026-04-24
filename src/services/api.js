@@ -1,4 +1,8 @@
-const API_URL = 'http://localhost:8000/api';
+const API_HOSTNAME = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? '127.0.0.1'
+  : window.location.hostname;
+
+const API_URL = `http://${API_HOSTNAME}:8000/api`;
 
 const getHeaders = () => {
   const token = localStorage.getItem("urban_token");

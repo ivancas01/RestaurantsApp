@@ -1,17 +1,17 @@
 import React from 'react';
 import { Sun, Moon } from 'lucide-react';
-import { useTheme } from '../hooks/useTheme';
+import { useAdmin } from '../context/AdminContext';
 
 const ThemeToggle = () => {
-  const { theme, toggleTheme } = useTheme();
+  const { darkMode, setDarkMode } = useAdmin();
 
   return (
     <button
-      onClick={toggleTheme}
+      onClick={() => setDarkMode(!darkMode)}
       className="p-2 border-2 border-primary/20 hover:border-primary transition-all duration-300 text-text-bright flex items-center justify-center"
       aria-label="Toggle Theme"
     >
-      {theme === 'dark' ? (
+      {darkMode ? (
         <Sun size={20} className="text-primary" />
       ) : (
         <Moon size={20} className="text-primary" />
