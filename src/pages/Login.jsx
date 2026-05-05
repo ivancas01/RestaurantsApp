@@ -39,7 +39,7 @@ const Login = () => {
       localStorage.setItem('urban_refresh_token', data.refresh);
       
       // Fetch profile and update context
-      const profile = await api.getCurrentUser();
+      const profile = await api.getMe();
       setCurrentUser(profile);
       await refreshData();
       

@@ -24,9 +24,14 @@ class Order(models.Model):
     type = models.CharField(max_length=20, choices=ORDER_TYPES, default='table')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pendiente')
     
-    # Delivery Flags
+    # Delivery & Payment Flags
     is_paid = models.BooleanField(default=False)
     is_sent = models.BooleanField(default=False)
+    payment_method = models.CharField(max_length=50, blank=True, null=True, choices=[
+        ('Cash', 'Efectivo'),
+        ('Card', 'Tarjeta'),
+        ('Transfer', 'Transferencia'),
+    ])
     
     # Customer Info
     customer_name = models.CharField(max_length=200, blank=True, null=True)

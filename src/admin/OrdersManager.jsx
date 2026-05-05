@@ -1,52 +1,42 @@
 import React, { useState, useEffect } from 'react';
+import Pagination from '../components/ui/Pagination';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ClipboardList, Users, CheckCircle, XCircle, ChevronRight, Hash, Phone, Plus, Search, X, Trash2, Printer, CreditCard, ChefHat, Filter, MessageSquare, ShoppingBag, MapPin, Eye, Edit2 } from 'lucide-react';
+import { ClipboardList, Users, CheckCircle, XCircle, ChevronRight, Hash, Phone, Plus, Search, X, Trash2, Printer, CreditCard, ChefHat, Filter, MessageSquare, ShoppingBag, MapPin, Eye, Edit2, Wallet, ArrowRightLeft } from 'lucide-react';
+import html2pdf from 'html2pdf.js';
 import { useAdmin } from '../context/AdminContext';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import ConfirmModal from '../components/ui/ConfirmModal';
 import { useNotification } from '../context/NotificationContext';
+import { api } from '../services/api';
 
 const OrdersManager = () => {
-  const { orders, updateOrderStatus, updateOrder, tables, reservations, menu, addOrder, locations, updateReservationStatus, cmsData } = useAdmin();
+  const { 
+    orders, updateOrderStatus, updateOrder, tables, reservations, 
+    menu, addOrder, locations, updateReservationStatus, cmsData,
+    fetchOrders, pagination
+  } = useAdmin();
+
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Local Polling: Only while this tab is active
+  useEffect(() => {
+    fetchOrders(currentPage); 
+    const POLL_INTERVAL = 8000;
+    const intervalId = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchOrders(currentPage);
+      }
+    }, POLL_INTERVAL);
+    return () => clearInterval(intervalId);
+  }, [fetchOrders, currentPage]);
   const brand = cmsData?.brand || { name: 'URBAN STREET', tagline: 'Gourmet Command Center' };
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [isAddingOrder, setIsAddingOrder] = useState(false);
   const [editingOrderId, setEditingOrderId] = useState(null);
-  const [showInvoice, setShowInvoice] = useState(false);
-  const [lastSavedOrder, setLastSavedOrder] = useState(null);
-  const [orderToCancel, setOrderToCancel] = useState(null);
-  const [cancelReason, setCancelReason] = useState('');
-  const { showNotification } = useNotification();
-  
-  // Sidebar State
-  const [sidebarSearch, setSidebarSearch] = useState('');
-  const [sidebarFilter, setSidebarFilter] = useState('ALL'); // ALL, Pendiente, Preparando, Completado, Pagado
-
-  const tableOrders = orders.filter(o => o.type === 'table');
-  
-  // Safely filtered list for Sidebar
-  const filteredSidebarOrders = tableOrders.filter(o => {
-    // 1. Status Filter
-    if (sidebarFilter !== 'ALL' && o.status !== sidebarFilter) return false;
-
-    // 2. Search Filter (Null-safe)
-    if (sidebarSearch.trim() === '') return true;
-    const searchLower = sidebarSearch.toLowerCase();
-    
-    const customerName = (o.customer_name || '').toLowerCase();
-    const orderId = (o.id || '').toLowerCase();
-    const tableNum = tables.find(t => t.id === o.table)?.number?.toString() || '';
-
-    return customerName.includes(searchLower) || 
-           orderId.includes(searchLower) ||
-           tableNum.includes(searchLower);
-  }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-  const selectedOrder = orders.find(o => o.id === selectedOrderId);
 
   const [newOrder, setNewOrder] = useState({
     customer_name: '',
@@ -60,32 +50,137 @@ const OrdersManager = () => {
   });
 
   useEffect(() => {
+    const lookupCustomer = async () => {
+      if (newOrder.identification && newOrder.identification.length >= 4) {
+        try {
+          const results = await api.searchCustomer(newOrder.identification);
+          // If exact match found
+          const match = results.find(c => String(c.identification) === String(newOrder.identification));
+          if (match) {
+            setNewOrder(prev => ({
+              ...prev,
+              customer_name: match.name,
+              customer_phone: match.phone
+            }));
+          }
+        } catch (err) {
+          console.error("Autocomplete error:", err);
+        }
+      }
+    };
+    
+    const timeoutId = setTimeout(lookupCustomer, 500);
+    return () => clearTimeout(timeoutId);
+  }, [newOrder.identification]);
+  const [showInvoice, setShowInvoice] = useState(false);
+  const [lastSavedOrder, setLastSavedOrder] = useState(null);
+  const [orderToCancel, setOrderToCancel] = useState(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const { showNotification } = useNotification();
+  
+  // Sidebar State
+  const [sidebarSearch, setSidebarSearch] = useState('');
+  const [sidebarFilter, setSidebarFilter] = useState('ALL'); // ALL, Pendiente, Preparando, Completado, Pagado
+  const [visibleOrdersCount, setVisibleOrdersCount] = useState(10);
+
+  const handleSidebarScroll = (e) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (scrollHeight - scrollTop <= clientHeight + 50) {
+      setVisibleOrdersCount(prev => prev + 10);
+    }
+  };
+
+  const tableOrders = orders.filter(o => o.type === 'table');
+  
+  // Safely filtered list for Sidebar
+  const filteredSidebarOrders = tableOrders.filter(o => {
+    // 1. Status Filter
+    if (sidebarFilter !== 'ALL' && o.status !== sidebarFilter) return false;
+
+    // 2. Search Filter (Null-safe)
+    if (sidebarSearch.trim() === '') return true;
+    const searchLower = sidebarSearch.toLowerCase();
+    
+    const customerName = (o.customer_name || '').toLowerCase();
+    const orderId = String(o.id || '').toLowerCase();
+    const tableNum = tables.find(t => t.id === o.table)?.number?.toString() || '';
+
+    return customerName.includes(searchLower) || 
+           orderId.includes(searchLower) ||
+           tableNum.includes(searchLower);
+  }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+  const selectedOrder = orders.find(o => o.id === selectedOrderId);
+
+  useEffect(() => {
     const tableIdFromUrl = searchParams.get('tableId');
     if (tableIdFromUrl && tables.length > 0) {
-      const tableExists = tables.find(t => t.id === tableIdFromUrl);
+      // Find table (handle string/number comparison)
+      const tableExists = tables.find(t => String(t.id) === String(tableIdFromUrl));
+      
       if (tableExists) {
-        const timer = setTimeout(() => {
-          setNewOrder(prev => ({ ...prev, table: tableIdFromUrl }));
-          setIsAddingOrder(true);
-          showNotification(`Mesa ${tableExists.number} seleccionada vía QR`, 'info');
-          // Clear params from URL
-          navigate('/hidden-admin/orders', { replace: true });
-        }, 300);
-        return () => clearTimeout(timer);
+        setNewOrder(prev => ({ 
+          ...prev, 
+          table: tableExists.id, // Use the correct ID from state
+          type: 'table' 
+        }));
+        setIsAddingOrder(true);
+        showNotification(`Mesa ${tableExists.number} seleccionada vía QR`, 'info');
+        // Clear params from URL to avoid re-triggering
+        navigate('/hidden-admin/orders', { replace: true });
       }
     }
   }, [searchParams, tables, navigate]);
 
   const [resSearch, setResSearch] = useState('');
   const [activeMenuCat, setActiveMenuCat] = useState(menu[0]?.id || '');
+  const [paymentModalOrder, setPaymentModalOrder] = useState(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('Cash');
+  const [customerSearchResults, setCustomerSearchResults] = useState([]);
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const handleCustomerSearch = async (val) => {
+    if (val.length < 3) {
+      setCustomerSearchResults([]);
+      return;
+    }
+    try {
+      const results = await api.searchCustomer(val);
+      setCustomerSearchResults(results);
+    } catch (error) {
+      console.error("Error searching customer:", error);
+    }
+  };
+
+  const selectCustomer = (customer) => {
+    setNewOrder({
+      ...newOrder,
+      customer_name: customer.name,
+      identification: customer.identification,
+      customer_phone: customer.phone,
+      customer_address: customer.address || ''
+    });
+    setCustomerSearchResults([]);
+  };
+  const handleFinalizePayment = async () => {
+    if (!paymentModalOrder) return;
+    await updateOrder(paymentModalOrder.id, { 
+      status: 'Pagado', 
+      isPaid: true, 
+      payment_method: selectedPaymentMethod 
+    });
+    setPaymentModalOrder(null);
+    showNotification(`Pedido #${paymentModalOrder.id} finalizado con ${selectedPaymentMethod}`);
+  };
+
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
   const filteredRes = resSearch.trim() ? reservations.filter(r => {
     const isToday = r.date === todayStr;
+    const isNotCompleted = r.status !== 'Completada' && r.status !== 'Cancelada';
     const matchesSearch = (r.name || '').toLowerCase().includes(resSearch.toLowerCase()) || 
                           (r.identification || '').includes(resSearch);
-    return isToday && matchesSearch;
+    return isToday && isNotCompleted && matchesSearch;
   }).slice(0, 5) : [];
 
   const handleLinkRes = (res) => {
@@ -96,40 +191,61 @@ const OrdersManager = () => {
       identification: res.identification,
       reservationId: res.id
     });
-    // Mark reservation as completed automatically
-    updateReservationStatus(res.id, 'Completada');
     setResSearch('');
-    showNotification(`Reserva de ${res.name} vinculada y completada`, 'success');
+    showNotification(`Reserva de ${res.name} vinculada al pedido`, 'success');
   };
 
   const addToCart = (product) => {
-    const existing = newOrder.items.find(i => i.id === product.id);
-    if (existing) {
-      setNewOrder({
-        ...newOrder,
-        items: newOrder.items.map(i => i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i)
-      });
+    const existingIndex = newOrder.items.findIndex(i => {
+      const itemId = i.id || i.product || i.product_id;
+      return String(itemId) === String(product.id) || (i.product_name === product.name || i.name === product.name);
+    });
+
+    if (existingIndex > -1) {
+      const updatedItems = [...newOrder.items];
+      updatedItems[existingIndex] = {
+        ...updatedItems[existingIndex],
+        quantity: updatedItems[existingIndex].quantity + 1
+      };
+      setNewOrder({ ...newOrder, items: updatedItems });
     } else {
       setNewOrder({
         ...newOrder,
-        items: [...newOrder.items, { ...product, quantity: 1 }]
+        items: [...newOrder.items, { ...product, product_id: product.id, quantity: 1 }]
       });
     }
   };
 
-  const removeFromCart = (id) => {
+  const removeFromCart = (targetId) => {
     setNewOrder({
       ...newOrder,
-      items: newOrder.items.filter(i => i.id !== id)
+      items: newOrder.items.filter(i => {
+        const itemId = i.id || i.product || i.product_id;
+        return String(itemId) !== String(targetId);
+      })
     });
   };
 
-  const updateQty = (id, delta) => {
+  const updateQty = (targetId, delta) => {
     setNewOrder({
       ...newOrder,
       items: newOrder.items.map(i => {
-        if (i.id === id) {
+        const itemId = i.id || i.product || i.product_id;
+        if (String(itemId) === String(targetId)) {
           return { ...i, quantity: Math.max(1, i.quantity + delta) };
+        }
+        return i;
+      })
+    });
+  };
+
+  const updateItemNote = (targetId, note) => {
+    setNewOrder({
+      ...newOrder,
+      items: newOrder.items.map(i => {
+        const itemId = i.id || i.product || i.product_id;
+        if (String(itemId) === String(targetId)) {
+          return { ...i, notes: note };
         }
         return i;
       })
@@ -189,7 +305,7 @@ const OrdersManager = () => {
           <div class="items">${itemsHtml}</div>
           <div class="total">
             <span>TOTAL</span>
-            <span>$${order.total.toFixed(2)}</span>
+            <span>$${(typeof order.total === 'number' ? order.total : parseFloat(String(order.total).replace('$', ''))).toFixed(2)}</span>
           </div>
           <div class="footer">¡Gracias por visitarnos! // Urban Street</div>
           <script>
@@ -208,8 +324,68 @@ const OrdersManager = () => {
     printWindow.document.close();
   };
 
+  const handleDownloadPDF = (order) => {
+    const itemsHtml = order.items.map(item => `
+      <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-family: 'Courier New', Courier, monospace; font-size: 12px;">
+        <span style="text-transform: uppercase;">${item.quantity}x ${(item.product_name || item.name)}</span>
+        <span>$${(parseFloat(String(item.price_at_order || item.price || '0').replace('$', '')) * item.quantity).toFixed(2)}</span>
+      </div>
+    `).join('');
+
+    const content = `
+      <div style="padding: 40px; font-family: 'Courier New', Courier, monospace; color: black; background: white; max-width: 500px; margin: auto;">
+        <div style="text-align: center; border-bottom: 2px dashed #000; padding-bottom: 20px; margin-bottom: 20px;">
+          <h1 style="margin: 0; font-family: Arial, sans-serif; font-size: 28px;">${brand.name}</h1>
+          <p style="margin: 5px 0 0; text-transform: uppercase; font-size: 10px; letter-spacing: 2px;">${brand.tagline}</p>
+        </div>
+        <div style="margin-bottom: 25px; font-size: 12px; text-transform: uppercase; line-height: 1.6;">
+          <div style="display: flex; justify-content: space-between;"><span>FACTURA:</span> <span>#ORD_${String(order.id).split('_').pop()}</span></div>
+          <div style="display: flex; justify-content: space-between;"><span>FECHA:</span> <span>${new Date().toLocaleDateString()}</span></div>
+          <div style="display: flex; justify-content: space-between;"><span>CLIENTE:</span> <span>${order.customer_name}</span></div>
+          ${order.table ? `<div style="display: flex; justify-content: space-between;"><span>MESA:</span> <span>${tables.find(t => t.id === order.table)?.number || 'N/A'}</span></div>` : ''}
+        </div>
+        <div style="border-bottom: 1px solid #000; padding-bottom: 15px; margin-bottom: 15px;">
+           <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 10px; font-size: 12px;">
+             <span>DESCRIPCIÓN</span>
+             <span>TOTAL</span>
+           </div>
+           ${itemsHtml}
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 20px; font-weight: bold; border-top: 2px solid black; padding-top: 10px;">
+          <span>TOTAL</span>
+          <span>$${(typeof order.total === 'number' ? order.total : parseFloat(String(order.total).replace('$', ''))).toFixed(2)}</span>
+        </div>
+        <div style="text-align: center; margin-top: 40px; font-size: 10px; text-transform: uppercase; letter-spacing: 2px;">
+           ¡Gracias por visitarnos! // Urban Street
+        </div>
+      </div>
+    `;
+
+    const opt = {
+      margin: 0,
+      filename: `${order.customer_name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 3, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().from(content).set(opt).save();
+    showNotification("Factura descargada exitosamente", "success");
+  };
+
   const handleSaveOrder = () => {
-    if (!newOrder.customer_name || newOrder.items.length === 0) return;
+    if (!newOrder.customer_name.trim()) {
+      showNotification("El nombre del cliente es obligatorio", "error");
+      return;
+    }
+    if (newOrder.items.length === 0) {
+      showNotification("Debes agregar al menos un producto", "error");
+      return;
+    }
+    if (newOrder.type === 'table' && !newOrder.table) {
+      showNotification("Debes seleccionar una mesa", "error");
+      return;
+    }
     
     if (editingOrderId) {
       const updatedData = {
@@ -228,6 +404,11 @@ const OrdersManager = () => {
       addOrder(finalOrder).then(savedOrder => {
         setLastSavedOrder(savedOrder || finalOrder);
         setShowInvoice(true);
+        
+        // Mark reservation as completed only after successful order save
+        if (newOrder.reservationId) {
+          updateReservationStatus(newOrder.reservationId, 'Completada');
+        }
       });
       showNotification("Pedido procesado exitosamente");
     }
@@ -298,6 +479,49 @@ const OrdersManager = () => {
   return (
     <div className="space-y-10 relative uppercase">
       {/* Modals */}
+      {/* Payment Selection Modal */}
+      <Modal
+        isOpen={!!paymentModalOrder}
+        onClose={() => setPaymentModalOrder(null)}
+        title="Finalizar Pago"
+        subtitle={`Pedido #${paymentModalOrder?.id}`}
+        maxWidth="max-w-md"
+      >
+        <div className="space-y-8 p-4">
+           <div className="text-center space-y-2">
+              <p className="text-[10px] font-bold text-text-dim uppercase tracking-widest">Total a Cobrar</p>
+              <h3 className="text-5xl font-serif text-primary">{paymentModalOrder?.total}</h3>
+           </div>
+           
+           <div className="space-y-4">
+              <p className="text-[10px] font-bold text-text-bright uppercase tracking-[0.2em] border-b border-zinc-800 pb-2">Seleccione Método de Pago</p>
+              <div className="grid grid-cols-1 gap-3">
+                 {[
+                   { id: 'Cash', label: 'Efectivo', icon: <Wallet size={18} /> },
+                   { id: 'Card', label: 'Tarjeta (Débito/Crédito)', icon: <CreditCard size={18} /> },
+                   { id: 'Transfer', label: 'Transferencia / Nequi', icon: <ArrowRightLeft size={18} /> }
+                 ].map(m => (
+                   <button 
+                     key={m.id}
+                     onClick={() => setSelectedPaymentMethod(m.id)}
+                     className={`flex items-center justify-between p-5 border-2 transition-all ${selectedPaymentMethod === m.id ? 'border-primary bg-primary/10' : 'border-zinc-800 hover:border-zinc-600'}`}
+                   >
+                      <div className="flex items-center space-x-4">
+                         <div className={selectedPaymentMethod === m.id ? 'text-primary' : 'text-text-dim'}>{m.icon}</div>
+                         <span className={`text-xs font-bold uppercase tracking-widest ${selectedPaymentMethod === m.id ? 'text-text-bright' : 'text-text-dim'}`}>{m.label}</span>
+                      </div>
+                      {selectedPaymentMethod === m.id && <CheckCircle className="text-primary" size={18} />}
+                   </button>
+                 ))}
+              </div>
+           </div>
+
+           <Button onClick={handleFinalizePayment} className="w-full py-5 text-lg shadow-[10px_10px_0px_0px_rgba(225,29,72,0.2)]">
+              Confirmar y Cerrar Comanda
+           </Button>
+        </div>
+      </Modal>
+
       <Modal 
         isOpen={isAddingOrder || !!editingOrderId} 
         onClose={() => {setIsAddingOrder(false); setEditingOrderId(null);}}
@@ -328,9 +552,62 @@ const OrdersManager = () => {
                         </div>
                       )}
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-                      <input type="text" placeholder="NOMBRE COMPLETO" value={newOrder.customer_name} onChange={e => setNewOrder({...newOrder, customer_name: e.target.value.toUpperCase()})} className="bg-background border-2 border-zinc-800 p-3 text-[10px] font-bold outline-none focus:border-primary w-full" />
-                      <input type="text" placeholder="TELÉFONO" value={newOrder.customer_phone} onChange={e => setNewOrder({...newOrder, customer_phone: e.target.value})} className="bg-background border-2 border-zinc-800 p-3 text-[10px] font-bold outline-none focus:border-primary w-full" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 relative">
+                      <div className="relative group">
+                        <input 
+                          type="text" 
+                          placeholder="NOMBRE COMPLETO" 
+                          value={newOrder.customer_name} 
+                          onChange={e => {
+                            setNewOrder({...newOrder, customer_name: e.target.value.toUpperCase()});
+                            handleCustomerSearch(e.target.value);
+                          }} 
+                          className="bg-background border-2 border-zinc-800 p-3 text-[10px] font-bold outline-none focus:border-primary w-full" 
+                        />
+                      </div>
+                      <div className="relative group">
+                        <input 
+                          type="text" 
+                          placeholder="IDENTIFICACIÓN / CC" 
+                          value={newOrder.identification} 
+                          onChange={e => {
+                            setNewOrder({...newOrder, identification: e.target.value});
+                            handleCustomerSearch(e.target.value);
+                          }} 
+                          className="bg-background border-2 border-zinc-800 p-3 text-[10px] font-bold outline-none focus:border-primary w-full" 
+                        />
+                      </div>
+                      <div className="relative group">
+                        <input 
+                          type="text" 
+                          placeholder="TELÉFONO" 
+                          value={newOrder.customer_phone} 
+                          onChange={e => {
+                            setNewOrder({...newOrder, customer_phone: e.target.value});
+                            handleCustomerSearch(e.target.value);
+                          }} 
+                          className="bg-background border-2 border-zinc-800 p-3 text-[10px] font-bold outline-none focus:border-primary w-full" 
+                        />
+                      </div>
+
+                      {customerSearchResults.length > 0 && (
+                        <div className="absolute top-full left-0 right-0 z-[110] bg-surface border-2 border-primary mt-1 shadow-2xl max-h-[200px] overflow-y-auto">
+                           <div className="p-2 bg-primary/10 text-[8px] font-bold text-primary uppercase tracking-widest border-b border-primary/20">Resultados en Base de Datos</div>
+                           {customerSearchResults.map((customer, idx) => (
+                             <button 
+                               key={idx} 
+                               onClick={() => selectCustomer(customer)}
+                               className="w-full p-3 hover:bg-primary/5 border-b border-zinc-800 last:border-0 flex justify-between items-center text-left"
+                             >
+                                <div>
+                                   <p className="text-[10px] font-bold text-text-bright">{customer.name}</p>
+                                   <p className="text-[8px] text-text-dim uppercase">{customer.identification} • {customer.phone}</p>
+                                </div>
+                                <ChevronRight size={14} className="text-primary" />
+                             </button>
+                           ))}
+                        </div>
+                      )}
                       <select 
                         value={newOrder.table} 
                         onChange={e => setNewOrder({...newOrder, table: e.target.value})}
@@ -344,7 +621,7 @@ const OrdersManager = () => {
                             <optgroup key={loc.id} label={loc.name.toUpperCase()} className="bg-background text-primary font-black">
                               {locationTables.map(t => (
                                 <option key={t.id} value={t.id} className="bg-background text-text-bright font-bold">
-                                  ID:{t.id} - MESA {t.number}
+                                  MESA {t.number}
                                 </option>
                               ))}
                             </optgroup>
@@ -373,15 +650,25 @@ const OrdersManager = () => {
                   {newOrder.items.length === 0 ? (
                     <div className="h-32 flex flex-center flex-col items-center justify-center border-2 border-dashed border-zinc-800 text-text-dim opacity-40"><ShoppingBag size={24} className="mb-2"/><p className="text-[8px] font-bold uppercase tracking-[0.2em]">Sin productos</p></div>
                   ) : (
-                    newOrder.items.map(item => (
-                      <div key={item.id} className="flex flex-col border-b border-zinc-800 pb-4">
-                          <div className="flex justify-between items-start font-bold text-[10px] text-text-bright pr-4"><span>{item.product_name || item.name}</span><button onClick={() => removeFromCart(item.id)} className="text-accent opacity-50 hover:opacity-100"><Trash2 size={14}/></button></div>
-                          <div className="flex justify-between items-center mt-3">
-                            <div className="flex items-center space-x-3 bg-background border border-zinc-800 px-2 py-1"><button onClick={() => updateQty(item.id, -1)} className="text-primary font-bold px-2 hover:bg-primary/10 transition-colors">-</button><span className="font-mono text-xs">{item.quantity}</span><button onClick={() => updateQty(item.id, 1)} className="text-primary font-bold px-2 hover:bg-primary/10 transition-colors">+</button></div>
-                            <span className="text-xs font-mono font-bold text-text-bright">${(parseFloat(String(item.price_at_order || item.price || '0').replace('$', '')) * item.quantity).toFixed(2)}</span>
-                          </div>
-                      </div>
-                    ))
+                    newOrder.items.map(item => {
+                      const itemId = item.id || item.product || item.product_id;
+                      return (
+                        <div key={itemId} className="flex flex-col border-b border-zinc-800 pb-4">
+                            <div className="flex justify-between items-start font-bold text-[10px] text-text-bright pr-4"><span>{item.product_name || item.name}</span><button onClick={() => removeFromCart(itemId)} className="text-accent opacity-50 hover:opacity-100"><Trash2 size={14}/></button></div>
+                            <div className="flex justify-between items-center mt-3 mb-3">
+                              <div className="flex items-center space-x-3 bg-background border border-zinc-800 px-2 py-1"><button onClick={() => updateQty(itemId, -1)} className="text-primary font-bold px-2 hover:bg-primary/10 transition-colors">-</button><span className="font-mono text-xs">{item.quantity}</span><button onClick={() => updateQty(itemId, 1)} className="text-primary font-bold px-2 hover:bg-primary/10 transition-colors">+</button></div>
+                              <span className="text-xs font-mono font-bold text-text-bright">${(parseFloat(String(item.price_at_order || item.price || '0').replace('$', '')) * item.quantity).toFixed(2)}</span>
+                            </div>
+                            <input 
+                              type="text" 
+                              value={item.notes || ''} 
+                              onChange={(e) => updateItemNote(itemId, e.target.value.toUpperCase())}
+                              placeholder="NOTAS POR PRODUCTO..."
+                              className="w-full bg-background border border-zinc-800 p-2 text-[8px] font-bold outline-none focus:border-primary uppercase"
+                            />
+                        </div>
+                      );
+                    })
                   )}
                 </div>
 
@@ -433,6 +720,7 @@ const OrdersManager = () => {
                    <div className="flex justify-between"><span>ID REGISTRO:</span><span className="font-bold text-[8px]">{lastSavedOrder.id}</span></div>
                    <div className="flex justify-between"><span>FECHA:</span><span>{new Date().toLocaleDateString()}</span></div>
                    <div className="flex justify-between"><span>CLI:</span><span className="font-bold">{lastSavedOrder.customer_name}</span></div>
+                   {lastSavedOrder.waiter_name && <div className="flex justify-between"><span>ATENDIDO POR:</span><span className="font-bold">{lastSavedOrder.waiter_name.toUpperCase()}</span></div>}
                 </div>
                 <div className="border-b border-zinc-200 mb-6 pb-4">
                    <div className="flex justify-between text-[10px] font-bold mb-4"><span>DESC</span><span>TOTAL</span></div>
@@ -445,7 +733,7 @@ const OrdersManager = () => {
                          <Printer size={14} />
                          <span>IMPRIMIR</span>
                       </Button>
-                      <Button onClick={() => handlePrint(lastSavedOrder)} variant="outline" className="text-[10px] border-zinc-900 text-zinc-900 space-x-2">
+                      <Button onClick={() => handleDownloadPDF(lastSavedOrder)} variant="outline" className="text-[10px] border-zinc-900 text-zinc-900 space-x-2">
                          <ShoppingBag size={14} />
                          <span>DESCARGAR</span>
                       </Button>
@@ -516,14 +804,14 @@ const OrdersManager = () => {
             </div>
 
             <div className="bg-surface border-2 border-zinc-200 dark:border-zinc-900 overflow-hidden shadow-xl">
-               <div className="overflow-x-auto scrollbar-hide">
+               <div className="overflow-x-auto scrollbar-hide max-h-[70vh]" onScroll={handleSidebarScroll}>
                   <table className="w-full text-left border-collapse min-w-[700px]">
                      <thead>
                         <tr className="bg-black/5 dark:bg-white/5 border-b-2 border-zinc-200 dark:border-zinc-800 uppercase tracking-widest text-[9px] font-bold text-primary">
-                           <th className="p-4">Mesa</th>
-                           <th className="p-4">Cliente</th>
+                           <th className="p-4">Ubicación</th>
+                           <th className="p-4">Cliente / Estado</th>
                            <th className="p-4">Total</th>
-                           <th className="p-4">Estado</th>
+                           <th className="p-4">Registro</th>
                            <th className="p-4 text-right">#</th>
                         </tr>
                      </thead>
@@ -536,7 +824,7 @@ const OrdersManager = () => {
                               </td>
                            </tr>
                         ) : (
-                           filteredSidebarOrders.map((order) => {
+                           filteredSidebarOrders.map((order, idx) => {
                               const table = tables.find(t => t.id === order.table);
                               const isSelected = selectedOrderId === order.id;
                               
@@ -552,21 +840,48 @@ const OrdersManager = () => {
                                            <div className="flex flex-col">
                                               <span className="text-sm font-serif">Mesa {tables.find(t => String(t.id) === String(order.table))?.number || '??'}</span>
                                               <span className="text-[8px] font-bold text-text-dim uppercase">{locations.find(l => l.id === tables.find(t => String(t.id) === String(order.table))?.locationId)?.name || 'AREA'}</span>
+                                              {order.waiter_name && (
+                                                <div className="pt-1 flex items-center space-x-1">
+                                                   <span className="text-[7px] font-bold text-primary uppercase tracking-tighter italic">Admin: {order.waiter_name}</span>
+                                                </div>
+                                              )}
                                            </div>
                                        </div>
                                     </td>
-                                    <td className="p-4 truncate max-w-[120px]">{order.customer_name}</td>
-                                    <td className="p-4 text-primary">${typeof order.total === 'number' ? order.total.toFixed(2) : parseFloat(String(order.total).replace('$', '')).toFixed(2)}</td>
                                     <td className="p-4">
-                                       <span className={`px-2 py-0.5 border text-[8px] ${getStatusColor(order.status)}`}>{order.status}</span>
+                                       <div className="flex flex-col">
+                                          <div className="flex items-center space-x-2">
+                                             <span className="text-sm font-bold text-text-bright">{order.customer_name}</span>
+                                             <span className={`text-[7px] px-1.5 py-0.5 font-black uppercase tracking-widest border ${getStatusColor(order.status)}`}>
+                                               {order.status}
+                                             </span>
+                                          </div>
+                                          <span className="text-[9px] text-text-dim font-mono">{order.identification || 'SIN DOC'}</span>
+                                       </div>
                                     </td>
-                                     <td className="p-4 text-right text-text-dim text-[9px]">#{String(order.id).split('_').pop()}</td>
+                                    <td className="p-4 text-primary font-serif text-lg">${typeof order.total === 'number' ? order.total.toFixed(2) : parseFloat(String(order.total).replace('$', '')).toFixed(2)}</td>
+                                    <td className="p-4">
+                                       <span className="text-text-dim text-[9px] font-mono">#{String(order.id).split('_').pop()}</span>
+                                    </td>
+                                    <td className="p-4 text-right">
+                                       <div className="flex items-center justify-end space-x-2">
+                                          <span className="text-[10px] font-bold text-primary/40 italic">#{idx + 1}</span>
+                                          <ChevronRight size={14} className="text-text-dim" />
+                                       </div>
+                                    </td>
                                  </tr>
                               );
                            })
                         )}
                      </tbody>
                   </table>
+               </div>
+               <div className="bg-surface border-t border-zinc-200 dark:border-zinc-800 px-4">
+                  <Pagination 
+                     current={currentPage} 
+                     total={pagination.orders} 
+                     onPageChange={setCurrentPage} 
+                  />
                </div>
             </div>
          </div>
@@ -598,9 +913,27 @@ const OrdersManager = () => {
                         <div className="flex justify-between items-end border-b border-zinc-100 dark:border-zinc-900 pb-4">
                            <div className="space-y-1">
                               <p className="text-[9px] font-bold text-text-dim uppercase tracking-widest">Cliente</p>
-                              <p className="text-sm font-bold text-text-bright uppercase">{selectedOrder.customer_name}</p>
-                           </div>
-                           <div className="text-right">
+                               <p className="text-sm font-bold text-text-bright uppercase">{selectedOrder.customer_name}</p>
+                               {selectedOrder.customer_phone && (
+                                  <a 
+                                    href={`https://wa.me/${selectedOrder.customer_phone.replace(/\D/g, '').length > 10 ? selectedOrder.customer_phone.replace(/\D/g, '') : '57' + selectedOrder.customer_phone.replace(/\D/g, '')}`} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="flex items-center space-x-1 text-[10px] text-primary hover:underline mt-1"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <Phone size={10} />
+                                    <span>{selectedOrder.customer_phone}</span>
+                                  </a>
+                               )}
+                            </div>
+                            {selectedOrder.waiter_name && (
+                               <div className="flex flex-col items-start bg-primary/5 px-2 py-1 border-l-2 border-primary">
+                                  <span className="text-[7px] font-bold text-primary uppercase tracking-[0.2em]">Atendido por</span>
+                                  <span className="text-[10px] font-bold text-text-bright uppercase">{selectedOrder.waiter_name}</span>
+                                </div>
+                            )}
+                            <div className="text-right">
                               <p className="text-2xl font-serif text-primary font-bold">${typeof selectedOrder.total === 'number' ? selectedOrder.total.toFixed(2) : parseFloat(String(selectedOrder.total).replace('$', '')).toFixed(2)}</p>
                               <span className={`text-[8px] font-bold uppercase px-2 py-0.5 border ${getStatusColor(selectedOrder.status)}`}>{selectedOrder.status}</span>
                            </div>
@@ -614,16 +947,16 @@ const OrdersManager = () => {
                         )}
 
                         <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                              {selectedOrder.items.map((item, i) => (
-                                 <div key={i} className="flex justify-between items-center text-xs md:text-sm font-bold border-b border-zinc-100 dark:border-zinc-900 pb-3 last:border-0 group hover:bg-primary/5 transition-all px-2">
-                                    <div className="flex items-center space-x-4">
-                                       <span className="text-lg md:text-xl font-serif text-primary w-8">{item.quantity}x</span>
-                                       <span className="text-text-bright uppercase tracking-wide">{item.product_name || item.name}</span>
-                                    </div>
-                                    <span className="text-text-dim font-serif text-xs">${(parseFloat(String(item.price_at_order || item.price || '0').replace('$', '')) * item.quantity).toFixed(2)}</span>
-                                 </div>
-                              ))}
-                           </div>
+                               {selectedOrder.items.map((item, i) => (
+                                  <div key={i} className="flex justify-between items-center text-xs md:text-sm font-bold border-b border-zinc-100 dark:border-zinc-900 pb-3 last:border-0 group hover:bg-primary/5 transition-all px-2">
+                                     <div className="flex items-center space-x-4">
+                                        <span className="text-lg md:text-xl font-serif text-primary w-8">{item.quantity}x</span>
+                                        <span className="text-text-bright uppercase tracking-wide">{item.product_name || item.name}</span>
+                                     </div>
+                                     <span className="text-text-dim font-serif text-xs">${(parseFloat(String(item.price_at_order || item.price || '0').replace('$', '')) * item.quantity).toFixed(2)}</span>
+                                  </div>
+                               ))}
+                            </div>
 
                         <div className="space-y-3 pt-4 border-t border-zinc-100 dark:border-zinc-900">
                            <div className="flex space-x-2">
@@ -631,7 +964,7 @@ const OrdersManager = () => {
                               <Button variant="outline" onClick={() => handleEditClick(selectedOrder)} className="flex-1 text-[9px] border-zinc-700"><Edit2 size={14}/><span>Editar</span></Button>
                            </div>
                            {selectedOrder.status === 'Listo' && (
-                              <Button onClick={() => updateOrderStatus(selectedOrder.id, 'Pagado')} className="w-full bg-emerald-500 hover:bg-emerald-600 shadow-xl space-x-2">
+                              <Button onClick={() => setPaymentModalOrder(selectedOrder)} className="w-full bg-emerald-500 hover:bg-emerald-600 shadow-xl space-x-2">
                                  <CreditCard size={16}/>
                                  <span>Finalizar y Cobrar</span>
                               </Button>
@@ -654,7 +987,13 @@ const OrdersManager = () => {
                                      ))}
                                  </div>
                             )}
-                           <button onClick={() => setOrderToCancel(selectedOrder)} className="w-full py-2 text-[9px] font-bold text-accent uppercase tracking-widest hover:underline">Cancelar Comanda</button>
+                           {['Pendiente', 'Confirmado', 'En Lista'].includes(selectedOrder.status) ? (
+                              <button onClick={() => setOrderToCancel(selectedOrder)} className="w-full py-2 text-[9px] font-bold text-accent uppercase tracking-widest hover:underline">Cancelar Comanda</button>
+                           ) : (
+                              <div className="w-full py-2 text-[8px] font-black text-text-dim/40 uppercase tracking-[0.2em] text-center border border-dashed border-zinc-800">
+                                Bloqueado: En Cocina / Pagado
+                              </div>
+                           )}
                         </div>
                      </div>
                   </motion.div>

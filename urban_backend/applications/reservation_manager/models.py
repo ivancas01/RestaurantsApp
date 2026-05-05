@@ -5,7 +5,7 @@ class Reservation(models.Model):
     STATUS_CHOICES = [
         ('Pendiente', 'Pendiente'),
         ('Confirmado', 'Confirmado'),
-        ('Completado', 'Completado'),
+        ('Completada', 'Completada'),
         ('Cancelado', 'Cancelado'),
     ]
     
@@ -36,7 +36,7 @@ class Reservation(models.Model):
     class Meta:
         verbose_name = "Reserva"
         verbose_name_plural = "Reservas"
-        ordering = ['date', 'time']
+        ordering = ['-date', '-time']
 
     def __str__(self):
         return f"{self.name} - {self.date} {self.time} ({self.persons}p)"

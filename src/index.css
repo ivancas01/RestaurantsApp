@@ -98,9 +98,32 @@
   /* Standardized Inputs - Urban Version */
   .input-field {
     @apply w-full px-4 py-4 bg-zinc-100 dark:bg-surface border-2 border-zinc-200 dark:border-zinc-700 
-           rounded-none text-text-bright placeholder:text-text-dim/50
+           rounded-none text-text-bright placeholder:text-text-dim/70 box-border
            focus:outline-none focus:border-primary focus:ring-0 transition-all duration-150
-           text-base; /* Better for mobile to prevent auto-zoom */
+           appearance-none min-h-[58px] block; 
+    font-size: 16px !important; /* Force 16px to prevent iOS auto-zoom */
+  }
+
+  /* iOS Placeholder Fix */
+  .input-field::-webkit-input-placeholder {
+    @apply text-text-dim/70;
+    opacity: 1; /* Required for iOS */
+  }
+
+  /* Global Fix to prevent iOS auto-zoom on form elements */
+  @media screen and (max-width: 768px) {
+    input, select, textarea, .input-field {
+      font-size: 16px !important;
+    }
+  }
+
+  /* Specific iOS fixes for date and time */
+  input[type="date"].input-field,
+  input[type="time"].input-field {
+    @apply relative;
+    -webkit-appearance: none;
+    min-height: 58px;
+    display: block;
   }
 
   /* Urban Card */

@@ -1,7 +1,7 @@
 from rest_framework import serializers, viewsets, permissions, status
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from .models import HeroSection, AboutSection, ContactSection, ReservationSection, BrandSection, SystemNotification
+from .models import HeroSection, AboutSection, ContactSection, ReservationSection, BrandSection, FooterSection, SystemNotification
 
 # Serializers for our explicit models
 class HeroSectionSerializer(serializers.ModelSerializer):
@@ -29,6 +29,11 @@ class BrandSectionSerializer(serializers.ModelSerializer):
         model = BrandSection
         exclude = ['id']
 
+class FooterSectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FooterSection
+        exclude = ['id']
+
 class SystemNotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = SystemNotification
@@ -41,6 +46,7 @@ SECTION_MAP = {
     'contact': (ContactSection, ContactSectionSerializer),
     'reservations': (ReservationSection, ReservationSectionSerializer),
     'brand': (BrandSection, BrandSectionSerializer),
+    'footer': (FooterSection, FooterSectionSerializer),
 }
 
 class CMSSectionViewSet(viewsets.ViewSet):

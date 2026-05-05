@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import HeroSection, AboutSection, ContactSection, ReservationSection, BrandSection, SystemNotification
+from .models import HeroSection, AboutSection, ContactSection, ReservationSection, BrandSection, FooterSection, SystemNotification
 
 class SingletonModelAdmin(admin.ModelAdmin):
     """
@@ -29,6 +29,10 @@ class ReservationSectionAdmin(SingletonModelAdmin):
 
 @admin.register(BrandSection)
 class BrandSectionAdmin(SingletonModelAdmin):
+    pass
+
+@admin.register(FooterSection)
+class FooterSectionAdmin(SingletonModelAdmin):
     pass
 
 @admin.register(SystemNotification)

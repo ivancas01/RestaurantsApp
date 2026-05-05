@@ -5,8 +5,8 @@ import { Link } from 'react-router-dom';
 import { useAdmin } from '../context/AdminContext';
 import Button from '../components/ui/Button';
 
-// Product Image generated via AI
-const PRODUCT_IMAGE = "file:///C:/Users/ivanc/.gemini/antigravity/brain/f538c209-2d5b-4265-9bff-70cef98c35f9/urban_hero_burger_1776653580173.png";
+// Dynamic Fallback Image
+const DEFAULT_HERO_IMAGE = "https://images.unsplash.com/photo-1555392816-4aa3b306e041?q=80&w=1920&auto=format&fit=crop";
 
 const HeroSection = () => {
   const { menu = [], cmsData = {} } = useAdmin() || {};
@@ -32,7 +32,7 @@ const HeroSection = () => {
     stats_label: "Trending",
     stats_value: "+124 Pedidos",
     established: `${cmsData?.brand?.name || 'Urban Street'} // Established 2026`,
-    featured_image: PRODUCT_IMAGE
+    featured_image: DEFAULT_HERO_IMAGE
   };
 
   const featured = randomProduct || {

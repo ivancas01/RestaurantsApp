@@ -18,24 +18,39 @@ const StatCard = ({ title, value, icon, trend }) => (
 );
 
 const Dashboard = () => {
-  const { orders, reservations, tables, notifications } = useAdmin();
+  const { dashboardStats, fetchAdminCritical } = useAdmin();
 
-  // Metrics Logic
-  const today = new Date().toISOString().split('T')[0];
-  
-  const todayOrders = orders.filter(o => o.created_at?.split('T')[0] === today);
-  const todayRevenue = todayOrders
-    .filter(o => o.status === 'Pagado' || o.isPaid)
-    .reduce((acc, o) => acc + parseFloat(String(o.total || 0).replace('$', '').replace(',', '')), 0);
+  const formatCurrency = (val) => new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: 0
+  }).format(val);
 
-  const pendingOrders = orders.filter(o => ['Pendiente', 'Preparando', 'En Lista', 'Confirmado'].includes(o.status)).length;
-  const occupiedTables = tables.filter(t => t.status === 'Ocupada').length;
-  const todayReservationsCount = reservations.filter(r => r.date === today).length;
+  // Dashboard needs everything to keep stats fresh
+  React.useEffect(() => {
+    fetchAdminCritical(); // Initial fetch
+    const POLL_INTERVAL = 10000; // 10s is enough for dashboard
+    const intervalId = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchAdminCritical();
+      }
+    }, POLL_INTERVAL);
+    return () => clearInterval(intervalId);
+  }, [fetchAdminCritical]);
 
-  // Calculate trends (Simple mock based on real counts vs thresholds for visual impact)
-  const resTrend = todayReservationsCount > 5 ? "+15%" : "+5%";
-  const orderTrend = pendingOrders > 10 ? "+22%" : "+8%";
-  const salesTrend = todayRevenue > 500 ? "+30%" : "+12%";
+  const {
+    today_sales,
+    active_orders,
+    occupied_tables,
+    today_reservations,
+    recent_orders,
+    recent_reservations
+  } = dashboardStats;
+
+  // Trends (Keep the visual mock or adapt)
+  const resTrend = today_reservations > 5 ? "+15%" : "+5%";
+  const orderTrend = active_orders > 10 ? "+22%" : "+8%";
+  const salesTrend = today_sales > 500 ? "+30%" : "+12%";
 
   const quickActions = [
     { label: 'Tomar Pedido', icon: <ShoppingCart />, path: '/hidden-admin/orders', color: 'bg-primary' },
@@ -48,10 +63,10 @@ const Dashboard = () => {
     <div className="space-y-6 md:space-y-10 uppercase">
       {/* Metrics Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        <StatCard title="Reservas Hoy" value={todayReservationsCount} icon={<Calendar />} trend={resTrend} />
-        <StatCard title="Mesas Ocupadas" value={occupiedTables} icon={<MapPin />} trend="+2" />
-        <StatCard title="Pedidos Activos" value={pendingOrders} icon={<ShoppingCart />} trend={orderTrend} />
-        <StatCard title="Ventas del Día" value={`$${todayRevenue.toFixed(0)}`} icon={<DollarSign />} trend={salesTrend} />
+        <StatCard title="Reservas Hoy" value={today_reservations} icon={<Calendar />} trend="Activo" />
+        <StatCard title="Mesas Ocupadas" value={occupied_tables} icon={<MapPin />} trend="En Tiempo Real" />
+        <StatCard title="Pedidos Activos" value={active_orders} icon={<ShoppingCart />} trend="Pendientes" />
+        <StatCard title="Ventas del Día" value={formatCurrency(today_sales)} icon={<DollarSign />} trend="Caja" />
       </div>
 
       {/* Quick Actions Grid */}
@@ -76,24 +91,28 @@ const Dashboard = () => {
             <a href="/hidden-admin/reservations" className="text-[9px] md:text-xs uppercase tracking-widest text-primary hover:underline font-bold">Ver todas</a>
           </div>
           <div className="space-y-4 md:space-y-6">
-            {reservations.slice(0, 3).map((res) => (
-              <div key={res.id} className="flex items-center justify-between py-3 md:py-4 border-b border-zinc-100 dark:border-white/5 last:border-0">
-                <div className="flex items-center space-x-3 md:space-x-4">
-                  <div className="w-8 h-8 md:w-10 md:h-10 bg-black/5 dark:bg-white/5 flex items-center justify-center text-primary">
-                    <Users size={16} />
+            {recent_reservations.length === 0 ? (
+               <p className="text-[10px] text-text-dim uppercase text-center py-10 opacity-30 tracking-widest">Sin reservas registradas</p>
+            ) : (
+              recent_reservations.slice(0, 5).map((res) => (
+                <div key={res.id} className="flex items-center justify-between py-3 md:py-4 border-b border-zinc-100 dark:border-white/5 last:border-0">
+                  <div className="flex items-center space-x-3 md:space-x-4">
+                    <div className="w-8 h-8 md:w-10 md:h-10 bg-black/5 dark:bg-white/5 flex items-center justify-center text-primary">
+                      <Users size={16} />
+                    </div>
+                    <div>
+                      <p className="text-xs md:text-sm font-bold text-text-bright truncate max-w-[120px] md:max-w-none">{res.name}</p>
+                      <p className="text-[10px] text-text-dim">{res.date} • {res.time} • {res.persons}p</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs md:text-sm font-bold text-text-bright truncate max-w-[120px] md:max-w-none">{res.name}</p>
-                    <p className="text-[10px] text-text-dim">{res.time} • {res.persons}p</p>
-                  </div>
+                  <span className={`text-[8px] md:text-[10px] px-2 py-0.5 md:px-3 md:py-1 uppercase tracking-widest font-bold border ${
+                    res.status === 'Confirmado' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
+                  }`}>
+                    {res.status}
+                  </span>
                 </div>
-                <span className={`text-[8px] md:text-[10px] px-2 py-0.5 md:px-3 md:py-1 uppercase tracking-widest font-bold border ${
-                  res.status === 'Confirmado' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
-                }`}>
-                  {res.status}
-                </span>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
@@ -106,19 +125,19 @@ const Dashboard = () => {
                <span className="text-[8px] font-bold tracking-widest text-text-dim uppercase">Live Feed</span>
             </div>
           </div>
-          <div className="space-y-4 md:space-y-6 flex-1 overflow-y-auto max-h-[300px] pr-2 custom-scrollbar">
-             {notifications.length === 0 ? (
+          <div className="space-y-4 md:space-y-6 flex-1 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
+             {recent_orders.length === 0 ? (
                <div className="h-full flex flex-col items-center justify-center opacity-20 py-10">
                   <TrendingUp size={48} strokeWidth={1} />
                   <p className="text-[10px] font-bold mt-4 uppercase">Esperando actividad...</p>
                </div>
              ) : (
-               [...notifications].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).map(n => (
-                 <div key={n.id} className="flex space-x-4 border-l-2 border-primary pl-4 py-1">
+               recent_orders.map(o => (
+                 <div key={o.id} className="flex space-x-4 border-l-2 border-primary pl-4 py-1">
                     <div className="flex-1">
-                       <p className="text-[10px] font-bold text-text-bright uppercase tracking-tight">{n.title}</p>
-                       <p className="text-[10px] text-text-dim uppercase leading-tight mt-1">{n.message}</p>
-                       <p className="text-[8px] text-primary/60 mt-2 font-mono">{new Date(n.timestamp).toLocaleTimeString()}</p>
+                       <p className="text-[10px] font-bold text-text-bright uppercase tracking-tight">Nuevo Pedido #{String(o.id).split('_').pop()}</p>
+                       <p className="text-[10px] text-text-dim uppercase leading-tight mt-1">{o.type === 'table' ? `Mesa ${o.table_number || '?'}` : 'Domicilio'} - {o.customer_name}</p>
+                       <p className="text-[8px] text-primary/60 mt-2 font-mono">{new Date(o.created_at).toLocaleTimeString()} • {o.total}</p>
                     </div>
                  </div>
                ))

@@ -21,12 +21,13 @@ class OrderSerializer(serializers.ModelSerializer):
     )
     isPaid = serializers.BooleanField(source='is_paid', required=False)
     isSent = serializers.BooleanField(source='is_sent', required=False)
+    waiter_name = serializers.ReadOnlyField(source='waiter.username')
     
     class Meta:
         model = Order
         fields = [
-            'id', 'type', 'status', 'isPaid', 'isSent', 'customer_name', 'customer_phone', 'identification',
-            'customer_address', 'table', 'table_number', 'waiter', 'reservationId',
+            'id', 'type', 'status', 'isPaid', 'isSent', 'payment_method', 'customer_name', 'customer_phone', 'identification',
+            'customer_address', 'table', 'table_number', 'waiter', 'waiter_name', 'reservationId',
             'total', 'created_at', 'updated_at', 'cancel_reason', 'notes', 'items'
         ]
         read_only_fields = ['total', 'created_at', 'updated_at']

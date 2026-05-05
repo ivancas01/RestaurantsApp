@@ -1,9 +1,10 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import FullMenu from './pages/FullMenu';
 import CartDrawer from './components/CartDrawer';
+import { CartProvider } from './context/CartContext';
 import { NotificationProvider } from './context/NotificationContext';
 import Toaster from './components/ui/Toaster';
 
@@ -18,15 +19,29 @@ const DeliveryManager = React.lazy(() => import('./admin/DeliveryManager'));
 const ProductsManager = React.lazy(() => import('./admin/ProductsManager'));
 const CMSManager = React.lazy(() => import('./admin/CMSManager'));
 const PersonnelManager = React.lazy(() => import('./admin/PersonnelManager'));
+const CustomersManager = React.lazy(() => import('./admin/CustomersManager'));
+const ReportsManager = React.lazy(() => import('./admin/ReportsManager'));
+
+const PublicLayout = () => (
+  <CartProvider>
+    <CartDrawer />
+    <Outlet />
+  </CartProvider>
+);
 
 function App() {
   return (
     <NotificationProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<Home />} />
+          {/* Public Routes with Cart */}
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/menu" element={<FullMenu />} />
+            <Route path="*" element={<Home />} />
+          </Route>
+
           <Route path="/login" element={<Login />} />
-          <Route path="/menu" element={<FullMenu />} />
 
           {/* Hidden Admin Routes */}
           <Route
@@ -46,12 +61,10 @@ function App() {
             <Route path="products" element={<ProductsManager />} />
             <Route path="cms" element={<CMSManager />} />
             <Route path="personnel" element={<PersonnelManager />} />
+            <Route path="customers" element={<CustomersManager />} />
+            <Route path="reports" element={<ReportsManager />} />
           </Route>
-
-          {/* 404 Fallback to Home to maintain hidden aspect */}
-          <Route path="*" element={<Home />} />
         </Routes>
-        <CartDrawer />
       </Router>
       <Toaster />
     </NotificationProvider>

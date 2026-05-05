@@ -1,5 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { menuCategories as INITIAL_MENU } from '../data/menu';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { auditStorage } from '../utils/storageAudit';
 import { api } from '../services/api';
 
@@ -26,34 +25,6 @@ export const PERMISSIONS = {
   DELIVERY_MANAGE: 'delivery_manage',
 };
 
-const DEFAULT_GROUPS = [
-  {
-    id: 'super_admin',
-    name: 'Super Administrador',
-    permissions: Object.values(PERMISSIONS),
-  },
-  {
-    id: 'chef',
-    name: 'Jefe de Cocina',
-    permissions: [PERMISSIONS.KITCHEN_VIEW, PERMISSIONS.PRODUCTS_MANAGE],
-  },
-  {
-    id: 'waiter',
-    name: 'Mesero',
-    permissions: [PERMISSIONS.ORDERS_MANAGE, PERMISSIONS.RESERVATIONS_MANAGE, PERMISSIONS.DELIVERY_MANAGE],
-  }
-];
-
-const DEFAULT_USERS = [
-  {
-    id: 'admin_1',
-    username: 'admin',
-    name: 'Admin de Operaciones',
-    groupId: 'super_admin',
-    active: true
-  }
-];
-
 export const AdminProvider = ({ children }) => {
   const [users, setUsers] = useState([]);
   const [groups, setGroups] = useState([]);
@@ -65,30 +36,9 @@ export const AdminProvider = ({ children }) => {
     return parsed;
   });
 
-  // Menu Data
-  const [menu, setMenu] = useState(() => {
-    const saved = localStorage.getItem('urban_menu');
-    return saved ? JSON.parse(saved) : INITIAL_MENU;
-  });
-
-  // Venue Data
-  const [locations, setLocations] = useState(() => {
-    const saved = localStorage.getItem('urban_locations');
-    return saved ? JSON.parse(saved) : [
-      { id: 'loc_1', name: 'Terranza Exterior', image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=800&auto=format&fit=crop' },
-      { id: 'loc_2', name: 'Salón Principal', image: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=800&auto=format&fit=crop' },
-      { id: 'loc_3', name: 'Zona VIP', image: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?q=80&w=800&auto=format&fit=crop' }
-    ];
-  });
-
-  const [tables, setTables] = useState(() => {
-    const saved = localStorage.getItem('urban_tables');
-    const defaultTables = [
-      { id: 'table_1', number: '1', capacity: 4, locationId: 'loc_1', status: 'Disponible', x: 100, y: 100, shape: 'rect' },
-      { id: 'table_2', number: '2', capacity: 2, locationId: 'loc_1', status: 'Ocupada', x: 300, y: 100, shape: 'circle' },
-    ];
-    return saved ? JSON.parse(saved) : defaultTables;
-  });
+  const [menu, setMenu] = useState([]);
+  const [locations, setLocations] = useState([]);
+  const [tables, setTables] = useState([]);
 
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('urban_theme');
@@ -134,74 +84,226 @@ export const AdminProvider = ({ children }) => {
       address: "",
       phone: "",
       email: "",
-      hours: []
+      instagram: "",
+      whatsapp_prefix: "57",
+      opening_time: "08:00:00",
+      closing_time: "22:00:00",
+      closed_image: "https://images.unsplash.com/photo-1541480601022-2308c0f02487?q=80&w=800&auto=format&fit=crop"
     },
     reservations: {
       title: "Reserva tu Mesa",
       subtitle: "",
       help_text: ""
+    },
+    footer: {
+      description: "Experience the city through flavor. Premium Urban Gastronomy.",
+      socials: [
+        { name: "Instagram", url: "#" },
+        { name: "Facebook", url: "#" }
+      ],
+      copyright: "Digital Gastronomy"
     }
   };
 
   const [cmsData, setCmsData] = useState(DEFAULT_CMS);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [lastSync, setLastSync] = useState(new Date());
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [pagination, setPagination] = useState({
+    orders: 0,
+    reservations: 0,
+    users: 0,
+    customers: 0
+  });
+  const [dashboardStats, setDashboardStats] = useState({
+    today_sales: 0,
+    active_orders: 0,
+    occupied_tables: 0,
+    today_reservations: 0,
+    recent_orders: [],
+    recent_reservations: []
+  });
 
-  const refreshData = async () => {
-    setLoading(true);
+  const fetchPublicBasics = useCallback(async () => {
     try {
-      // 1. Fetch Public Data (Menu, Locations, CMS)
-      const [menuData, locData, heroRes, aboutRes, contactRes, resvRes, brandRes] = await Promise.all([
+      const [menuData, locData, brandRes, contactRes] = await Promise.all([
         api.getCategories(),
         api.getLocations(),
+        api.getCmsSection('brand').catch(() => null),
+        api.getCmsSection('contact').catch(() => null)
+      ]);
+      const menuResults = menuData.results || (Array.isArray(menuData) ? menuData : []);
+      const locResults = locData.results || (Array.isArray(locData) ? locData : []);
+      
+      setMenu(menuResults);
+      setLocations(locResults);
+      setTables(locResults.flatMap(l => l.tables || []));
+      setCmsData(prev => ({ 
+        ...prev, 
+        brand: brandRes?.content || prev.brand,
+        contact: contactRes?.content || prev.contact
+      }));
+    } catch (err) {
+      console.error("Failed to fetch public basics:", err);
+    }
+  }, []);
+
+  const fetchCMSContent = useCallback(async () => {
+    try {
+      // Hero, About, and Footer are only needed for public site or CMS management
+      const [heroRes, aboutRes, resvRes, footerRes] = await Promise.all([
         api.getCmsSection('hero').catch(() => null),
         api.getCmsSection('about').catch(() => null),
-        api.getCmsSection('contact').catch(() => null),
         api.getCmsSection('reservations').catch(() => null),
-        api.getCmsSection('brand').catch(() => null)
+        api.getCmsSection('footer').catch(() => null)
       ]);
 
-      if (Array.isArray(menuData)) setMenu(menuData);
-      if (Array.isArray(locData)) {
-        setLocations(locData);
-        setTables(locData.flatMap(l => l.tables || []));
-      }
+      setCmsData(prev => ({
+        ...prev,
+        hero: heroRes?.content || prev.hero,
+        about: aboutRes?.content || prev.about,
+        reservations: resvRes?.content || prev.reservations,
+        footer: footerRes?.content || prev.footer
+      }));
+    } catch (err) {
+      console.error("Failed to fetch CMS content:", err);
+    }
+  }, []);
 
-      const updatedCms = { ...DEFAULT_CMS };
-      if (heroRes?.content) updatedCms.hero = heroRes.content;
-      if (aboutRes?.content) updatedCms.about = aboutRes.content;
-      if (contactRes?.content) updatedCms.contact = contactRes.content;
-      if (resvRes?.content) updatedCms.reservations = resvRes.content;
-      if (brandRes?.content) updatedCms.brand = brandRes.content;
-      setCmsData(updatedCms);
-
-      // 2. Fetch Private Data (if logged in)
-      if (localStorage.getItem('urban_token')) {
-        const [ordData, resData, userData, roleData, profileData] = await Promise.all([
-          api.getOrders(),
-          api.getReservations(),
-          api.getUsers(),
-          api.getRoles(),
-          api.getCurrentUser().catch(() => null)
-        ]);
-
-        setOrders(Array.isArray(ordData) ? ordData : []);
-        setReservations(Array.isArray(resData) ? resData : []);
-        setUsers(Array.isArray(userData) ? userData : []);
-        setGroups(Array.isArray(roleData) ? roleData : []);
-        if (profileData) setCurrentUser(profileData);
+  const fetchOrders = useCallback(async (page = 1) => {
+    try {
+      const data = await api.getOrders(page);
+      const results = data.results || (Array.isArray(data) ? data : []);
+      setOrders(results);
+      setPagination(prev => ({ ...prev, orders: data.count || results.length }));
+      
+      // Update notifications briefly
+      if (Array.isArray(results)) {
+        const recent = results.filter(o => o.status === 'Pendiente').slice(0, 5);
+        setNotifications(recent.map(o => ({
+          id: o.id,
+          title: 'Nuevo Pedido',
+          message: `Mesa ${o.table || 'Domi'} - $${o.total}`,
+          timestamp: o.created_at
+        })));
       }
     } catch (err) {
-      console.error("Failed to refresh data:", err);
-    } finally {
-      setLoading(false);
+      console.error("Failed to fetch orders:", err);
     }
-  };
+  }, []);
+
+  const fetchReservations = useCallback(async (page = 1) => {
+    try {
+      const data = await api.getReservations(page);
+      const results = data.results || (Array.isArray(data) ? data : []);
+      setReservations(results);
+      setPagination(prev => ({ ...prev, reservations: data.count || results.length }));
+    } catch (err) {
+      console.error("Failed to fetch reservations:", err);
+    }
+  }, []);
+
+  const fetchDashboardStats = useCallback(async () => {
+    try {
+      const data = await api.getDashboardStats();
+      setDashboardStats(data);
+    } catch (err) {
+      console.error("Failed to fetch dashboard stats:", err);
+    }
+  }, []);
+
+  const fetchAdminCritical = useCallback(async () => {
+    if (!localStorage.getItem('urban_token')) return;
+    setIsSyncing(true);
+    try {
+      // Essential: Always fetch roles/groups so hasPermission works
+      // Critical: User Profile, Orders, Reservations, Dashboard, and Groups
+      await Promise.all([
+        api.getMe().then(data => setCurrentUser(prev => ({ ...prev, ...data }))),
+        fetchOrders(), 
+        fetchReservations(), 
+        fetchDashboardStats(),
+        api.getRoles().then(data => setGroups(Array.isArray(data) ? data : []))
+      ]);
+    } catch (err) {
+      console.error("Failed to fetch admin critical data:", err);
+    } finally {
+      setIsSyncing(false);
+      setLastSync(new Date());
+    }
+  }, [fetchOrders, fetchReservations]);
+
+  const fetchPersonnelData = useCallback(async (page = 1) => {
+    if (!localStorage.getItem('urban_token')) return;
+    try {
+      const userData = await api.getUsers(page);
+      const userResults = userData.results || (Array.isArray(userData) ? userData : []);
+      setUsers(userResults);
+      setPagination(prev => ({ ...prev, users: userData.count || userResults.length }));
+      
+      // Groups are now fetched in fetchAdminCritical for all admin views
+    } catch (err) {
+      console.error("Failed to fetch personnel data:", err);
+    }
+  }, []);
+
+  const refreshData = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    setIsSyncing(true);
+    
+    const path = window.location.pathname;
+    const isAdmin = path.includes('/hidden-admin');
+    const isPublic = path === '/' || path === '/menu';
+
+    const tasks = [fetchPublicBasics()];
+    
+    if (isAdmin) {
+      tasks.push(fetchAdminCritical());
+    } else if (isPublic) {
+      tasks.push(fetchCMSContent());
+    }
+
+    await Promise.all(tasks);
+    
+    setLastSync(new Date());
+    setLoading(false);
+    setIsSyncing(false);
+  }, [fetchPublicBasics, fetchAdminCritical, fetchCMSContent]);
+
+  const logout = useCallback(() => {
+    localStorage.removeItem('urban_token');
+    localStorage.removeItem('urban_refresh_token');
+    localStorage.removeItem('urban_current_user');
+    setCurrentUser(null);
+    setOrders([]);
+    setReservations([]);
+  }, []);
 
   // Initial Data Fetch
   useEffect(() => {
-    refreshData();
-  }, []);
+    // Session expiration listener
+    const handleUnauthorized = () => {
+      logout();
+      window.location.href = '/login';
+    };
+
+    window.addEventListener('urban_unauthorized', handleUnauthorized);
+    
+    // Initial fetch only if we have a token or on public routes
+    const path = window.location.pathname;
+    const isPublic = path === '/' || path === '/menu';
+    const hasToken = !!localStorage.getItem('urban_token');
+
+    if (hasToken || isPublic) {
+      refreshData();
+    } else if (path.includes('/hidden-admin')) {
+      // Force redirect if trying to access admin without token
+      window.location.href = '/login';
+    }
+
+    return () => window.removeEventListener('urban_unauthorized', handleUnauthorized);
+  }, [refreshData, logout]);
 
   // Persistence Effects (Only for local UI state like theme and current user)
   useEffect(() => { localStorage.setItem('urban_current_user', JSON.stringify(currentUser)); }, [currentUser]);
@@ -240,7 +342,8 @@ export const AdminProvider = ({ children }) => {
 
     if (!userGroup) return false;
 
-    if (userGroup.slug === 'super_admin') return true;
+    // If they have the slug 'super_admin', they have all permissions
+    if (userGroup.slug === 'super_admin' || userGroup.name?.toLowerCase().includes('admin')) return true;
     return userGroup.permissions.includes(permission);
   };
 
@@ -473,7 +576,12 @@ export const AdminProvider = ({ children }) => {
       if (!order) return;
 
       const updated = await api.updateOrderStatus(orderId, status);
-      setOrders(orders.map(o => o.id === orderId ? { ...o, status, cancelReason: reason || o.cancelReason } : o));
+      setOrders(orders.map(o => o.id === orderId ? { 
+        ...o, 
+        status, 
+        isPaid: status === 'Pagado' ? true : o.isPaid,
+        cancelReason: reason || o.cancelReason 
+      } : o));
 
       // Release table only on Pagado or Cancelado
       if (order.type === 'table' && order.table) {
@@ -517,6 +625,14 @@ export const AdminProvider = ({ children }) => {
 
       const savedOrder = await api.updateOrder(orderId, orderData);
       setOrders(orders.map(o => o.id === orderId ? savedOrder : o));
+
+      // Release table if status changed to Pagado or Cancelado
+      if (savedOrder.type === 'table' && savedOrder.table) {
+        if (['Pagado', 'Cancelado'].includes(savedOrder.status)) {
+          setTables(prev => prev.map(t => String(t.id) === String(savedOrder.table) ? { ...t, status: 'Disponible' } : t));
+          await api.updateTable(savedOrder.table, { status: 'Disponible' });
+        }
+      }
     } catch (err) {
       console.error("Error updating order:", err);
     }
@@ -534,14 +650,27 @@ export const AdminProvider = ({ children }) => {
   const addReservation = async (res) => {
     try {
       const newRes = await api.createReservation(res);
-      setReservations([...reservations, newRes]);
+      setReservations([newRes, ...reservations]);
       addNotification({
         type: 'INFO',
         title: 'Nueva Reserva',
         message: `${res.name} para las ${res.time} (${res.persons}p)`
       });
+      return newRes;
     } catch (err) {
       console.error("Error creating reservation:", err);
+      throw err;
+    }
+  };
+
+  const updateReservation = async (resId, data) => {
+    try {
+      const updatedRes = await api.updateReservation(resId, data);
+      setReservations(reservations.map(r => r.id === resId ? updatedRes : r));
+      return updatedRes;
+    } catch (err) {
+      console.error("Error updating reservation:", err);
+      throw err;
     }
   };
 
@@ -612,14 +741,6 @@ export const AdminProvider = ({ children }) => {
     return topProduct ? { ...topProduct, totalOrders: topItemQuantity } : null;
   };
 
-  const logout = () => {
-    localStorage.removeItem('urban_token');
-    localStorage.removeItem('urban_refresh_token');
-    localStorage.removeItem('urban_current_user');
-    setCurrentUser(null);
-    setOrders([]);
-    setReservations([]);
-  };
 
   return (
     <AdminContext.Provider
@@ -635,6 +756,7 @@ export const AdminProvider = ({ children }) => {
         notifications,
         cmsData,
         PERMISSIONS,
+        pagination,
         hasPermission,
         loginAs,
         logout,
@@ -666,15 +788,24 @@ export const AdminProvider = ({ children }) => {
         deleteOrder,
         setOrders,
         addReservation,
+        updateReservation,
         updateReservationStatus,
         deleteReservation,
         refreshData,
+        fetchCMSContent,
+        fetchAdminCritical,
+        fetchOrders,
+        fetchReservations,
+        fetchPersonnelData,
         logout,
         setReservations,
         updateCMS,
         getMostOrderedProduct,
         darkMode,
-        setDarkMode
+        setDarkMode,
+        lastSync,
+        isSyncing,
+        dashboardStats
       }}
     >
       {children}

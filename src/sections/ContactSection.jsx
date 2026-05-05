@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Camera, Link, Send, User, MessageSquare } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, User } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
 import { useNotification } from '../context/NotificationContext';
 import Button from '../components/ui/Button';
@@ -98,13 +98,6 @@ const ContactSection = () => {
             </div>
           </div>
 
-          <div className="flex space-x-6 md:space-x-8 mt-12 md:mt-16">
-            {[Camera, Link, Send].map((Icon, i) => (
-              <button key={i} className="w-10 h-10 md:w-12 md:h-12 border-2 border-white/5 flex items-center justify-center text-text-dim/50 hover:text-primary hover:border-primary transition-all bg-background/50">
-                <Icon size={18} md:size={20} />
-              </button>
-            ))}
-          </div>
         </motion.div>
 
         <motion.div 

@@ -39,10 +39,10 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = (product) => {
     setCartItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.id === product.id);
+      const existingItem = prevItems.find((item) => String(item.id) === String(product.id));
       if (existingItem) {
         return prevItems.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          String(item.id) === String(product.id) ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
       return [...prevItems, { ...product, quantity: 1, notes: '' }];
@@ -68,7 +68,7 @@ export const CartProvider = ({ children }) => {
   const updateNotes = (productId, notes) => {
     setCartItems((prevItems) =>
       prevItems.map((item) =>
-        item.id === productId ? { ...item, notes } : item
+        String(item.id) === String(productId) ? { ...item, notes } : item
       )
     );
   };

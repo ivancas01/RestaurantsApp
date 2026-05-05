@@ -7,10 +7,16 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Modal from '../components/ui/Modal';
 import ConfirmModal from '../components/ui/ConfirmModal';
+import Pagination from '../components/ui/Pagination';
 
 const PersonnelManager = () => {
-  const { users, groups, addUser, updateUser, deleteUser } = useAdmin();
+  const { users, groups, addUser, updateUser, deleteUser, fetchPersonnelData, pagination } = useAdmin();
   const { showNotification } = useNotification();
+  const [currentPage, setCurrentPage] = useState(1);
+
+  React.useEffect(() => {
+    fetchPersonnelData(currentPage);
+  }, [fetchPersonnelData, currentPage]);
   
   // Modal States
   const [isEditingUser, setIsEditingUser] = useState(false);
@@ -190,6 +196,12 @@ const PersonnelManager = () => {
             );
           })}
         </div>
+
+        <Pagination 
+          current={currentPage} 
+          total={pagination.users} 
+          onPageChange={setCurrentPage} 
+        />
       </div>
     </div>
   );

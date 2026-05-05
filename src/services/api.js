@@ -2,7 +2,7 @@ const API_HOSTNAME = window.location.hostname === 'localhost' || window.location
   ? '127.0.0.1'
   : window.location.hostname;
 
-const API_URL = `http://${API_HOSTNAME}:8000/api`;
+const API_URL = import.meta.env.VITE_API_URL || `http://${API_HOSTNAME}:8000/api`;
 
 const getHeaders = () => {
   const token = localStorage.getItem("urban_token");
@@ -12,35 +12,46 @@ const getHeaders = () => {
   };
 };
 
+const handleRequest = async (url, options = {}) => {
+  const response = await fetch(url, options);
+  
+  if (response.status === 401) {
+    // Session expired or invalid
+    window.dispatchEvent(new CustomEvent('urban_unauthorized'));
+    throw new Error("Sesión expirada");
+  }
+  
+  if (response.status === 204) return null;
+  return response.json();
+};
+
 export const api = {
   // Auth
   login: async (username, password) => {
-    const response = await fetch(`${API_URL}/auth/login/`, {
+    return handleRequest(`${API_URL}/auth/login/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
     });
-    if (!response.ok) throw new Error("Credenciales inválidas");
-    return response.json();
   },
 
   // Menu Categories
   getCategories: () =>
-    fetch(`${API_URL}/menu/categories/`).then((res) => res.json()),
+    handleRequest(`${API_URL}/menu/categories/`),
   createCategory: (data) =>
-    fetch(`${API_URL}/menu/categories/`, {
+    handleRequest(`${API_URL}/menu/categories/`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(data),
-    }).then((res) => res.json()),
+    }),
   updateCategory: (id, data) =>
-    fetch(`${API_URL}/menu/categories/${id}/`, {
+    handleRequest(`${API_URL}/menu/categories/${id}/`, {
       method: "PATCH",
       headers: getHeaders(),
       body: JSON.stringify(data),
-    }).then((res) => res.json()),
+    }),
   deleteCategory: (id) =>
-    fetch(`${API_URL}/menu/categories/${id}/`, {
+    handleRequest(`${API_URL}/menu/categories/${id}/`, {
       method: "DELETE",
       headers: getHeaders(),
     }),
@@ -51,181 +62,197 @@ export const api = {
     const body = data instanceof FormData ? data : JSON.stringify(data);
     if (data instanceof FormData) delete headers["Content-Type"];
 
-    return fetch(`${API_URL}/menu/products/`, {
+    return handleRequest(`${API_URL}/menu/products/`, {
       method: "POST",
       headers,
       body,
-    }).then((res) => res.json());
+    });
   },
   updateProduct: (id, data) => {
     const headers = getHeaders();
     const body = data instanceof FormData ? data : JSON.stringify(data);
     if (data instanceof FormData) delete headers["Content-Type"];
 
-    return fetch(`${API_URL}/menu/products/${id}/`, {
+    return handleRequest(`${API_URL}/menu/products/${id}/`, {
       method: "PATCH",
       headers,
       body,
-    }).then((res) => res.json());
+    });
   },
   deleteProduct: (id) =>
-    fetch(`${API_URL}/menu/products/${id}/`, {
+    handleRequest(`${API_URL}/menu/products/${id}/`, {
       method: "DELETE",
       headers: getHeaders(),
     }),
 
   // Venue Locations
   getLocations: () =>
-    fetch(`${API_URL}/venue/locations/`).then((res) => res.json()),
+    handleRequest(`${API_URL}/venue/locations/`),
   createLocation: (data) => {
     const headers = getHeaders();
     const body = data instanceof FormData ? data : JSON.stringify(data);
     if (data instanceof FormData) delete headers["Content-Type"];
 
-    return fetch(`${API_URL}/venue/locations/`, {
+    return handleRequest(`${API_URL}/venue/locations/`, {
       method: "POST",
       headers,
       body,
-    }).then((res) => res.json());
+    });
   },
   deleteLocation: (id) =>
-    fetch(`${API_URL}/venue/locations/${id}/`, {
+    handleRequest(`${API_URL}/venue/locations/${id}/`, {
       method: "DELETE",
       headers: getHeaders(),
     }),
 
   // Venue Tables
   createTable: (data) =>
-    fetch(`${API_URL}/venue/tables/`, {
+    handleRequest(`${API_URL}/venue/tables/`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(data),
-    }).then((res) => res.json()),
+    }),
   updateTable: (id, data) =>
-    fetch(`${API_URL}/venue/tables/${id}/`, {
+    handleRequest(`${API_URL}/venue/tables/${id}/`, {
       method: "PATCH",
       headers: getHeaders(),
       body: JSON.stringify(data),
-    }).then((res) => res.json()),
+    }),
   deleteTable: (id) =>
-    fetch(`${API_URL}/venue/tables/${id}/`, {
+    handleRequest(`${API_URL}/venue/tables/${id}/`, {
       method: "DELETE",
       headers: getHeaders(),
     }),
 
   // Orders
-  getOrders: () =>
-    fetch(`${API_URL}/orders/orders/`, { headers: getHeaders() }).then((res) =>
-      res.json(),
-    ),
+  getOrders: (page = 1) =>
+    handleRequest(`${API_URL}/orders/orders/?page=${page}`, { headers: getHeaders() }),
   getKitchenQueue: () =>
-    fetch(`${API_URL}/orders/orders/kitchen_queue/`, {
+    handleRequest(`${API_URL}/orders/orders/kitchen_queue/`, {
       headers: getHeaders(),
-    }).then((res) => res.json()),
+    }),
   createOrder: (data) =>
-    fetch(`${API_URL}/orders/orders/`, {
+    handleRequest(`${API_URL}/orders/orders/`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(data),
-    }).then((res) => res.json()),
+    }),
   updateOrder: (id, data) =>
-    fetch(`${API_URL}/orders/orders/${id}/`, {
+    handleRequest(`${API_URL}/orders/orders/${id}/`, {
       method: "PATCH",
       headers: getHeaders(),
       body: JSON.stringify(data),
-    }).then((res) => res.json()),
+    }),
   deleteOrder: (id) =>
-    fetch(`${API_URL}/orders/orders/${id}/`, {
+    handleRequest(`${API_URL}/orders/orders/${id}/`, {
       method: "DELETE",
       headers: getHeaders(),
     }),
+  getDashboardStats: () =>
+    handleRequest(`${API_URL}/orders/orders/dashboard_stats/`, {
+      headers: getHeaders(),
+    }),
   updateOrderStatus: (id, status) =>
-    fetch(`${API_URL}/orders/orders/${id}/update_status/`, {
+    handleRequest(`${API_URL}/orders/orders/${id}/update_status/`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify({ status }),
-    }).then((res) => res.json()),
+    }),
+  searchCustomer: (query) =>
+    handleRequest(`${API_URL}/orders/orders/search_customer/?q=${query}`, {
+      headers: getHeaders(),
+    }),
+  getCustomers: (page = 1) =>
+    handleRequest(`${API_URL}/orders/orders/customer_list/?page=${page}`, {
+      headers: getHeaders(),
+    }),
+  getCustomerStats: (id) =>
+    handleRequest(`${API_URL}/orders/orders/customer_stats/?identification=${id}`, {
+      headers: getHeaders(),
+    }),
+  getGlobalStats: () =>
+    handleRequest(`${API_URL}/orders/orders/global_stats/`, {
+      headers: getHeaders(),
+    }),
+  getCashClosing: () =>
+    handleRequest(`${API_URL}/orders/orders/cash_closing/`, {
+      headers: getHeaders(),
+    }),
 
   // Reservations
-  getReservations: () =>
-    fetch(`${API_URL}/reservations/reservations/`, {
+  getReservations: (page = 1) =>
+    handleRequest(`${API_URL}/reservations/reservations/?page=${page}`, {
       headers: getHeaders(),
-    }).then((res) => res.json()),
+    }),
   createReservation: (data) =>
-    fetch(`${API_URL}/reservations/reservations/`, {
+    handleRequest(`${API_URL}/reservations/reservations/`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(data),
-    }).then((res) => res.json()),
+    }),
   updateReservation: (id, data) =>
-    fetch(`${API_URL}/reservations/reservations/${id}/`, {
+    handleRequest(`${API_URL}/reservations/reservations/${id}/`, {
       method: "PATCH",
       headers: getHeaders(),
       body: JSON.stringify(data),
-    }).then((res) => res.json()),
+    }),
   deleteReservation: (id) =>
-    fetch(`${API_URL}/reservations/reservations/${id}/`, {
+    handleRequest(`${API_URL}/reservations/reservations/${id}/`, {
       method: "DELETE",
       headers: getHeaders(),
     }),
 
   // Personnel
-  getUsers: () =>
-    fetch(`${API_URL}/auth/users/`, { headers: getHeaders() }).then((res) =>
-      res.json(),
-    ),
-  getCurrentUser: () =>
-    fetch(`${API_URL}/auth/users/me/`, { headers: getHeaders() }).then((res) =>
-      res.json(),
-    ),
+  getUsers: (page = 1) =>
+    handleRequest(`${API_URL}/auth/users/?page=${page}`, { headers: getHeaders() }),
+  getMe: () =>
+    handleRequest(`${API_URL}/auth/users/me/`, { headers: getHeaders() }),
   createUser: (data) =>
-    fetch(`${API_URL}/auth/users/`, {
+    handleRequest(`${API_URL}/auth/users/`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(data),
-    }).then((res) => res.json()),
+    }),
   updateUser: (id, data) =>
-    fetch(`${API_URL}/auth/users/${id}/`, {
+    handleRequest(`${API_URL}/auth/users/${id}/`, {
       method: "PATCH",
       headers: getHeaders(),
       body: JSON.stringify(data),
-    }).then((res) => res.json()),
+    }),
   deleteUser: (id) =>
-    fetch(`${API_URL}/auth/users/${id}/`, {
+    handleRequest(`${API_URL}/auth/users/${id}/`, {
       method: "DELETE",
       headers: getHeaders(),
     }),
 
   // Roles / Groups
   getRoles: () =>
-    fetch(`${API_URL}/auth/roles/`, { headers: getHeaders() }).then((res) =>
-      res.json(),
-    ),
+    handleRequest(`${API_URL}/auth/roles/`, { headers: getHeaders() }),
   createRole: (data) =>
-    fetch(`${API_URL}/auth/roles/`, {
+    handleRequest(`${API_URL}/auth/roles/`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(data),
-    }).then((res) => res.json()),
+    }),
   updateRole: (id, data) =>
-    fetch(`${API_URL}/auth/roles/${id}/`, {
+    handleRequest(`${API_URL}/auth/roles/${id}/`, {
       method: "PATCH",
       headers: getHeaders(),
       body: JSON.stringify(data),
-    }).then((res) => res.json()),
+    }),
   deleteRole: (id) =>
-    fetch(`${API_URL}/auth/roles/${id}/`, {
+    handleRequest(`${API_URL}/auth/roles/${id}/`, {
       method: "DELETE",
       headers: getHeaders(),
     }),
 
   // CMS
   getCmsSection: (name) =>
-    fetch(`${API_URL}/cms/sections/${name}/`).then((res) => res.json()),
+    handleRequest(`${API_URL}/cms/sections/${name}/`),
   updateCmsSection: (name, data) =>
-    fetch(`${API_URL}/cms/sections/${name}/`, {
+    handleRequest(`${API_URL}/cms/sections/${name}/`, {
       method: "PATCH",
       headers: getHeaders(),
       body: JSON.stringify(data),
-    }).then((res) => res.json()),
+    }),
 };

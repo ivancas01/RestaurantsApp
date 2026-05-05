@@ -3,6 +3,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   BarChart, 
+  PieChart,
   Calendar, 
   Users, 
   ClipboardList, 
@@ -22,6 +23,7 @@ import {
   Moon
 } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
+import AccessDenied from './AccessDenied';
 
 const AdminLayout = () => {
   const navigate = useNavigate();
@@ -29,7 +31,7 @@ const AdminLayout = () => {
   const [isMobile, setIsMobile] = React.useState(window.innerWidth < 1280);
   const [notifOpen, setNotifOpen] = React.useState(false);
   const [userMenuOpen, setUserMenuOpen] = React.useState(false);
-  const { hasPermission, PERMISSIONS, currentUser, groups, notifications, clearNotification, darkMode, setDarkMode, logout, cmsData } = useAdmin();
+  const { hasPermission, PERMISSIONS, currentUser, groups, notifications, clearNotification, darkMode, setDarkMode, logout, cmsData, lastSync, isSyncing } = useAdmin();
   const brand = cmsData?.brand || { name: 'URBAN', tagline: 'Control Center' };
 
   React.useEffect(() => {
@@ -56,10 +58,12 @@ const AdminLayout = () => {
 
   const menuItems = [
     { name: 'Dashboard', path: '/hidden-admin', icon: <BarChart size={20} />, permission: PERMISSIONS.DASHBOARD_VIEW },
+    { name: 'Reportes', path: '/hidden-admin/reports', icon: <PieChart size={20} />, permission: PERMISSIONS.DASHBOARD_VIEW },
     { name: 'Pedidos', path: '/hidden-admin/orders', icon: <ClipboardList size={20} />, permission: PERMISSIONS.ORDERS_MANAGE },
     { name: 'Cocina', path: '/hidden-admin/kitchen', icon: <ChefHat size={20} />, permission: PERMISSIONS.KITCHEN_VIEW },
     { name: 'Domicilios', path: '/hidden-admin/delivery', icon: <Truck size={20} />, permission: PERMISSIONS.DELIVERY_MANAGE },
     { name: 'Reservas', path: '/hidden-admin/reservations', icon: <Calendar size={20} />, permission: PERMISSIONS.RESERVATIONS_MANAGE },
+    { name: 'Clientes', path: '/hidden-admin/customers', icon: <Users size={20} />, permission: PERMISSIONS.DASHBOARD_VIEW },
     { name: 'Infraestructura', path: '/hidden-admin/venue', icon: <Users size={20} />, permission: PERMISSIONS.TABLES_MANAGE },
     { name: 'Menu/Carta', path: '/hidden-admin/products', icon: <Coffee size={20} />, permission: PERMISSIONS.PRODUCTS_MANAGE },
     { name: 'Contenido CMS', path: '/hidden-admin/cms', icon: <Monitor size={20} />, permission: PERMISSIONS.CMS_MANAGE },
@@ -157,6 +161,30 @@ const AdminLayout = () => {
               <h1 className="text-sm md:text-2xl font-serif uppercase tracking-wider whitespace-nowrap">
                 Sistema <span className="text-primary italic">Activo</span>
               </h1>
+              <div className="hidden lg:flex items-center space-x-3 ml-6 pl-6 border-l-2 border-zinc-200 dark:border-zinc-800">
+                 {(() => {
+                    const path = window.location.pathname;
+                    const isPollingRoute = path.includes('/orders') || path.includes('/kitchen') || path.includes('/delivery') || path.includes('/reservations');
+                    const isActive = document.visibilityState === 'visible' && isPollingRoute;
+
+                    return (
+                      <>
+                        <div className="relative">
+                           <div className={`w-2.5 h-2.5 rounded-full ${isSyncing ? 'bg-primary' : (isActive ? 'bg-emerald-500' : 'bg-zinc-400')} ${isActive ? 'animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 'opacity-40'}`}></div>
+                           {isSyncing && <div className="absolute inset-0 w-2.5 h-2.5 bg-primary rounded-full animate-ping opacity-75"></div>}
+                        </div>
+                        <div className="flex flex-col">
+                           <span className="text-[8px] font-bold tracking-[0.2em] text-text-bright uppercase">
+                              {isPollingRoute ? 'En Vivo' : 'Estático'}
+                           </span>
+                           <span className="text-[7px] font-bold text-text-dim uppercase">
+                              {isPollingRoute ? `Sinc: ${lastSync.toLocaleTimeString([], { hour12: false })}` : 'Refresco Manual'}
+                           </span>
+                        </div>
+                      </>
+                    );
+                 })()}
+              </div>
             </div>
           </div>
           
@@ -298,7 +326,36 @@ const AdminLayout = () => {
           {/* Subtle pattern */}
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/micro-carbon.png')] opacity-[0.03] dark:opacity-[0.1] pointer-events-none"></div>
           <div className="relative max-w-[1600px] mx-auto">
-            <Outlet />
+            {(() => {
+              const currentPath = window.location.pathname;
+              const currentItem = menuItems.find(item => item.path === currentPath);
+              
+              // If it's the dashboard (root admin) or we found the item in our authorized list, allow it
+              if (currentPath === '/hidden-admin' || currentItem) {
+                return <Outlet />;
+              }
+              
+              // If we are in an admin sub-path but it's not in our authorized menuItems, check why
+              const fullMenuEntry = [
+                { path: '/hidden-admin', permission: PERMISSIONS.DASHBOARD_VIEW },
+                { path: '/hidden-admin/reports', permission: PERMISSIONS.DASHBOARD_VIEW },
+                { path: '/hidden-admin/orders', permission: PERMISSIONS.ORDERS_MANAGE },
+                { path: '/hidden-admin/kitchen', permission: PERMISSIONS.KITCHEN_VIEW },
+                { path: '/hidden-admin/delivery', permission: PERMISSIONS.DELIVERY_MANAGE },
+                { path: '/hidden-admin/reservations', permission: PERMISSIONS.RESERVATIONS_MANAGE },
+                { path: '/hidden-admin/customers', permission: PERMISSIONS.DASHBOARD_VIEW },
+                { path: '/hidden-admin/venue', permission: PERMISSIONS.TABLES_MANAGE },
+                { path: '/hidden-admin/products', permission: PERMISSIONS.PRODUCTS_MANAGE },
+                { path: '/hidden-admin/cms', permission: PERMISSIONS.CMS_MANAGE },
+                { path: '/hidden-admin/personnel', permission: PERMISSIONS.SYSTEM_SETTINGS },
+              ].find(m => m.path === currentPath);
+
+              if (fullMenuEntry && !hasPermission(fullMenuEntry.permission)) {
+                return <AccessDenied permission={fullMenuEntry.permission} />;
+              }
+
+              return <Outlet />;
+            })()}
           </div>
         </div>
       </main>

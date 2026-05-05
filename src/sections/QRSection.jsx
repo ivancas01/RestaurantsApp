@@ -1,8 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { QrCode, Smartphone, ArrowRight } from 'lucide-react';
+import { Smartphone, ArrowRight } from 'lucide-react';
+import { useAdmin } from '../context/AdminContext';
 
 const QRSection = () => {
+  const { cmsData } = useAdmin();
+  const brandName = cmsData?.brand?.name || "Lumina Urban Gourmet";
   return (
     <section className="py-24 bg-background relative overflow-hidden flex items-center justify-center">
       {/* Decorative large text background */}
@@ -87,7 +90,7 @@ const QRSection = () => {
                 </div>
                 
                 <div className="mt-4 text-center">
-                  <p className="text-[10px] font-bold text-zinc-900 uppercase tracking-[0.2em]">Lumina Urban Gourmet // Scan Me</p>
+                  <p className="text-[10px] font-bold text-zinc-900 uppercase tracking-[0.2em]">{brandName} // Scan Me</p>
                 </div>
 
                 {/* Decorative scanning line */}

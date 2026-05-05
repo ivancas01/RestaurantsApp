@@ -14,6 +14,14 @@ const ProductsManager = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState(menu[0]?.id || null);
   const [isEditing, setIsEditing] = useState(null); // { catId, itemId } or { catId, isNew: true }
   const [itemToDelete, setItemToDelete] = useState(null); // { catId, itemId, name }
+  const [visibleCount, setVisibleCount] = useState(10);
+
+  const handleScroll = (e) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (scrollHeight - scrollTop <= clientHeight + 50) {
+      setVisibleCount(prev => prev + 10);
+    }
+  };
   
   // Category management states
   const [isEditingCategory, setIsEditingCategory] = useState(null); // { id, name } or { isNew: true }
@@ -281,8 +289,8 @@ const ProductsManager = () => {
              )}
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
-            {(selectedCategory?.products || []).map((item, idx) => (
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6 max-h-[70vh] overflow-y-auto scrollbar-hide pr-2" onScroll={handleScroll}>
+            {(selectedCategory?.products || []).slice(0, visibleCount).map((item, idx) => (
               <div key={item.id || `prod-${idx}`} className="bg-surface border-2 border-zinc-200 dark:border-zinc-900 p-6 md:p-8 flex flex-col sm:flex-row gap-6 md:gap-8 group hover:border-primary transition-all relative">
                 <div className="w-full sm:w-32 h-48 sm:h-32 bg-zinc-100 dark:bg-zinc-800 border border-white/5 flex-shrink-0 relative overflow-hidden">
                    <img src={item.image} alt={item.name} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />

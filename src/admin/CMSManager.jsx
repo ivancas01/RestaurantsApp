@@ -88,16 +88,31 @@ const CMSSection = ({ title, icon, children, onSave, onReset }) => (
 );
 
 const CMSManager = () => {
-  const { cmsData, updateCMS, getMostOrderedProduct } = useAdmin();
+  const { cmsData, updateCMS, getMostOrderedProduct, fetchCMSContent } = useAdmin();
+
+  React.useEffect(() => {
+    fetchCMSContent();
+  }, []);
   
   // Local states for each section to avoid unnecessary context re-renders while typing
   const [brand, setBrand] = useState(cmsData.brand || { name: 'URBAN STREET', tagline: 'Control Center' });
   const [hero, setHero] = useState(cmsData.hero);
   const [about, setAbout] = useState(cmsData.about);
-  const [contact, setContact] = useState(cmsData.contact);
+  const [contact, setContact] = useState(cmsData.contact || { opening_time: '08:00', closing_time: '22:00', closed_image: '' });
   const [resText, setResText] = useState(cmsData.reservations);
+  const [footer, setFooter] = useState(cmsData.footer || { description: '', socials: [], copyright: '' });
 
   const { showNotification } = useNotification();
+
+  // Sync local state when cmsData is loaded from API
+  React.useEffect(() => {
+    if (cmsData.brand) setBrand(cmsData.brand);
+    if (cmsData.hero) setHero(cmsData.hero);
+    if (cmsData.about) setAbout(cmsData.about);
+    if (cmsData.contact) setContact(cmsData.contact);
+    if (cmsData.reservations) setResText(cmsData.reservations);
+    if (cmsData.footer) setFooter(cmsData.footer);
+  }, [cmsData]);
 
   const saveSection = (section, data) => {
     updateCMS(section, data);
@@ -246,6 +261,13 @@ const CMSManager = () => {
               <Input label="Instagram" value={contact.instagram} onChange={(e) => setContact({...contact, instagram: e.target.value})} />
               <Input label="Indicativo WhatsApp (Ej: 57)" value={contact.whatsapp_prefix || ''} onChange={(e) => setContact({...contact, whatsapp_prefix: e.target.value})} />
            </div>
+           <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                 <Input label="Hora Apertura" type="time" value={contact.opening_time} onChange={(e) => setContact({...contact, opening_time: e.target.value})} />
+                 <Input label="Hora Cierre" type="time" value={contact.closing_time} onChange={(e) => setContact({...contact, closing_time: e.target.value})} />
+              </div>
+              <ImageUpload label="Imagen 'Estamos Durmiendo'" value={contact.closed_image} onChange={(val) => setContact({...contact, closed_image: val})} />
+           </div>
         </CMSSection>
 
         {/* Reservations Section */}
@@ -261,6 +283,53 @@ const CMSManager = () => {
            </div>
            <div className="space-y-4">
               <Input label="Texto de Ayuda (Pax)" value={resText.help_text} onChange={(e) => setResText({...resText, help_text: e.target.value})} />
+           </div>
+        </CMSSection>
+
+        {/* Footer Section */}
+        <CMSSection 
+          title="Pie de Página // Footer" 
+          icon={<Monitor size={24}/>} 
+          onSave={() => saveSection('footer', footer)}
+          onReset={() => setFooter(cmsData.footer)}
+        >
+           <div className="space-y-4 md:col-span-2">
+              <Input label="Descripción Corta" value={footer.description} onChange={(e) => setFooter({...footer, description: e.target.value})} />
+              <Input label="Copyright / Créditos" value={footer.copyright} onChange={(e) => setFooter({...footer, copyright: e.target.value})} />
+           </div>
+           
+           <div className="md:col-span-2 space-y-6">
+              <div className="flex justify-between items-center border-t border-zinc-100 dark:border-white/5 pt-6">
+                <h3 className="text-[10px] font-bold text-primary uppercase tracking-[0.3em]">// REDES SOCIALES</h3>
+                <Button onClick={() => setFooter({...footer, socials: [...footer.socials, { name: '', url: '' }]})} className="py-1 px-3 text-[8px]">Agregar Red</Button>
+              </div>
+              
+              <div className="grid grid-cols-1 gap-4">
+                {footer.socials.map((social, i) => (
+                  <div key={i} className="flex gap-4 items-end bg-black/5 p-4 border border-zinc-200 dark:border-zinc-800">
+                    <div className="flex-1">
+                      <Input label="Nombre (Ej: Instagram)" value={social.name} onChange={(e) => {
+                        const newSocials = [...footer.socials];
+                        newSocials[i].name = e.target.value;
+                        setFooter({...footer, socials: newSocials});
+                      }} />
+                    </div>
+                    <div className="flex-1">
+                      <Input label="URL / Enlace" value={social.url} onChange={(e) => {
+                        const newSocials = [...footer.socials];
+                        newSocials[i].url = e.target.value;
+                        setFooter({...footer, socials: newSocials});
+                      }} />
+                    </div>
+                    <button 
+                      onClick={() => setFooter({...footer, socials: footer.socials.filter((_, idx) => idx !== i)})}
+                      className="p-3 text-accent hover:bg-accent/10 transition-colors"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+                ))}
+              </div>
            </div>
         </CMSSection>
 

@@ -5,8 +5,16 @@ import { useAdmin } from '../context/AdminContext';
 
 const Footer = () => {
   const navigate = useNavigate();
-  const { cmsData } = useAdmin();
+  const { cmsData, currentUser } = useAdmin();
   const brand = cmsData?.brand || { name: 'URBAN STREET' };
+  const footer = cmsData?.footer || {
+    description: "Experience the city through flavor. Premium Urban Gastronomy.",
+    socials: [
+      { name: "Instagram", url: "#" },
+      { name: "Facebook", url: "#" }
+    ],
+    copyright: "Digital Gastronomy"
+  };
   const brandParts = brand.name.split(' ');
 
   return (
@@ -17,26 +25,35 @@ const Footer = () => {
             {brandParts[0]} <span className="text-text-bright">{brandParts.slice(1).join(' ')}</span>
           </div>
           <p className="text-text-dim text-[10px] uppercase tracking-[0.3em] font-bold max-w-xs leading-relaxed opacity-60">
-            Experience the city through flavor. <br />Premium Urban Gastronomy.
+            {footer.description}
           </p>
         </div>
 
         <div className="flex flex-col items-center md:items-end space-y-6">
           <div className="flex space-x-6 mb-2">
-             <a href="#" className="text-[10px] uppercase tracking-widest text-text-dim hover:text-primary transition-colors font-bold">Instagram</a>
-             <a href="#" className="text-[10px] uppercase tracking-widest text-text-dim hover:text-primary transition-colors font-bold">Facebook</a>
+             {footer.socials.map((social, i) => (
+               <a 
+                 key={i} 
+                 href={social.url} 
+                 target="_blank" 
+                 rel="noopener noreferrer" 
+                 className="text-[10px] uppercase tracking-widest text-text-dim hover:text-primary transition-colors font-bold"
+               >
+                 {social.name}
+               </a>
+             ))}
           </div>
           
           <p className="text-text-dim/30 text-[9px] uppercase tracking-[0.2em] font-bold">
-            © 2026 {brand.name} // Digital Gastronomy.
+            © 2026 {brand.name} // {footer.copyright}.
           </p>
           
           <button 
-            onClick={() => navigate('/login')}
+            onClick={() => navigate(currentUser ? '/hidden-admin' : '/login')}
             className="group flex items-center space-x-3 text-[10px] uppercase tracking-[0.4em] font-bold text-text-dim/50 hover:text-primary transition-all px-4 py-2 border border-white/5 hover:border-primary/20 bg-background/50"
           >
             <ShieldAlert size={12} className="text-primary" />
-            <span>Operational Portal</span>
+            <span>{currentUser ? currentUser.name : 'Acceso interno'}</span>
           </button>
         </div>
       </div>

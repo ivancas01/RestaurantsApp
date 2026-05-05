@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, Users, Clock, CheckCircle, XCircle, Search, Filter, Plus, CalendarDays, Monitor, ShieldCheck, X, ChevronLeft, ChevronRight, Edit2, Trash2, Eye, MapPin, Phone } from 'lucide-react';
 import { useAdmin } from '../context/AdminContext';
@@ -6,9 +6,28 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Modal from '../components/ui/Modal';
 import ConfirmModal from '../components/ui/ConfirmModal';
+import Pagination from '../components/ui/Pagination';
 
 const ReservationsManager = () => {
-  const { reservations, updateReservationStatus, addReservation, deleteReservation: apiDeleteReservation, locations, setReservations } = useAdmin();
+  const { 
+    reservations, updateReservation, updateReservationStatus, 
+    addReservation, deleteReservation: apiDeleteReservation, 
+    locations, fetchReservations, pagination 
+  } = useAdmin();
+
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Local Polling: Only while this tab is active
+  useEffect(() => {
+    fetchReservations(currentPage); // Initial fetch with page
+    const POLL_INTERVAL = 8000;
+    const intervalId = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchReservations(currentPage);
+      }
+    }, POLL_INTERVAL);
+    return () => clearInterval(intervalId);
+  }, [fetchReservations, currentPage]);
   const [isAdding, setIsAdding] = useState(false);
   const [editingResId, setEditingResId] = useState(null);
   const [viewingResId, setViewingResId] = useState(null);
@@ -26,10 +45,41 @@ const ReservationsManager = () => {
     instructions: ''
   });
 
+  useEffect(() => {
+    const lookupCustomer = async () => {
+      if (newRes.identification && newRes.identification.length >= 4) {
+        try {
+          const results = await api.searchCustomer(newRes.identification);
+          const match = results.find(c => String(c.identification) === String(newRes.identification));
+          if (match) {
+            setNewRes(prev => ({
+              ...prev,
+              name: match.name,
+              phone: match.phone
+            }));
+          }
+        } catch (err) {
+          console.error("Autocomplete error:", err);
+        }
+      }
+    };
+    
+    const timeoutId = setTimeout(lookupCustomer, 500);
+    return () => clearTimeout(timeoutId);
+  }, [newRes.identification]);
+
   const [errors, setErrors] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('Todos');
   const [viewMode, setViewMode] = useState('list');
+  const [visibleCount, setVisibleCount] = useState(10);
+
+  const handleScroll = (e) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (scrollHeight - scrollTop <= clientHeight + 50) {
+      setVisibleCount(prev => prev + 10);
+    }
+  };
 
   const validate = () => {
     const newErrors = {};
@@ -43,22 +93,25 @@ const ReservationsManager = () => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
-  const handleSaveRes = () => {
+  const handleSaveRes = async () => {
     if (validate()) {
-      if (editingResId) {
-        setReservations(prev => prev.map(r => r.id === editingResId ? { ...r, ...newRes } : r));
-        setEditingResId(null);
-      } else {
-        addReservation({
-          ...newRes,
-          status: 'Pendiente',
-          method: 'admin'
-        });
-        setIsAdding(false);
+      try {
+        if (editingResId) {
+          await updateReservation(editingResId, newRes);
+          setEditingResId(null);
+        } else {
+          await addReservation({
+            ...newRes,
+            status: 'Pendiente',
+            method: 'admin'
+          });
+          setIsAdding(false);
+        }
+        setNewRes({ name: '', identification: '', phone: '', email: '', date: '', time: '', persons: 2, locationId: '', instructions: '' });
+        setErrors({});
+      } catch (err) {
+        console.error("Error saving reservation:", err);
       }
-      setNewRes({ name: '', identification: '', phone: '', email: '', date: '', time: '', persons: 2, locationId: '', instructions: '' });
-      setErrors({});
     }
   };
 
@@ -75,12 +128,12 @@ const ReservationsManager = () => {
 
   const filteredReservations = reservations.filter(res => {
     const name = res.name || '';
-    const id = res.id || '';
+    const id = String(res.id || '');
     const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           id.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'Todos' || res.status === statusFilter;
     return matchesSearch && matchesStatus;
-  }).sort((a, b) => b.id.localeCompare(a.id));
+  }).sort((a, b) => b.id - a.id);
 
   const getStatusStyle = (status) => {
     switch (status) {
@@ -168,7 +221,13 @@ const ReservationsManager = () => {
         {viewingRes && (
           <div className="space-y-8">
              <div className="flex justify-between items-start border-b border-zinc-800 pb-6">
-                <div><h3 className="text-4xl font-serif text-text-bright">{viewingRes.name}</h3><p className="text-[10px] font-bold text-primary tracking-widest mt-2">// ID: {viewingRes.id}</p></div>
+                <div>
+                   <h3 className="text-4xl font-serif text-text-bright">{viewingRes.name}</h3>
+                   <div className="flex space-x-4 items-center mt-2">
+                      <p className="text-[10px] font-bold text-primary tracking-widest">// ID: {viewingRes.id}</p>
+                      <p className="text-[10px] font-bold text-text-dim tracking-widest font-mono uppercase">CC: {viewingRes.identification || 'SIN DOC'}</p>
+                   </div>
+                </div>
                 <span className={`px-4 py-1 text-[10px] font-bold border ${getStatusStyle(viewingRes.status)}`}>{viewingRes.status}</span>
              </div>
              <div className="grid grid-cols-2 gap-8">
@@ -240,7 +299,7 @@ const ReservationsManager = () => {
             exit={{ opacity: 0, y: -10 }} 
             className="bg-surface border-2 border-zinc-200 dark:border-zinc-900 overflow-hidden"
           >
-             <div className="overflow-x-auto scrollbar-hide">
+             <div className="overflow-x-auto scrollbar-hide max-h-[70vh]" onScroll={handleScroll}>
                 <table className="w-full text-left border-collapse min-w-[900px]">
                    <thead>
                       <tr className="bg-black/5 dark:bg-white/5 border-b-2 border-zinc-200 dark:border-zinc-800">
@@ -262,10 +321,12 @@ const ReservationsManager = () => {
                            </td>
                         </tr>
                       ) : (
-                        filteredReservations.map((res) => (
+                        filteredReservations.map((res, idx) => (
                           <tr key={res.id} className="border-b border-zinc-100 dark:border-zinc-900 hover:bg-primary/5 transition-all group">
                              <td className="p-5">
-                                <div className="flex items-center space-x-3">
+                                <div className="flex items-center space-x-4">
+                                   <span className="text-[10px] font-bold text-primary/40 italic">#{idx + 1}</span>
+                                   <div className="flex items-center space-x-3">
                                    <div className="flex space-x-1">
                                       {['Confirmado', 'Cancelado', 'Pendiente'].map(s => (
                                          <button 
@@ -280,10 +341,14 @@ const ReservationsManager = () => {
                                    </div>
                                    <span className={`text-[8px] font-bold uppercase px-2 py-0.5 border ${getStatusStyle(res.status)}`}>{res.status}</span>
                                 </div>
+                             </div>
                              </td>
                              <td className="p-5">
-                                <p className="text-sm font-bold text-text-bright uppercase">{res.name}</p>
-                                <p className="text-[8px] text-text-dim mt-0.5 tracking-tighter">ID: #{String(res.id).split('_').pop()}</p>
+                                <div className="flex flex-col">
+                                   <span className="text-sm font-bold text-text-bright">{res.name}</span>
+                                   <span className="text-[9px] text-text-dim font-mono">{res.identification || 'SIN DOC'}</span>
+                                   <p className="text-[8px] text-text-dim mt-0.5 tracking-tighter">ID: #{String(res.id).split('_').pop()}</p>
+                                </div>
                              </td>
                              <td className="p-5">
                                 {(() => {
@@ -343,6 +408,11 @@ const ReservationsManager = () => {
                    </tbody>
                 </table>
              </div>
+             <Pagination 
+                current={currentPage} 
+                total={pagination.reservations} 
+                onPageChange={setCurrentPage} 
+             />
           </motion.div>
         ) : (
           <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="bg-surface border-2 md:border-4 border-zinc-200 dark:border-zinc-900 overflow-hidden shadow-2xl">

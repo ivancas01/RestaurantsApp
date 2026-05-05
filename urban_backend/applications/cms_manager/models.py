@@ -67,6 +67,9 @@ class ContactSection(SingletonModel):
     email = models.EmailField(default="contacto@urbangourmet.com", verbose_name="Email Público")
     instagram = models.CharField(max_length=100, default="@urbangourmet", verbose_name="Instagram")
     whatsapp_prefix = models.CharField(max_length=10, default="57", verbose_name="Indicativo WhatsApp (Ej: 57)")
+    opening_time = models.TimeField(default="08:00:00", verbose_name="Hora de Apertura")
+    closing_time = models.TimeField(default="22:00:00", verbose_name="Hora de Cierre")
+    closed_image = models.TextField(blank=True, null=True, verbose_name="Imagen de 'Cerrado' (URL o Base64)")
 
     class Meta:
         verbose_name = "Información de Contacto"
@@ -97,6 +100,18 @@ class BrandSection(SingletonModel):
 
     def __str__(self):
         return "Configuración de Marca"
+
+class FooterSection(SingletonModel):
+    description = models.CharField(max_length=500, default="Experience the city through flavor.", verbose_name="Descripción Footer")
+    socials = models.JSONField(default=list, blank=True, verbose_name="Redes Sociales")
+    copyright = models.CharField(max_length=200, default="Digital Gastronomy", verbose_name="Texto Copyright")
+
+    class Meta:
+        verbose_name = "Pie de Página (Footer)"
+        verbose_name_plural = "Pie de Página (Footer)"
+
+    def __str__(self):
+        return "Configuración Footer"
 
 class SystemNotification(models.Model):
     title = models.CharField(max_length=200)

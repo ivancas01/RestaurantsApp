@@ -1,7 +1,7 @@
 // Reference Images generated specifically for the Urban theme
-const BURGER_IMG = "file:///C:/Users/ivanc/.gemini/antigravity/brain/f538c209-2d5b-4265-9bff-70cef98c35f9/urban_hero_burger_1776653580173.png";
-const RAMEN_IMG = "file:///C:/Users/ivanc/.gemini/antigravity/brain/f538c209-2d5b-4265-9bff-70cef98c35f9/urban_ramen_reference_1776653875300.png";
-const TACOS_IMG = "file:///C:/Users/ivanc/.gemini/antigravity/brain/f538c209-2d5b-4265-9bff-70cef98c35f9/urban_octopus_tacos_reference_1776653892808.png";
+const BURGER_IMG = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=800&auto=format&fit=crop";
+const RAMEN_IMG = "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?q=80&w=800&auto=format&fit=crop";
+const TACOS_IMG = "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?q=80&w=800&auto=format&fit=crop";
 
 export const menuCategories = [
   {

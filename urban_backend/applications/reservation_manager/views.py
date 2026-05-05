@@ -19,5 +19,9 @@ class ReservationSerializer(serializers.ModelSerializer):
 class ReservationViewSet(viewsets.ModelViewSet):
     queryset = Reservation.objects.all()
     serializer_class = ReservationSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     filterset_fields = ['status', 'date', 'location']
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]

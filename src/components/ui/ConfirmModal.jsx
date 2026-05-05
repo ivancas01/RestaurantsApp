@@ -9,13 +9,13 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmLabel
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6">
+        <div className="fixed inset-0 w-screen h-screen z-[2000] flex items-center justify-center p-6">
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/90 backdrop-blur-md"
+            className="fixed inset-0 w-screen h-screen bg-black/90 backdrop-blur-md"
           />
 
           <motion.div 
