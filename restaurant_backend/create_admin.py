@@ -10,9 +10,9 @@ User = get_user_model()
 
 def create_admin():
     username = 'admin'
-    email = 'admin@urbanstreet.com'
+    email = 'admin@restaurantapp.com'
     password = 'admin123'
-    name = 'Admin Urban'
+    name = 'Admin Restaurant'
     
     if not User.objects.filter(username=username).exists():
         User.objects.create_superuser(
