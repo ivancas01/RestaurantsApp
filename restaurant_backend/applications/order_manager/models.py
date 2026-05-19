@@ -16,6 +16,8 @@ class Order(models.Model):
         ('En Lista', 'En Lista'),
         ('Preparando', 'Preparando'),
         ('Listo', 'Listo'),
+        ('Servido', 'Servido'),
+        ('Entregado', 'Entregado'),
         ('Completado', 'Completado'),
         ('Pagado', 'Pagado'),
         ('Cancelado', 'Cancelado'),

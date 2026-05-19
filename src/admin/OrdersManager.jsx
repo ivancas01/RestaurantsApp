@@ -455,6 +455,7 @@ const OrdersManager = () => {
     { id: 'Pendiente', label: 'Pend.' },
     { id: 'Preparando', label: 'Prep.' },
     { id: 'Listo', label: 'Listos' },
+    { id: 'Servido', label: 'Servidos' },
     { id: 'Pagado', label: 'Pago' }
   ];
 
@@ -470,6 +471,7 @@ const OrdersManager = () => {
       case 'Confirmado': return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
       case 'Preparando': return 'bg-primary/10 text-primary border-primary/20';
       case 'Listo': return 'bg-green-500/10 text-green-500 border-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.1)]';
+      case 'Servido': return 'bg-blue-500/20 text-blue-400 border-blue-500/40 shadow-[0_0_10px_rgba(59,130,246,0.2)]';
       case 'Pagado': return 'bg-emerald-500/20 text-emerald-500 border-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.2)]';
       case 'Cancelado': return 'bg-accent/10 text-accent border-accent/20';
       default: return 'bg-zinc-500/10 text-zinc-500 border-zinc-500/20';
@@ -963,14 +965,23 @@ const OrdersManager = () => {
                               <Button onClick={() => {setLastSavedOrder(selectedOrder); setShowInvoice(true);}} variant="outline" className="flex-1 space-x-2 border-zinc-700 text-[9px]"><Printer size={14}/><span>Ticket</span></Button>
                               <Button variant="outline" onClick={() => handleEditClick(selectedOrder)} className="flex-1 text-[9px] border-zinc-700"><Edit2 size={14}/><span>Editar</span></Button>
                            </div>
-                           {selectedOrder.status === 'Listo' && (
+                           {selectedOrder.status === 'Servido' && (
                               <Button onClick={() => setPaymentModalOrder(selectedOrder)} className="w-full bg-emerald-500 hover:bg-emerald-600 shadow-xl space-x-2">
                                  <CreditCard size={16}/>
                                  <span>Finalizar y Cobrar</span>
                               </Button>
                            )}
+                           {selectedOrder.status === 'Listo' && (
+                              <Button 
+                                 onClick={() => updateOrderStatus(selectedOrder.id, 'Servido')} 
+                                 className="w-full bg-blue-600 hover:bg-blue-700 shadow-xl space-x-2"
+                              >
+                                 <CheckCircle size={16}/>
+                                 <span>Marcar como Servido</span>
+                              </Button>
+                           )}
 
-                           {selectedOrder.status !== 'Pagado' && selectedOrder.status !== 'Listo' && (
+                           {selectedOrder.status !== 'Pagado' && selectedOrder.status !== 'Listo' && selectedOrder.status !== 'Servido' && (
                                  <div className="flex grid grid-cols-3 gap-1">
                                      {['Pendiente', 'Preparando', 'Listo'].map((s) => (
                                          <button 

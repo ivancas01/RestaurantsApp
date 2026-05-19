@@ -93,7 +93,15 @@ const CartDrawer = () => {
       // 2. Only if successful, open WhatsApp
       const message = formatWhatsAppMessage();
       const businessPhone = (cmsData.contact.phone || WHATSAPP_NUMBER).replace(/\D/g, '');
-      window.open(`https://wa.me/${businessPhone}?text=${message}`, '_blank');
+      
+      // On mobile, window.open is blocked by popup blockers because of the async `await addOrder` above.
+      // So we redirect the current window for mobile devices, and open a new tab on desktop.
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (isMobile) {
+        window.location.href = `https://wa.me/${businessPhone}?text=${message}`;
+      } else {
+        window.open(`https://wa.me/${businessPhone}?text=${message}`, '_blank');
+      }
       
       clearCart();
     } catch (err) {

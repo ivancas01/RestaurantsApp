@@ -353,6 +353,7 @@ const DeliveryManager = () => {
   };
 
   const getStatusColor = (order) => {
+    if (order.status === 'Entregado') return 'bg-purple-500/10 text-purple-500 border-purple-500/20 shadow-[0_0_10px_rgba(168,85,247,0.2)]';
     if (order.isPaid && order.isSent) return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
     if (order.isPaid) return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
     if (order.isSent) return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
@@ -634,22 +635,31 @@ const DeliveryManager = () => {
 
                            <p className="text-[8px] font-bold text-text-dim uppercase tracking-widest text-center mt-6 mb-2">Acciones de Logística</p>
                            <div className="grid grid-cols-2 gap-2">
-                              <Button 
-                                 onClick={() => updateOrder(selectedOrder.id, { isSent: true })}
-                                 disabled={selectedOrder.isSent}
-                                 className={`text-[9px] space-x-2 ${selectedOrder.isSent ? 'bg-zinc-500 opacity-50 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
-                              >
-                                 {selectedOrder.isSent ? <CheckCircle size={14}/> : <Truck size={14}/>}
-                                 <span>{selectedOrder.isSent ? 'Enviado' : 'Marcar Enviado'}</span>
-                              </Button>
-                              <Button 
-                                  onClick={() => setPaymentModalOrder(selectedOrder)}
-                                  disabled={selectedOrder.isPaid}
-                                  className={`text-[9px] space-x-2 ${selectedOrder.isPaid ? 'bg-zinc-500 opacity-50 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700'}`}
+                               <Button 
+                                  onClick={() => updateOrder(selectedOrder.id, { isSent: true })}
+                                  disabled={selectedOrder.isSent}
+                                  className={`text-[9px] space-x-2 ${selectedOrder.isSent ? 'bg-zinc-500 opacity-50 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
                                >
-                                  {selectedOrder.isPaid ? <CheckCircle size={14}/> : <CreditCard size={14}/>}
-                                  <span>{selectedOrder.isPaid ? 'Pagado' : 'Marcar Pagado'}</span>
+                                  {selectedOrder.isSent ? <CheckCircle size={14}/> : <Truck size={14}/>}
+                                  <span>{selectedOrder.isSent ? 'Enviado' : 'Marcar Enviado'}</span>
                                </Button>
+                               <Button 
+                                   onClick={() => setPaymentModalOrder(selectedOrder)}
+                                   disabled={selectedOrder.isPaid}
+                                   className={`text-[9px] space-x-2 ${selectedOrder.isPaid ? 'bg-zinc-500 opacity-50 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700'}`}
+                                >
+                                   {selectedOrder.isPaid ? <CheckCircle size={14}/> : <CreditCard size={14}/>}
+                                   <span>{selectedOrder.isPaid ? 'Pagado' : 'Marcar Pagado'}</span>
+                                </Button>
+                               {selectedOrder.status === 'Listo' && (
+                                   <Button 
+                                      onClick={() => updateOrderStatus(selectedOrder.id, 'Entregado')}
+                                      className="text-[9px] space-x-2 col-span-2 bg-purple-600 hover:bg-purple-700 mt-2"
+                                   >
+                                      <CheckCircle size={14}/>
+                                      <span>Marcar como Entregado</span>
+                                   </Button>
+                               )}
                            </div>
 
                            {/* View Invoice - Only if Sent AND Paid */}

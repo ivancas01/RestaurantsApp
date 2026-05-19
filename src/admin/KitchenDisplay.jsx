@@ -35,6 +35,9 @@ const KitchenDisplay = () => {
 
   // Enhanced filtering logic
   const filteredOrders = orders.filter(o => {
+    // Domicilios (delivery) en estado 'Pendiente' no van a la cocina hasta que el administrador los confirme / envíe a 'En Lista'
+    if (o.type === 'delivery' && o.status === 'Pendiente') return false;
+
     // 0. Date Filter: Show active orders from ANY date, but completed/ready orders ONLY from today
     const orderDate = new Date(o.created_at).toISOString().split('T')[0];
     const today = new Date().toISOString().split('T')[0];
@@ -70,9 +73,9 @@ const KitchenDisplay = () => {
 
   const handleNextStatus = (orderId, currentStatus) => {
     const nextMap = {
-      'Pendiente': 'Confirmado',
-      'En Lista': 'Confirmado',
-      'Confirmado': 'Preparando',
+      'Pendiente': 'Preparando',
+      'En Lista': 'Preparando',
+      'Confirmado': 'Preparando', // Fallback for old orders
       'Preparando': 'Listo',
       'En Cocina': 'Listo'
     };

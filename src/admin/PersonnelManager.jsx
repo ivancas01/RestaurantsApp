@@ -35,10 +35,40 @@ const PersonnelManager = () => {
   });
   const [editingUserId, setEditingUserId] = useState(null);
 
+  const startCreateUser = () => {
+    setNewUser({ 
+      name: '', 
+      username: '', 
+      password: '',
+      confirmPassword: '',
+      email: '',
+      identification: '',
+      phone: '',
+      groupId: groups[0]?.id || '' 
+    });
+    setEditingUserId(null);
+    setIsEditingUser(true);
+  };
+
   const startEditUser = (user) => {
     setNewUser({ ...user, confirmPassword: user.password });
     setEditingUserId(user.id);
     setIsEditingUser(true);
+  };
+
+  const closeUserModal = () => {
+    setIsEditingUser(false);
+    setNewUser({ 
+      name: '', 
+      username: '', 
+      password: '',
+      confirmPassword: '',
+      email: '',
+      identification: '',
+      phone: '',
+      groupId: groups[0]?.id || '' 
+    });
+    setEditingUserId(null);
   };
 
   const handleSaveUser = async () => {
@@ -89,8 +119,8 @@ const PersonnelManager = () => {
       {/* Modals */}
       <Modal 
         isOpen={isEditingUser} 
-        onClose={() => setIsEditingUser(false)} 
-        title="Gestionar" 
+        onClose={closeUserModal} 
+        title={editingUserId ? "Editar" : "Registrar"} 
         subtitle="Operador"
         maxWidth="max-w-xl"
       >
@@ -147,7 +177,7 @@ const PersonnelManager = () => {
       <div className="space-y-8">
         <div className="flex justify-between items-center border-b border-zinc-200 dark:border-zinc-900 pb-4">
           <h2 className="text-xl md:text-2xl font-serif uppercase tracking-wider text-text-bright">Staff <span className="text-primary italic">Activo</span></h2>
-          <Button onClick={() => setIsEditingUser(true)} className="flex items-center space-x-2 py-2 px-4">
+          <Button onClick={startCreateUser} className="flex items-center space-x-2 py-2 px-4">
             <Plus size={16} />
             <span className="text-[10px] md:text-xs">Nuevo</span>
           </Button>

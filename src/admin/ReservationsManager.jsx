@@ -12,7 +12,7 @@ const ReservationsManager = () => {
   const { 
     reservations, updateReservation, updateReservationStatus, 
     addReservation, deleteReservation: apiDeleteReservation, 
-    locations, fetchReservations, pagination 
+    locations, fetchReservations, pagination, cmsData
   } = useAdmin();
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -140,7 +140,8 @@ const ReservationsManager = () => {
       case 'Confirmado': return 'bg-green-500/10 text-green-500 border-green-500/20';
       case 'Pendiente': return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
       case 'Cancelado': return 'bg-accent/10 text-accent border-accent/20';
-      case 'Completado': return 'bg-zinc-500/10 text-zinc-500 border-zinc-500/20';
+      case 'Completado':
+      case 'Completada': return 'bg-zinc-500/10 text-zinc-500 border-zinc-500/20';
       default: return 'bg-zinc-500/10 text-zinc-500 border-zinc-500/20';
     }
   };
@@ -283,7 +284,7 @@ const ReservationsManager = () => {
             <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-800 hidden lg:block"></div>
             <div className="flex items-center space-x-2 overflow-x-auto scrollbar-hide py-1 w-full sm:w-auto">
                <Filter size={14} className="text-primary flex-shrink-0" />
-               {['Todos', 'Confirmado', 'Pendiente', 'Cancelado'].map(f => (
+               {['Todos', 'Confirmado', 'Pendiente', 'Completada', 'Cancelado'].map(f => (
                  <button key={f} onClick={() => setStatusFilter(f)} className={`px-4 py-2 text-[9px] font-bold uppercase transition-all whitespace-nowrap ${statusFilter === f ? 'bg-primary text-white border-primary' : 'text-text-dim hover:text-primary border border-zinc-200 dark:border-zinc-800'}`}>{f}</button>
                ))}
             </div>
@@ -355,9 +356,10 @@ const ReservationsManager = () => {
                                    const phone = res.phone || '';
                                    if (!phone) return <span className="text-[10px] text-text-dim italic">SIN CONTACTO</span>;
 
-                                   const cleanPhone = phone.replace(/\D/g, '');
-                                   const waMsg = encodeURIComponent(`Hola ${res.name}, te escribimos de Urban Street para confirmar tu reserva para el ${res.date} a las ${res.time}. ¿Confirmas tu asistencia?`);
-                                   const waUrl = `https://wa.me/${cleanPhone.length > 10 ? cleanPhone : '57' + cleanPhone}?text=${waMsg}`;
+                                    const cleanPhone = phone.replace(/\D/g, '');
+                                    const brandName = cmsData?.brand?.name || 'Urban Street';
+                                    const waMsg = encodeURIComponent(`Hola ${res.name}, te escribimos de ${brandName} para confirmar tu reserva para el ${res.date} a las ${res.time}. ¿Confirmas tu asistencia?`);
+                                    const waUrl = `https://wa.me/${cleanPhone.length > 10 ? cleanPhone : '57' + cleanPhone}?text=${waMsg}`;
                                    
                                    return (
                                      <a 
