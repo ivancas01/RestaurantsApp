@@ -6,6 +6,11 @@ import { useAdmin } from '../context/AdminContext';
 const QRSection = () => {
   const { cmsData } = useAdmin();
   const brandName = cmsData?.brand?.name || "Lumina Urban Gourmet";
+  
+  // Dynamically generate the menu URL pointing to the /menu route of the current site
+  const menuUrl = typeof window !== 'undefined' ? `${window.location.origin}/menu` : '';
+  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(menuUrl)}`;
+
   return (
     <section className="py-24 bg-background relative overflow-hidden flex items-center justify-center">
       {/* Decorative large text background */}
@@ -35,7 +40,7 @@ const QRSection = () => {
                   transition={{ delay: 0.1 }}
                   className="text-5xl md:text-7xl font-serif uppercase text-text-bright leading-[0.9]"
                 >
-                  Lleva la <br /> <span className="text-primary italic">Calle</span> en tu <br /> Bolsillo
+                  Lleva la <br /> <span className="text-primary italic">Carta</span> en tu <br /> Bolsillo
                 </motion.h2>
               </div>
 
@@ -81,11 +86,11 @@ const QRSection = () => {
                   Oficial // 2026
                 </div>
                 
-                <div className="border-[12px] border-zinc-900 p-2">
+                <div className="border-[12px] border-zinc-900 p-2 bg-white">
                   <img 
-                    src="/qr_menu.png" 
+                    src={qrImageUrl} 
                     alt="Menu QR Code" 
-                    className="w-64 h-64 md:w-80 md:h-80 object-cover"
+                    className="w-64 h-64 md:w-80 md:h-80 object-contain bg-white"
                   />
                 </div>
                 

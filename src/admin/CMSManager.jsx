@@ -95,7 +95,7 @@ const CMSManager = () => {
   }, []);
   
   // Local states for each section to avoid unnecessary context re-renders while typing
-  const [brand, setBrand] = useState(cmsData.brand || { name: 'URBAN STREET', tagline: 'Control Center' });
+  const [brand, setBrand] = useState(cmsData.brand || { name: 'URBAN STREET', tagline: 'Control Center', theme: 'rose' });
   const [hero, setHero] = useState(cmsData.hero);
   const [about, setAbout] = useState(cmsData.about);
   const [contact, setContact] = useState(cmsData.contact || { opening_time: '08:00', closing_time: '22:00', closed_image: '' });
@@ -145,14 +145,65 @@ const CMSManager = () => {
           title="Identidad y Marca" 
           icon={<Star className="text-primary" size={24} />}
           onSave={() => saveSection('brand', brand)}
-          onReset={() => setBrand(cmsData.brand || { name: 'URBAN STREET', tagline: 'Control Center' })}
+          onReset={() => {
+             const originalBrand = cmsData.brand || { name: 'URBAN STREET', tagline: 'Control Center', theme: 'rose' };
+             setBrand(originalBrand);
+             
+             // Revert live preview
+             const themes = {
+               rose: { primary: '#e11d48', dark: '#be123c' },
+               amber: { primary: '#f59e0b', dark: '#d97706' },
+               emerald: { primary: '#10b981', dark: '#059669' },
+               blue: { primary: '#3b82f6', dark: '#2563eb' },
+               violet: { primary: '#8b5cf6', dark: '#7c3aed' },
+               orange: { primary: '#ea580c', dark: '#c2410c' }
+             };
+             const themeColors = themes[originalBrand.theme || 'rose'] || themes.rose;
+             document.documentElement.style.setProperty('--primary', themeColors.primary);
+             document.documentElement.style.setProperty('--primary-dark', themeColors.dark);
+          }}
         >
            <div className="space-y-4">
               <Input label="Nombre del Restaurante" value={brand.name} onChange={(e) => setBrand({...brand, name: e.target.value.toUpperCase()})} />
               <Input label="Eslogan Administrativo" value={brand.tagline} onChange={(e) => setBrand({...brand, tagline: e.target.value})} />
            </div>
-           <div className="flex items-center justify-center border-2 border-dashed border-zinc-200 dark:border-zinc-800 p-8 opacity-50">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-center">El nombre se reflejará en facturas, tickets y encabezados</p>
+           <div className="space-y-4">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-primary">Tema de Color de la Interfaz</label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                 {[
+                    { id: 'rose', label: 'Fresa (Rojo)', color: 'bg-rose-600' },
+                    { id: 'amber', label: 'Dorado (Ámbar)', color: 'bg-amber-500' },
+                    { id: 'emerald', label: 'Menta (Verde)', color: 'bg-emerald-500' },
+                    { id: 'blue', label: 'Océano (Azul)', color: 'bg-blue-500' },
+                    { id: 'violet', label: 'Lujo (Violeta)', color: 'bg-violet-500' },
+                    { id: 'orange', label: 'Vibrante (Naranja)', color: 'bg-orange-500' }
+                 ].map(t => (
+                    <button 
+                       key={t.id} 
+                       type="button"
+                       onClick={() => {
+                          setBrand({...brand, theme: t.id});
+                          
+                          // Instant Live Preview
+                          const themes = {
+                            rose: { primary: '#e11d48', dark: '#be123c' },
+                            amber: { primary: '#f59e0b', dark: '#d97706' },
+                            emerald: { primary: '#10b981', dark: '#059669' },
+                            blue: { primary: '#3b82f6', dark: '#2563eb' },
+                            violet: { primary: '#8b5cf6', dark: '#7c3aed' },
+                            orange: { primary: '#ea580c', dark: '#c2410c' }
+                          };
+                          const themeColors = themes[t.id] || themes.rose;
+                          document.documentElement.style.setProperty('--primary', themeColors.primary);
+                          document.documentElement.style.setProperty('--primary-dark', themeColors.dark);
+                       }}
+                       className={`flex items-center space-x-2 p-2 border-2 transition-all hover:bg-zinc-100 dark:hover:bg-white/5 ${brand.theme === t.id ? 'border-primary bg-zinc-50 dark:bg-white/5 shadow-md' : 'border-zinc-200 dark:border-zinc-800'}`}
+                    >
+                       <span className={`w-3.5 h-3.5 rounded-full ${t.color} flex-shrink-0`}></span>
+                       <span className="text-[9px] font-bold uppercase tracking-wider text-text-bright">{t.label}</span>
+                    </button>
+                 ))}
+              </div>
            </div>
         </CMSSection>
 

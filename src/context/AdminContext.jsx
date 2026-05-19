@@ -62,7 +62,8 @@ export const AdminProvider = ({ children }) => {
   const DEFAULT_CMS = {
     brand: {
       name: "URBAN STREET",
-      tagline: "Control Center"
+      tagline: "Control Center",
+      theme: "rose"
     },
     hero: {
       title: "",
@@ -106,6 +107,23 @@ export const AdminProvider = ({ children }) => {
   };
 
   const [cmsData, setCmsData] = useState(DEFAULT_CMS);
+
+  useEffect(() => {
+    const themes = {
+      rose: { primary: '#e11d48', dark: '#be123c' },
+      amber: { primary: '#f59e0b', dark: '#d97706' },
+      emerald: { primary: '#10b981', dark: '#059669' },
+      blue: { primary: '#3b82f6', dark: '#2563eb' },
+      violet: { primary: '#8b5cf6', dark: '#7c3aed' },
+      orange: { primary: '#ea580c', dark: '#c2410c' }
+    };
+    
+    const selectedTheme = cmsData?.brand?.theme || 'rose';
+    const themeColors = themes[selectedTheme] || themes.rose;
+    
+    document.documentElement.style.setProperty('--primary', themeColors.primary);
+    document.documentElement.style.setProperty('--primary-dark', themeColors.dark);
+  }, [cmsData?.brand?.theme]);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastSync, setLastSync] = useState(new Date());

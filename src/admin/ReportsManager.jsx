@@ -150,8 +150,8 @@ const ReportsManager = () => {
                         <AreaChart data={stats?.sales_by_day || []}>
                            <defs>
                               <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                                 <stop offset="5%" stopColor="#e11d48" stopOpacity={0.3}/>
-                                 <stop offset="95%" stopColor="#e11d48" stopOpacity={0}/>
+                                 <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3}/>
+                                 <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
                               </linearGradient>
                            </defs>
                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#27272a" />
@@ -169,10 +169,10 @@ const ReportsManager = () => {
                              tickFormatter={(val) => `$${val/1000}k`}
                            />
                            <Tooltip 
-                             contentStyle={{ backgroundColor: '#000', border: '2px solid #e11d48', color: '#fff', fontSize: '10px', textTransform: 'uppercase', fontWeight: 'bold' }}
-                             itemStyle={{ color: '#e11d48' }}
+                             contentStyle={{ backgroundColor: '#000', border: '2px solid var(--primary)', color: '#fff', fontSize: '10px', textTransform: 'uppercase', fontWeight: 'bold' }}
+                             itemStyle={{ color: 'var(--primary)' }}
                            />
-                           <Area type="monotone" dataKey="revenue" stroke="#e11d48" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
+                           <Area type="monotone" dataKey="revenue" stroke="var(--primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
                         </AreaChart>
                      </ResponsiveContainer>
                   </div>

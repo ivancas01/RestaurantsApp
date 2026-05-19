@@ -93,6 +93,7 @@ class ReservationSection(SingletonModel):
 class BrandSection(SingletonModel):
     name = models.CharField(max_length=100, default="URBAN STREET", verbose_name="Nombre del Restaurante")
     tagline = models.CharField(max_length=200, default="Control Center", verbose_name="Eslogan / Tagline")
+    theme = models.CharField(max_length=50, default="rose", verbose_name="Tema de Color")
 
     class Meta:
         verbose_name = "Identidad de Marca"
