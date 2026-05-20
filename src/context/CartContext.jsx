@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useAdmin } from './AdminContext';
+import { useNotification } from './NotificationContext';
 
 const CartContext = createContext();
 
@@ -14,6 +16,8 @@ export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [total, setTotal] = useState(0);
+  const { cmsData } = useAdmin();
+  const { showNotification } = useNotification();
 
   // Load cart from localStorage on mount
   useEffect(() => {
@@ -38,6 +42,27 @@ export const CartProvider = ({ children }) => {
   }, [cartItems]);
 
   const addToCart = (product) => {
+    // Operational closed check
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+    const [openH, openM] = (cmsData?.contact?.opening_time || "08:00:00").split(':').map(Number);
+    const [closeH, closeM] = (cmsData?.contact?.closing_time || "22:00:00").split(':').map(Number);
+    const openingTime = openH * 60 + (openM || 0);
+    const closingTime = closeH * 60 + (closeM || 0);
+
+    let isClosed = false;
+    if (closingTime < openingTime) {
+      isClosed = !(currentTime >= openingTime || currentTime <= closingTime);
+    } else {
+      isClosed = !(currentTime >= openingTime && currentTime <= closingTime);
+    }
+
+    if (isClosed) {
+      showNotification("El local está fuera de servicio en este momento.", "error");
+      setIsCartOpen(true);
+      return;
+    }
+
     setCartItems((prevItems) => {
       const existingItem = prevItems.find((item) => String(item.id) === String(product.id));
       if (existingItem) {

@@ -161,6 +161,9 @@ const CMSManager = () => {
              const themeColors = themes[originalBrand.theme || 'rose'] || themes.rose;
              document.documentElement.style.setProperty('--primary', themeColors.primary);
              document.documentElement.style.setProperty('--primary-dark', themeColors.dark);
+             document.documentElement.style.setProperty('--primary-shadow-10', themeColors.primary + '1a');
+             document.documentElement.style.setProperty('--primary-shadow-20', themeColors.primary + '33');
+             document.documentElement.style.setProperty('--primary-shadow-30', themeColors.primary + '4d');
           }}
         >
            <div className="space-y-4">
@@ -196,6 +199,9 @@ const CMSManager = () => {
                           const themeColors = themes[t.id] || themes.rose;
                           document.documentElement.style.setProperty('--primary', themeColors.primary);
                           document.documentElement.style.setProperty('--primary-dark', themeColors.dark);
+                          document.documentElement.style.setProperty('--primary-shadow-10', themeColors.primary + '1a');
+                          document.documentElement.style.setProperty('--primary-shadow-20', themeColors.primary + '33');
+                          document.documentElement.style.setProperty('--primary-shadow-30', themeColors.primary + '4d');
                        }}
                        className={`flex items-center space-x-2 p-2 border-2 transition-all hover:bg-zinc-100 dark:hover:bg-white/5 ${brand.theme === t.id ? 'border-primary bg-zinc-50 dark:bg-white/5 shadow-md' : 'border-zinc-200 dark:border-zinc-800'}`}
                     >

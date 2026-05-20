@@ -134,7 +134,11 @@ const VenueManager = () => {
            </div>
 
            <div className="flex justify-end pt-8">
-             <Button onClick={handleAddLocation} className="text-xs font-bold uppercase tracking-[0.3em] px-20 py-4 shadow-[10px_10px_0px_0px_rgba(225,29,72,0.2)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all">
+             <Button 
+               onClick={handleAddLocation} 
+               className="text-xs font-bold uppercase tracking-[0.3em] px-20 py-4 hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all"
+               style={{ boxShadow: '10px 10px 0px 0px var(--primary-shadow-20)' }}
+             >
                 Crear Zona
              </Button>
            </div>
@@ -178,7 +182,11 @@ const VenueManager = () => {
               </div>
            </div>
            <div className="flex justify-end pt-8">
-             <Button onClick={handleAddTable} className="text-xs font-bold uppercase tracking-[0.3em] px-20 py-4 shadow-[10px_10px_0px_0px_rgba(225,29,72,0.2)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all">
+             <Button 
+               onClick={handleAddTable} 
+               className="text-xs font-bold uppercase tracking-[0.3em] px-20 py-4 hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all"
+               style={{ boxShadow: '10px 10px 0px 0px var(--primary-shadow-20)' }}
+             >
                 Registrar Mesa
              </Button>
            </div>

@@ -41,7 +41,8 @@ const AccessDenied = ({ permission }) => {
         </Button>
         <Button 
           onClick={() => window.location.reload()}
-          className="py-4 px-8 shadow-[8px_8px_0px_0px_rgba(225,29,72,0.2)]"
+          className="py-4 px-8"
+          style={{ boxShadow: '8px 8px 0px 0px var(--primary-shadow-20)' }}
         >
           Re-Verificar Permisos
         </Button>

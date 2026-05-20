@@ -36,7 +36,7 @@ const FullMenu = () => {
     const printWindow = window.open('', '_blank');
     
     let categoriesHtml = '';
-    menu.forEach(cat => {
+    menu.forEach((cat, catIndex) => {
       let productsHtml = '';
       (cat.products || []).forEach(prod => {
         const imgHtml = prod.image ? `
@@ -53,7 +53,7 @@ const FullMenu = () => {
                 <div class="menu-item-header">
                   <span class="menu-item-name">${prod.name}</span>
                   <span class="menu-item-dots"></span>
-                  <span class="menu-item-price">${prod.price}</span>
+                  <span class="menu-item-price">$${prod.price}</span>
                 </div>
                 <p class="menu-item-desc">${prod.description || ''}</p>
               </div>
@@ -62,11 +62,56 @@ const FullMenu = () => {
         `;
       });
       
+      const patIdA = `checkers-a-${catIndex}`;
+      const patIdB = `checkers-b-${catIndex}`;
+      const patIdC = `checkers-c-${catIndex}`;
+
       categoriesHtml += `
         <div class="menu-category">
-          <h2 class="category-title">${cat.name}</h2>
+          <div class="category-header">
+            <div class="checkerboard-pattern">
+              <svg width="100%" height="12" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <pattern id="${patIdA}" width="12" height="12" patternUnits="userSpaceOnUse">
+                    <rect width="6" height="6" fill="var(--primary)" />
+                    <rect x="6" y="6" width="6" height="6" fill="var(--primary)" />
+                  </pattern>
+                </defs>
+                <rect width="100%" height="12" fill="url(#${patIdA})" />
+              </svg>
+            </div>
+            <h2 class="category-title">${cat.name}</h2>
+            <p class="category-subtitle">PARA COMPARTIR Y DISFRUTAR</p>
+            <div class="checkerboard-pattern">
+              <svg width="100%" height="12" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <pattern id="${patIdB}" width="12" height="12" patternUnits="userSpaceOnUse">
+                    <rect width="6" height="6" fill="var(--primary)" />
+                    <rect x="6" y="6" width="6" height="6" fill="var(--primary)" />
+                  </pattern>
+                </defs>
+                <rect width="100%" height="12" fill="url(#${patIdB})" />
+              </svg>
+            </div>
+          </div>
+          
           <div class="menu-items-grid">
             ${productsHtml}
+          </div>
+
+          <div class="category-footer">
+            <div class="checkerboard-pattern">
+              <svg width="100%" height="12" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <pattern id="${patIdC}" width="12" height="12" patternUnits="userSpaceOnUse">
+                    <rect width="6" height="6" fill="var(--primary)" />
+                    <rect x="6" y="6" width="6" height="6" fill="var(--primary)" />
+                  </pattern>
+                </defs>
+                <rect width="100%" height="12" fill="url(#${patIdC})" />
+              </svg>
+            </div>
+            <p class="footer-prices-notice">PRECIOS EXPRESADOS EN MILES</p>
           </div>
         </div>
       `;
@@ -81,7 +126,7 @@ const FullMenu = () => {
         <style>
           @page {
             size: letter;
-            margin: 0; /* Removes default browser headers & footers (URL, Page title, etc.) */
+            margin: 0;
           }
           :root {
             --primary: ${themeColors.primary};
@@ -90,9 +135,9 @@ const FullMenu = () => {
           body {
             font-family: 'Inter', sans-serif;
             color: #18181b;
-            background-color: #fff;
+            background-color: #fdfbf7; /* Warm cream vintage paper background */
             margin: 0;
-            padding: 15mm 20mm 20mm 20mm; /* Consistent margins on Page 1 */
+            padding: 15mm 20mm 20mm 20mm;
             font-size: 10px;
             line-height: 1.5;
           }
@@ -110,15 +155,15 @@ const FullMenu = () => {
           }
           .restaurant-name {
             font-family: 'Bebas Neue', sans-serif;
-            font-size: 52px;
+            font-size: 56px;
             letter-spacing: 4px;
             margin: 0 0 5px 0;
-            color: #18181b;
+            color: var(--primary);
             line-height: 1;
             text-transform: uppercase;
           }
           .restaurant-tagline {
-            font-size: 11px;
+            font-size: 12px;
             letter-spacing: 6px;
             color: #52525b;
             margin: 0 0 10px 0;
@@ -126,7 +171,7 @@ const FullMenu = () => {
             text-transform: uppercase;
           }
           .restaurant-info {
-            font-size: 8px;
+            font-size: 9px;
             letter-spacing: 2px;
             color: #71717a;
             margin: 0;
@@ -136,25 +181,42 @@ const FullMenu = () => {
             margin-bottom: 40px;
           }
           .menu-category:not(:first-of-type) {
-            page-break-before: always; /* Split each category to a new page */
-            padding-top: 15mm; /* Safe consistent top margin on Pages 2, 3, etc. */
+            page-break-before: always;
+            padding-top: 15mm;
             box-sizing: border-box;
+          }
+          .category-header {
+            text-align: center;
+            margin-bottom: 30px;
+            page-break-after: avoid;
           }
           .category-title {
             font-family: 'Bebas Neue', sans-serif;
-            font-size: 26px;
-            letter-spacing: 2px;
-            border-bottom: 2px solid var(--primary);
-            padding-bottom: 5px;
-            margin: 0 0 20px 0;
+            font-size: 42px;
+            letter-spacing: 3px;
+            margin: 10px 0 2px 0;
             color: var(--primary);
             text-transform: uppercase;
-            page-break-after: avoid;
+            line-height: 1;
+          }
+          .category-subtitle {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 18px;
+            letter-spacing: 4px;
+            margin: 0 0 10px 0;
+            color: #18181b;
+            text-transform: uppercase;
+            line-height: 1;
+          }
+          .checkerboard-pattern {
+            width: 100%;
+            display: block;
+            margin: 5px 0;
           }
           .menu-items-grid {
             display: grid;
             grid-template-cols: 1fr 1fr;
-            gap: 20px 40px;
+            gap: 24px 40px;
           }
           @media (max-width: 600px) {
             .menu-items-grid {
@@ -164,19 +226,22 @@ const FullMenu = () => {
           .menu-item {
             page-break-inside: avoid;
             margin-bottom: 5px;
+            border-bottom: 1px dashed rgba(24, 24, 27, 0.1);
+            padding-bottom: 12px;
           }
           .menu-item-body {
             display: flex;
-            align-items: flex-start;
-            gap: 12px;
+            align-items: center;
+            gap: 16px;
           }
           .menu-item-image-wrapper {
-            width: 45px;
-            height: 45px;
+            width: 64px;
+            height: 64px;
             flex-shrink: 0;
-            border: 1px solid #e4e4e7;
-            background-color: #f4f4f5;
+            border: 2px solid var(--primary);
+            background-color: #faf8f5;
             overflow: hidden;
+            box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.12);
           }
           .menu-item-img {
             width: 100%;
@@ -193,34 +258,50 @@ const FullMenu = () => {
             justify-content: space-between;
           }
           .menu-item-name {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 20px;
             font-weight: 700;
-            font-size: 11px;
             letter-spacing: 1px;
+            color: var(--primary);
             text-transform: uppercase;
           }
           .menu-item-dots {
             flex-grow: 1;
-            border-bottom: 1px dotted #a1a1aa;
+            border-bottom: 1px dotted rgba(24, 24, 27, 0.2);
             margin: 0 8px;
           }
           .menu-item-price {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 20px;
             font-weight: 700;
-            font-size: 11px;
-            color: var(--primary);
+            color: #18181b;
           }
           .menu-item-desc {
-            font-size: 8px;
+            font-size: 11px;
             color: #52525b;
             margin: 4px 0 0 0;
-            letter-spacing: 1px;
-            text-transform: uppercase;
+            line-height: 1.4;
+            letter-spacing: 0.5px;
+          }
+          .category-footer {
+            margin-top: 30px;
+            text-align: center;
+            page-break-inside: avoid;
+          }
+          .footer-prices-notice {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 12px;
+            letter-spacing: 2px;
+            color: var(--primary);
+            margin: 8px 0 0 0;
+            font-weight: 700;
           }
           .menu-footer {
             margin-top: 40px;
             text-align: center;
-            border-top: 1px solid #e4e4e7;
+            border-top: 1px solid rgba(24, 24, 27, 0.1);
             padding-top: 20px;
-            font-size: 8px;
+            font-size: 9px;
             letter-spacing: 3px;
             color: #71717a;
             text-transform: uppercase;
@@ -292,56 +373,83 @@ const FullMenu = () => {
           </div>
 
           {/* Categories */}
-          <div className="space-y-20 md:space-y-32">
+          <div className="space-y-24 md:space-y-36">
             {menu.map((category, catIndex) => (
-              <div key={category.id} id={category.id}>
+              <div key={category.id} id={category.id} className="scroll-mt-28">
+                {/* Rebranded Gourmet Category Header on Screen */}
                 <motion.div 
                    initial={{ opacity: 0, y: 20 }}
                    whileInView={{ opacity: 1, y: 0 }}
                    viewport={{ once: true }}
-                   transition={{ duration: 0.3 }}
-                   className="flex items-center space-x-6 mb-8 md:mb-12"
+                   transition={{ duration: 0.4 }}
+                   className="text-center max-w-xl mx-auto mb-12 md:mb-16 px-4"
                 >
-                  <h2 className="text-3xl md:text-6xl font-serif uppercase text-text-bright">{category.name}</h2>
-                  <div className="flex-1 h-px bg-zinc-200 dark:bg-white/10"></div>
+                  <div className="text-primary mb-3">
+                    <svg width="100%" height="12" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <pattern id={`checkers-s-a-${catIndex}`} width="12" height="12" patternUnits="userSpaceOnUse">
+                          <rect width="6" height="6" fill="currentColor" />
+                          <rect x="6" y="6" width="6" height="6" fill="currentColor" />
+                        </pattern>
+                      </defs>
+                      <rect width="100%" height="12" fill={`url(#checkers-s-a-${catIndex})`} />
+                    </svg>
+                  </div>
+                  <h2 className="text-4xl md:text-6xl font-serif uppercase text-text-bright tracking-wider leading-none mb-2">{category.name}</h2>
+                  <p className="text-primary uppercase tracking-[0.2em] font-bold text-xs md:text-sm mb-3">PARA COMPARTIR Y DISFRUTAR</p>
+                  <div className="text-primary">
+                    <svg width="100%" height="12" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <pattern id={`checkers-s-b-${catIndex}`} width="12" height="12" patternUnits="userSpaceOnUse">
+                          <rect width="6" height="6" fill="currentColor" />
+                          <rect x="6" y="6" width="6" height="6" fill="currentColor" />
+                        </pattern>
+                      </defs>
+                      <rect width="100%" height="12" fill={`url(#checkers-s-b-${catIndex})`} />
+                    </svg>
+                  </div>
                 </motion.div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1 bg-zinc-200 dark:bg-white/5 border border-zinc-200 dark:border-white/5">
+                {/* 2-Column Responsive Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
                   {(category.products || []).map((item, index) => (
                     <motion.div
                       key={item.id}
-                      initial={{ opacity: 0 }}
-                      whileInView={{ opacity: 1 }}
+                      initial={{ opacity: 0, y: 15 }}
+                      whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
                       transition={{ duration: 0.3, delay: index * 0.05 }}
-                      className="bg-surface p-6 md:p-8 group relative overflow-hidden flex flex-col h-full"
+                      className="bg-surface border border-zinc-200 dark:border-zinc-800/80 p-5 md:p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col sm:flex-row items-center gap-6"
                     >
-                      <div className="aspect-video overflow-hidden mb-6 grayscale group-hover:grayscale-0 transition-all duration-500 border border-zinc-100 dark:border-zinc-800">
-                        <img 
-                          src={item.image} 
-                          alt={item.name} 
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                        />
+                      {item.image && (
+                        <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 flex-shrink-0 border-2 border-primary bg-zinc-100 dark:bg-zinc-900 overflow-hidden shadow-[4px_4px_0px_rgba(0,0,0,0.15)] group relative">
+                          <img 
+                            src={item.image} 
+                            alt={item.name} 
+                            className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500 scale-105 hover:scale-100" 
+                          />
+                        </div>
+                      )}
+                      
+                      <div className="flex-grow min-w-0 w-full">
+                        <div className="flex items-baseline justify-between gap-2">
+                          <h3 className="text-xl md:text-2xl font-serif text-text-bright uppercase tracking-wide leading-none">{item.name}</h3>
+                          <span className="flex-grow border-b border-dashed border-zinc-300 dark:border-zinc-700/80 mx-2 self-end"></span>
+                          <span className="text-primary font-bold font-serif text-xl md:text-2xl leading-none">${item.price}</span>
+                        </div>
+                        
+                        <p className="text-text-dim text-[11px] md:text-xs leading-relaxed mt-3 pr-2">
+                          {item.description}
+                        </p>
+                        
+                        <button 
+                          onClick={() => addToCart(item)}
+                          className="mt-4 flex items-center space-x-2 text-primary font-bold uppercase tracking-[0.2em] text-[10px] pt-1 group/btn hover:opacity-85 transition-opacity"
+                        >
+                          <ShoppingBag size={12} />
+                          <span>Agregar al pedido</span>
+                        </button>
                       </div>
-                      
-                      <div className="flex justify-between items-start mb-4">
-                        <h3 className="text-lg md:text-xl font-serif text-text-bright uppercase tracking-wide pr-4 leading-tight">{item.name}</h3>
-                        <span className="text-primary font-bold text-base md:text-lg whitespace-nowrap">{item.price}</span>
-                      </div>
-                      
-                      <div className="w-8 h-1 bg-primary mb-4 group-hover:w-full transition-all duration-300"></div>
-                      
-                      <p className="text-text-dim text-[10px] md:text-xs uppercase tracking-wider mb-8 flex-grow leading-relaxed">
-                        {item.description}
-                      </p>
-                      
-                      <button 
-                        onClick={() => addToCart(item)}
-                        className="w-full border-2 border-primary/20 py-3 uppercase tracking-widest text-[9px] md:text-[10px] font-bold hover:bg-primary hover:text-white transition-all flex items-center justify-center space-x-2"
-                      >
-                        <ShoppingBag size={14} />
-                        <span>Agregar al pedido</span>
-                      </button>
                     </motion.div>
                   ))}
                 </div>

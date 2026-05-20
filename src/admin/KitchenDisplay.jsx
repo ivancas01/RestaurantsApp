@@ -205,7 +205,8 @@ const KitchenDisplay = () => {
            {/* Monitor Button Grouped with View Switchers */}
            <button 
              onClick={() => setIsMonitorMode(true)}
-             className="px-6 py-2 bg-zinc-950 text-white text-[9px] font-bold uppercase tracking-[0.2em] hover:bg-primary transition-all flex items-center space-x-2 border-2 border-primary/30 shadow-[4px_4px_0px_0px_rgba(225,29,72,0.2)] hover:shadow-none translate-y-0 active:translate-y-1"
+             className="px-6 py-2 bg-zinc-950 text-white text-[9px] font-bold uppercase tracking-[0.2em] hover:bg-primary transition-all flex items-center space-x-2 border-2 border-primary/30 hover:shadow-none translate-y-0 active:translate-y-1"
+             style={{ boxShadow: '4px 4px 0px 0px var(--primary-shadow-20)' }}
            >
               <ChefHat size={14} className="text-primary" />
               <span>Modo Monitor</span>
@@ -262,7 +263,8 @@ const KitchenDisplay = () => {
               <button
                 key={btn.id}
                 onClick={() => setFilter(btn.id)}
-                className={`px-4 md:px-6 py-2 text-[9px] md:text-[10px] font-bold uppercase tracking-widest transition-all border-2 flex-shrink-0 ${filter === btn.id ? 'bg-primary border-primary text-white shadow-[4px_4px_0px_0px_rgba(225,29,72,0.3)]' : 'border-zinc-200 dark:border-zinc-800 text-text-dim hover:border-primary/50'}`}
+                className={`px-4 md:px-6 py-2 text-[9px] md:text-[10px] font-bold uppercase tracking-widest transition-all border-2 flex-shrink-0 ${filter === btn.id ? 'bg-primary border-primary text-white' : 'border-zinc-200 dark:border-zinc-800 text-text-dim hover:border-primary/50'}`}
+                style={filter === btn.id ? { boxShadow: '4px 4px 0px 0px var(--primary-shadow-30)' } : undefined}
               >
                 {btn.label}
               </button>

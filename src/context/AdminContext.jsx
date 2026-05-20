@@ -123,6 +123,9 @@ export const AdminProvider = ({ children }) => {
     
     document.documentElement.style.setProperty('--primary', themeColors.primary);
     document.documentElement.style.setProperty('--primary-dark', themeColors.dark);
+    document.documentElement.style.setProperty('--primary-shadow-10', themeColors.primary + '1a');
+    document.documentElement.style.setProperty('--primary-shadow-20', themeColors.primary + '33');
+    document.documentElement.style.setProperty('--primary-shadow-30', themeColors.primary + '4d');
   }, [cmsData?.brand?.theme]);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);

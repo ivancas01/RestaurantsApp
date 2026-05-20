@@ -43,7 +43,7 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex space-x-8 lg:space-x-12 items-center">
+        <div className="hidden xl:flex space-x-8 xl:space-x-12 items-center">
           {navLinks.map((link) => (
             <a
               key={link.name}
@@ -70,7 +70,7 @@ const Navbar = () => {
         </div>
 
         {/* Mobile Toggle */}
-        <div className="md:hidden flex items-center space-x-5">
+        <div className="xl:hidden flex items-center space-x-5">
           <button 
             onClick={toggleCart}
             className="text-text-bright hover:text-primary transition-colors relative"
@@ -100,7 +100,7 @@ const Navbar = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-full left-0 w-full bg-surface border-b-2 border-primary md:hidden shadow-2xl"
+            className="absolute top-full left-0 w-full bg-surface border-b-2 border-primary xl:hidden shadow-2xl"
           >
             <div className="flex flex-col p-8 space-y-6">
               {navLinks.map((link, index) => (

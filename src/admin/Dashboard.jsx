@@ -75,7 +75,8 @@ const Dashboard = () => {
            <a 
              key={i} 
              href={action.path}
-             className={`p-6 md:p-8 flex flex-col items-center justify-center text-center space-y-4 border-2 border-zinc-200 dark:border-zinc-800 hover:border-primary transition-all group ${action.color === 'bg-primary' ? 'bg-primary border-primary text-white shadow-[8px_8px_0px_0px_rgba(225,29,72,0.2)]' : 'bg-surface text-text-bright'}`}
+             className={`p-6 md:p-8 flex flex-col items-center justify-center text-center space-y-4 border-2 border-zinc-200 dark:border-zinc-800 hover:border-primary transition-all group ${action.color === 'bg-primary' ? 'bg-primary border-primary text-white' : 'bg-surface text-text-bright'}`}
+             style={action.color === 'bg-primary' ? { boxShadow: '8px 8px 0px 0px var(--primary-shadow-20)' } : undefined}
            >
               {React.cloneElement(action.icon, { size: 28, className: action.color === 'bg-primary' ? 'text-white' : 'text-primary' })}
               <span className="text-[10px] font-bold tracking-widest">{action.label}</span>

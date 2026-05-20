@@ -216,7 +216,10 @@ const ReportsManager = () => {
           >
             {/* Cash Summary */}
             <div className="lg:col-span-1 space-y-6">
-               <div className="bg-primary p-8 text-white shadow-[10px_10px_0px_0px_rgba(225,29,72,0.1)] border-b-8 border-black/20">
+               <div 
+                 className="bg-primary p-8 text-white border-b-8 border-black/20"
+                 style={{ boxShadow: '10px 10px 0px 0px var(--primary-shadow-10)' }}
+               >
                   <p className="text-[10px] font-bold tracking-[0.3em] opacity-70 mb-2">// CIERRE DEL DÍA</p>
                   <h3 className="text-5xl font-serif mb-4 leading-none">{formatCurrency(cashClosing?.total_day || 0)}</h3>
                   <div className="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-widest pt-4 border-t border-white/20">

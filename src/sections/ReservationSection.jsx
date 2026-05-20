@@ -31,7 +31,10 @@ const Select = ({ label, className = "", children, ...props }) => {
 };
 
 const LocationVisualizer = ({ selectedLocation, persons, className = "" }) => (
-  <div className={`mt-8 border-2 border-primary/30 p-4 bg-background relative group overflow-hidden shadow-[4px_4px_0px_0px_rgba(225,29,72,0.1)] ${className}`}>
+  <div 
+    className={`mt-8 border-2 border-primary/30 p-4 bg-background relative group overflow-hidden ${className}`}
+    style={{ boxShadow: '4px 4px 0px 0px var(--primary-shadow-10)' }}
+  >
      <div className="absolute top-0 right-0 p-2 text-[8px] font-bold text-primary opacity-50 tracking-widest uppercase">Visualizer v1.0</div>
      <div className="aspect-video bg-zinc-200 dark:bg-zinc-900 mb-6 overflow-hidden relative border border-white/5">
         {selectedLocation?.image ? (

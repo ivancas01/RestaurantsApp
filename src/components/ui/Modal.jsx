@@ -21,7 +21,8 @@ const Modal = ({ isOpen, onClose, title, subtitle, children, maxWidth = 'max-w-4
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className={`bg-surface border-4 border-primary w-full ${maxWidth} shadow-[0_0_50px_rgba(225,29,72,0.3)] flex flex-col max-h-[90vh] pointer-events-auto relative`}
+            className={`bg-surface border-4 border-primary w-full ${maxWidth} flex flex-col max-h-[90vh] pointer-events-auto relative`}
+            style={{ boxShadow: '0 0 50px var(--primary-shadow-30)' }}
           >
             {/* Header */}
             <div className="bg-primary p-6 text-white flex justify-between items-center flex-shrink-0">

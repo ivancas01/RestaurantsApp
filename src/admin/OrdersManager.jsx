@@ -255,6 +255,24 @@ const OrdersManager = () => {
   const calculateTotal = (items) => items.reduce((acc, i) => acc + (parseFloat(String(i.price_at_order || i.price || '0').replace('$', '')) * i.quantity), 0);
 
   const handlePrint = (order) => {
+    const isPaid = order.isPaid || order.is_paid;
+    const paymentMethod = order.payment_method;
+    const getPaymentMethodLabel = (method) => {
+      const mapping = {
+        'Cash': 'EFECTIVO',
+        'Card': 'TARJETA',
+        'Transfer': 'TRANSFERENCIA'
+      };
+      return mapping[method] || method || 'EFECTIVO';
+    };
+    
+    const orderStartTime = order.created_at 
+      ? new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) 
+      : new Date().toLocaleTimeString();
+    const orderPaymentTime = isPaid 
+      ? (order.updated_at ? new Date(order.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : new Date().toLocaleTimeString()) 
+      : 'PENDIENTE';
+
     const printWindow = window.open('', '_blank', 'width=450,height=600');
     const itemsHtml = order.items.map(item => `
       <div class="item-row">
@@ -283,7 +301,7 @@ const OrdersManager = () => {
             .item-name { flex: 1; text-align: left; text-transform: uppercase; }
             .item-price { flex-shrink: 0; text-align: right; }
             .total { font-family: 'Courier New', Courier, monospace; display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; border-top: 2px solid black; padding-top: 8px; }
-            .footer { font-family: 'Courier New', Courier, monospace; text-align: center; margin-top: 30px; font-size: 9px; text-transform: uppercase; letter-spacing: 2px; line-height: 1.4; }
+            .footer { font-family: 'Courier New', Courier, monospace; text-align: center; margin-top: 30px; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; line-height: 1.4; }
             @media print { 
               body { padding: 5px; width: 260px; margin: 0; } 
               .no-print { display: none; } 
@@ -297,17 +315,37 @@ const OrdersManager = () => {
           </div>
           <div class="meta">
             <div><span>ID:</span> <span>#${String(order.id).split('_').pop()}</span></div>
-            <div><span>Fecha:</span> <span>${new Date().toLocaleDateString()}</span></div>
-            <div><span>Hora:</span> <span>${new Date().toLocaleTimeString()}</span></div>
+            <div><span>Fecha:</span> <span>${new Date(order.created_at || new Date()).toLocaleDateString()}</span></div>
+            <div><span>Hora Inicio:</span> <span>${orderStartTime}</span></div>
+            ${isPaid ? `<div><span>Hora Pago:</span> <span>${orderPaymentTime}</span></div>` : ''}
+            ${isPaid ? `<div><span>Método Pago:</span> <span>${getPaymentMethodLabel(paymentMethod)}</span></div>` : ''}
             <div><span>Cliente:</span> <span>${order.customer_name}</span></div>
+            <div><span>Documento:</span> <span>${order.identification || '---'}</span></div>
+            <div><span>Contacto:</span> <span>${order.customer_phone || '---'}</span></div>
             ${order.table ? `<div><span>Mesa:</span> <span>${tables.find(t => t.id === order.table)?.number || 'N/A'}</span></div>` : ''}
+            ${order.waiter_name ? `<div><span>Atendido:</span> <span>${order.waiter_name.toUpperCase()}</span></div>` : ''}
           </div>
           <div class="items">${itemsHtml}</div>
           <div class="total">
             <span>TOTAL</span>
             <span>$${(typeof order.total === 'number' ? order.total : parseFloat(String(order.total).replace('$', ''))).toFixed(2)}</span>
           </div>
-          <div class="footer">¡Gracias por visitarnos! // Urban Street</div>
+          <div class="footer">
+            <div style="font-weight: bold; border-top: 1px dashed black; padding-top: 15px; margin-top: 15px;">
+              ${cmsData?.brand?.name || 'URBAN STREET'}
+            </div>
+            <div style="font-size: 8px; margin-top: 5px;">
+              ${cmsData?.contact?.address || 'CALLE 123, CIUDAD'}
+            </div>
+            <div style="font-size: 8px;">
+              TEL: ${cmsData?.contact?.phone || '---'}
+            </div>
+            <div style="font-size: 8px; text-transform: lowercase;">
+              Instagram: ${cmsData?.contact?.instagram || '@urbangourmet'}
+            </div>
+            ${cmsData?.contact?.email ? `<div style="font-size: 8px; text-transform: lowercase;">${cmsData?.contact?.email}</div>` : ''}
+            <div style="margin-top: 15px; font-weight: bold; letter-spacing: 1px;">¡GRACIAS POR SU COMPRA!</div>
+          </div>
           <script>
             window.onload = () => {
               setTimeout(() => {
@@ -325,6 +363,24 @@ const OrdersManager = () => {
   };
 
   const handleDownloadPDF = (order) => {
+    const isPaid = order.isPaid || order.is_paid;
+    const paymentMethod = order.payment_method;
+    const getPaymentMethodLabel = (method) => {
+      const mapping = {
+        'Cash': 'EFECTIVO',
+        'Card': 'TARJETA',
+        'Transfer': 'TRANSFERENCIA'
+      };
+      return mapping[method] || method || 'EFECTIVO';
+    };
+    
+    const orderStartTime = order.created_at 
+      ? new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) 
+      : new Date().toLocaleTimeString();
+    const orderPaymentTime = isPaid 
+      ? (order.updated_at ? new Date(order.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : new Date().toLocaleTimeString()) 
+      : 'PENDIENTE';
+
     const itemsHtml = order.items.map(item => `
       <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-family: 'Courier New', Courier, monospace; font-size: 12px;">
         <span style="text-transform: uppercase;">${item.quantity}x ${(item.product_name || item.name)}</span>
@@ -340,9 +396,15 @@ const OrdersManager = () => {
         </div>
         <div style="margin-bottom: 25px; font-size: 12px; text-transform: uppercase; line-height: 1.6;">
           <div style="display: flex; justify-content: space-between;"><span>FACTURA:</span> <span>#ORD_${String(order.id).split('_').pop()}</span></div>
-          <div style="display: flex; justify-content: space-between;"><span>FECHA:</span> <span>${new Date().toLocaleDateString()}</span></div>
+          <div style="display: flex; justify-content: space-between;"><span>FECHA:</span> <span>${new Date(order.created_at || new Date()).toLocaleDateString()}</span></div>
+          <div style="display: flex; justify-content: space-between;"><span>HORA INICIO:</span> <span>${orderStartTime}</span></div>
+          ${isPaid ? `<div style="display: flex; justify-content: space-between;"><span>HORA PAGO:</span> <span>${orderPaymentTime}</span></div>` : ''}
+          ${isPaid ? `<div style="display: flex; justify-content: space-between;"><span>MÉTODO PAGO:</span> <span>${getPaymentMethodLabel(paymentMethod)}</span></div>` : ''}
           <div style="display: flex; justify-content: space-between;"><span>CLIENTE:</span> <span>${order.customer_name}</span></div>
+          <div style="display: flex; justify-content: space-between;"><span>DOCUMENTO:</span> <span>${order.identification || '---'}</span></div>
+          <div style="display: flex; justify-content: space-between;"><span>CONTACTO:</span> <span>${order.customer_phone || '---'}</span></div>
           ${order.table ? `<div style="display: flex; justify-content: space-between;"><span>MESA:</span> <span>${tables.find(t => t.id === order.table)?.number || 'N/A'}</span></div>` : ''}
+          ${order.waiter_name ? `<div style="display: flex; justify-content: space-between;"><span>ATENDIDO POR:</span> <span>${order.waiter_name.toUpperCase()}</span></div>` : ''}
         </div>
         <div style="border-bottom: 1px solid #000; padding-bottom: 15px; margin-bottom: 15px;">
            <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 10px; font-size: 12px;">
@@ -355,8 +417,21 @@ const OrdersManager = () => {
           <span>TOTAL</span>
           <span>$${(typeof order.total === 'number' ? order.total : parseFloat(String(order.total).replace('$', ''))).toFixed(2)}</span>
         </div>
-        <div style="text-align: center; margin-top: 40px; font-size: 10px; text-transform: uppercase; letter-spacing: 2px;">
-           ¡Gracias por visitarnos! // Urban Street
+        <div style="text-align: center; margin-top: 40px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; line-height: 1.5;">
+          <div style="font-weight: bold; border-top: 1px dashed black; padding-top: 15px; margin-top: 15px;">
+            ${cmsData?.brand?.name || 'URBAN STREET'}
+          </div>
+          <div style="font-size: 8px; margin-top: 5px;">
+            ${cmsData?.contact?.address || 'CALLE 123, CIUDAD'}
+          </div>
+          <div style="font-size: 8px;">
+            TEL: ${cmsData?.contact?.phone || '---'}
+          </div>
+          <div style="font-size: 8px; text-transform: lowercase;">
+            Instagram: ${cmsData?.contact?.instagram || '@urbangourmet'}
+          </div>
+          ${cmsData?.contact?.email ? `<div style="font-size: 8px; text-transform: lowercase;">${cmsData?.contact?.email}</div>` : ''}
+          <div style="margin-top: 15px; font-weight: bold; letter-spacing: 1px;">¡GRACIAS POR SU COMPRA!</div>
         </div>
       </div>
     `;
@@ -518,7 +593,11 @@ const OrdersManager = () => {
               </div>
            </div>
 
-           <Button onClick={handleFinalizePayment} className="w-full py-5 text-lg shadow-[10px_10px_0px_0px_rgba(225,29,72,0.2)]">
+           <Button 
+              onClick={handleFinalizePayment} 
+              className="w-full py-5 text-lg"
+              style={{ boxShadow: '10px 10px 0px 0px var(--primary-shadow-20)' }}
+            >
               Confirmar y Cerrar Comanda
            </Button>
         </div>
@@ -686,7 +765,14 @@ const OrdersManager = () => {
 
                 <div className="border-t-4 border-primary pt-6 space-y-6">
                   <div className="flex justify-between items-center text-text-bright"><span className="text-[10px] font-bold uppercase tracking-widest">Total comanda</span><span className="text-2xl md:text-3xl font-serif text-primary tracking-tighter">${calculateTotal(newOrder.items).toFixed(2)}</span></div>
-                  <Button onClick={handleSaveOrder} className="w-full text-xs font-bold uppercase tracking-[0.2em] py-5 md:py-4 shadow-[8px_8px_0px_0px_rgba(225,29,72,0.2)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all" disabled={newOrder.items.length === 0 || !newOrder.customer_name}>{editingOrderId ? 'Guardar Cambios' : 'Procesar Pedido'}</Button>
+                   <Button 
+                     onClick={handleSaveOrder} 
+                     className="w-full text-xs font-bold uppercase tracking-[0.2em] py-5 md:py-4 hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all" 
+                     style={{ boxShadow: '8px 8px 0px 0px var(--primary-shadow-20)' }}
+                     disabled={newOrder.items.length === 0 || !newOrder.customer_name}
+                   >
+                     {editingOrderId ? 'Guardar Cambios' : 'Procesar Pedido'}
+                   </Button>
                 </div>
             </div>
         </div>
@@ -715,33 +801,75 @@ const OrdersManager = () => {
       <AnimatePresence>
         {showInvoice && lastSavedOrder && (
           <div className="fixed inset-0 w-screen h-screen z-[1100] flex items-center justify-center p-6 bg-black/95 backdrop-blur-xl">
-             <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="bg-white text-zinc-900 w-[95%] max-w-sm p-6 md:p-8 font-mono relative shadow-2xl print-ticket overflow-hidden">
-                <div className="text-center border-b-2 border-dashed border-zinc-300 pb-6 mb-6 font-bold"><h2 className="text-xl">{brand.name}</h2><p className="text-[10px] tracking-widest uppercase">{brand.tagline}</p></div>
-                <div className="space-y-1 mb-8 text-[10px] uppercase">
-                   <div className="flex justify-between"><span>FACTURA:</span><span className="font-bold">#ORD_{String(lastSavedOrder.id).split('_').pop()}</span></div>
-                   <div className="flex justify-between"><span>ID REGISTRO:</span><span className="font-bold text-[8px]">{lastSavedOrder.id}</span></div>
-                   <div className="flex justify-between"><span>FECHA:</span><span>{new Date().toLocaleDateString()}</span></div>
-                   <div className="flex justify-between"><span>CLI:</span><span className="font-bold">{lastSavedOrder.customer_name}</span></div>
-                   {lastSavedOrder.waiter_name && <div className="flex justify-between"><span>ATENDIDO POR:</span><span className="font-bold">{lastSavedOrder.waiter_name.toUpperCase()}</span></div>}
-                </div>
-                <div className="border-b border-zinc-200 mb-6 pb-4">
-                   <div className="flex justify-between text-[10px] font-bold mb-4"><span>DESC</span><span>TOTAL</span></div>
-                   <div className="space-y-2">{lastSavedOrder.items.map((item, i) => (<div key={i} className="flex justify-between text-[10px]"><span className="max-w-[70%]">{item.quantity}x {(item.product_name || item.name).toUpperCase()}</span><span>${(parseFloat(String(item.price_at_order || item.price || '0').replace('$', '')) * item.quantity).toFixed(2)}</span></div>))}</div>
-                </div>
-                <div className="flex justify-between text-lg font-bold border-t-2 border-zinc-900 pt-2 mb-10"><span>TOTAL:</span><span>${typeof lastSavedOrder.total === 'number' ? lastSavedOrder.total.toFixed(2) : parseFloat(String(lastSavedOrder.total).replace('$', '')).toFixed(2)}</span></div>
-                <div className="flex flex-col space-y-3 no-print">
-                   <div className="grid grid-cols-2 gap-2">
-                      <Button onClick={() => handlePrint(lastSavedOrder)} className="text-[10px] space-x-2">
-                         <Printer size={14} />
-                         <span>IMPRIMIR</span>
-                      </Button>
-                      <Button onClick={() => handleDownloadPDF(lastSavedOrder)} variant="outline" className="text-[10px] border-zinc-900 text-zinc-900 space-x-2">
-                         <ShoppingBag size={14} />
-                         <span>DESCARGAR</span>
-                      </Button>
-                   </div>
-                   <Button variant="outline" onClick={() => setShowInvoice(false)} className="w-full text-[10px] border-zinc-300 text-zinc-400">Cerrar</Button>
-                </div>
+             <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="bg-white text-zinc-900 w-[95%] max-w-sm p-6 md:p-8 font-mono relative shadow-2xl print-ticket max-h-[90vh] overflow-y-auto custom-scrollbar">
+                {(() => {
+                  const isPaid = lastSavedOrder.isPaid || lastSavedOrder.is_paid;
+                  const paymentMethod = lastSavedOrder.payment_method;
+                  const getPaymentMethodLabel = (method) => {
+                    const mapping = {
+                      'Cash': 'EFECTIVO',
+                      'Card': 'TARJETA',
+                      'Transfer': 'TRANSFERENCIA'
+                    };
+                    return mapping[method] || method || 'EFECTIVO';
+                  };
+                  
+                  const orderStartTime = lastSavedOrder.created_at 
+                    ? new Date(lastSavedOrder.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) 
+                    : new Date().toLocaleTimeString();
+                  const orderPaymentTime = isPaid 
+                    ? (lastSavedOrder.updated_at ? new Date(lastSavedOrder.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : new Date().toLocaleTimeString()) 
+                    : 'PENDIENTE';
+
+                  return (
+                    <>
+                      <div className="text-center border-b-2 border-dashed border-zinc-300 pb-6 mb-6 font-bold">
+                        <h2 className="text-xl">{brand.name}</h2>
+                        <p className="text-[10px] tracking-widest uppercase">{brand.tagline}</p>
+                      </div>
+                      <div className="space-y-1 mb-8 text-[10px] uppercase">
+                         <div className="flex justify-between"><span>FACTURA:</span><span className="font-bold">#ORD_{String(lastSavedOrder.id).split('_').pop()}</span></div>
+                         <div className="flex justify-between"><span>ID REGISTRO:</span><span className="font-bold text-[8px]">{lastSavedOrder.id}</span></div>
+                         <div className="flex justify-between"><span>FECHA:</span><span>{new Date(lastSavedOrder.created_at || new Date()).toLocaleDateString()}</span></div>
+                         <div className="flex justify-between"><span>HORA INICIO:</span><span>{orderStartTime}</span></div>
+                         {isPaid && <div className="flex justify-between"><span>HORA PAGO:</span><span>{orderPaymentTime}</span></div>}
+                         {isPaid && <div className="flex justify-between"><span>MÉTODO PAGO:</span><span className="font-bold">{getPaymentMethodLabel(paymentMethod)}</span></div>}
+                         <div className="flex justify-between"><span>CLI:</span><span className="font-bold">{lastSavedOrder.customer_name}</span></div>
+                         <div className="flex justify-between"><span>DOCUMENTO:</span><span className="font-bold">{lastSavedOrder.identification || '---'}</span></div>
+                         <div className="flex justify-between"><span>CONTACTO:</span><span className="font-bold">{lastSavedOrder.customer_phone || '---'}</span></div>
+                         {lastSavedOrder.waiter_name && <div className="flex justify-between"><span>ATENDIDO POR:</span><span className="font-bold">{lastSavedOrder.waiter_name.toUpperCase()}</span></div>}
+                      </div>
+                      <div className="border-b border-zinc-200 mb-6 pb-4">
+                         <div className="flex justify-between text-[10px] font-bold mb-4"><span>DESC</span><span>TOTAL</span></div>
+                         <div className="space-y-2">{lastSavedOrder.items.map((item, i) => (<div key={i} className="flex justify-between text-[10px]"><span className="max-w-[70%]">{item.quantity}x {(item.product_name || item.name).toUpperCase()}</span><span>${(parseFloat(String(item.price_at_order || item.price || '0').replace('$', '')) * item.quantity).toFixed(2)}</span></div>))}</div>
+                      </div>
+                      <div className="flex justify-between text-lg font-bold border-t-2 border-zinc-900 pt-2 mb-6"><span>TOTAL:</span><span>${typeof lastSavedOrder.total === 'number' ? lastSavedOrder.total.toFixed(2) : parseFloat(String(lastSavedOrder.total).replace('$', '')).toFixed(2)}</span></div>
+                      
+                      <div className="text-center text-[9px] uppercase tracking-wider mb-8 border-t border-dashed border-zinc-200 pt-4 space-y-1">
+                        <div className="font-bold">{cmsData?.brand?.name || 'URBAN STREET'}</div>
+                        <div className="text-[8px] text-zinc-500">{cmsData?.contact?.address || 'CALLE 123, CIUDAD'}</div>
+                        <div className="text-[8px] text-zinc-500">TEL: {cmsData?.contact?.phone || '---'}</div>
+                        <div className="text-[8px] text-zinc-500 text-lowercase">Instagram: {cmsData?.contact?.instagram || '@urbangourmet'}</div>
+                        {cmsData?.contact?.email && <div className="text-[8px] text-zinc-500 text-lowercase">{cmsData?.contact?.email}</div>}
+                        <div className="mt-4 font-bold text-zinc-900 tracking-widest text-[9px] pt-2">¡GRACIAS POR SU COMPRA!</div>
+                      </div>
+
+                      <div className="flex flex-col space-y-3 no-print">
+                         <div className="grid grid-cols-2 gap-2">
+                            <Button onClick={() => handlePrint(lastSavedOrder)} className="text-[10px] space-x-2">
+                               <Printer size={14} />
+                               <span>IMPRIMIR</span>
+                            </Button>
+                            <Button onClick={() => handleDownloadPDF(lastSavedOrder)} variant="outline" className="text-[10px] border-zinc-900 text-zinc-900 space-x-2">
+                               <ShoppingBag size={14} />
+                               <span>DESCARGAR</span>
+                            </Button>
+                         </div>
+                         <Button variant="outline" onClick={() => setShowInvoice(false)} className="w-full text-[10px] border-zinc-300 text-zinc-400">Cerrar</Button>
+                      </div>
+                    </>
+                  );
+                })()}
              </motion.div>
           </div>
         )}
@@ -770,7 +898,11 @@ const OrdersManager = () => {
               </div>
            </div>
            {/* Action Button */}
-           <Button onClick={() => {setIsAddingOrder(true); setEditingOrderId(null);}} className="w-full flex items-center justify-center space-x-2 py-5 lg:py-4 shadow-[8px_8px_0px_0px_rgba(225,29,72,0.1)]">
+            <Button 
+              onClick={() => {setIsAddingOrder(true); setEditingOrderId(null);}} 
+              className="w-full flex items-center justify-center space-x-2 py-5 lg:py-4"
+              style={{ boxShadow: '8px 8px 0px 0px var(--primary-shadow-10)' }}
+            >
               <Plus size={18} />
               <span className="text-xs font-bold uppercase tracking-widest">Nuevo Pedido</span>
            </Button>

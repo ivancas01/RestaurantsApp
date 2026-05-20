@@ -19,7 +19,10 @@ const QRSection = () => {
       </div>
 
       <div className="container mx-auto px-6 relative z-10">
-        <div className="max-w-6xl mx-auto bg-surface border-4 border-primary p-1 md:p-2 shadow-[20px_20px_0px_0px_rgba(225,29,72,0.1)]">
+        <div 
+          className="max-w-6xl mx-auto bg-surface border-4 border-primary p-1 md:p-2"
+          style={{ boxShadow: '20px 20px 0px 0px var(--primary-shadow-10)' }}
+        >
           <div className="border border-primary/20 p-8 md:p-16 flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
             
             {/* Left: Content */}
