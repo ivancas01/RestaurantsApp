@@ -29,6 +29,7 @@ class Order(models.Model):
     # Delivery & Payment Flags
     is_paid = models.BooleanField(default=False)
     is_sent = models.BooleanField(default=False)
+    has_updates = models.BooleanField(default=False)
     payment_method = models.CharField(max_length=50, blank=True, null=True, choices=[
         ('Cash', 'Efectivo'),
         ('Card', 'Tarjeta'),
@@ -70,6 +71,7 @@ class OrderItem(models.Model):
     quantity = models.PositiveIntegerField(default=1)
     price_at_order = models.CharField(max_length=50, verbose_name="Precio (Copia)") # Match Product price format
     notes = models.TextField(blank=True, null=True)
+    is_new = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.quantity}x {self.product.name} (Pedido #{self.order.id})"

@@ -278,11 +278,15 @@ const DeliveryManager = () => {
   const calculateTotal = (items) => items.reduce((acc, i) => acc + (parseFloat(String(i.price_at_order || i.price || '0').replace('$', '')) * i.quantity), 0);
 
   const addToCart = (product) => {
+    // Check if we are editing an existing order
+    const isEditing = !!editingOrderId;
+
     const existingIndex = newOrder.items.findIndex(i => {
-      const itemId = i.id || i.product || i.product_id;
-      return String(itemId) === String(product.id) || (i.product_name === product.name || i.name === product.name);
+      const matchesProduct = String(i.product || i.product_id || i.id) === String(product.id) || (i.product_name === product.name || i.name === product.name);
+      // If editing, only group/sum with other new additions in this session, never with original items
+      return matchesProduct && (isEditing ? i.is_new === true : true);
     });
-    
+
     if (existingIndex > -1) {
       const updatedItems = [...newOrder.items];
       updatedItems[existingIndex] = {
@@ -293,27 +297,31 @@ const DeliveryManager = () => {
     } else {
       setNewOrder({
         ...newOrder,
-        items: [...newOrder.items, { ...product, product_id: product.id, product_name: product.name, quantity: 1, price_at_order: product.price }]
+        items: [...newOrder.items, { 
+          ...product, 
+          product_id: product.id, 
+          product_name: product.name,
+          quantity: 1, 
+          price_at_order: product.price,
+          is_new: isEditing ? true : false,
+          cartId: `new_${Date.now()}_${product.id}`
+        }]
       });
     }
   };
 
-  const removeFromCart = (targetId) => {
+  const removeFromCart = (cartId) => {
     setNewOrder({
       ...newOrder,
-      items: newOrder.items.filter(i => {
-        const itemId = i.id || i.product || i.product_id;
-        return String(itemId) !== String(targetId);
-      })
+      items: newOrder.items.filter(i => (i.cartId || i.id || i.product || i.product_id) !== cartId)
     });
   };
 
-  const updateQty = (targetId, delta) => {
+  const updateQty = (cartId, delta) => {
     setNewOrder({
       ...newOrder,
       items: newOrder.items.map(i => {
-        const itemId = i.id || i.product || i.product_id;
-        if (String(itemId) === String(targetId)) {
+        if ((i.cartId || i.id || i.product || i.product_id) === cartId) {
           return { ...i, quantity: Math.max(1, i.quantity + delta) };
         }
         return i;
@@ -321,12 +329,11 @@ const DeliveryManager = () => {
     });
   };
 
-  const updateItemNote = (targetId, note) => {
+  const updateItemNote = (cartId, note) => {
     setNewOrder({
       ...newOrder,
       items: newOrder.items.map(i => {
-        const itemId = i.id || i.product || i.product_id;
-        if (String(itemId) === String(targetId)) {
+        if ((i.cartId || i.id || i.product || i.product_id) === cartId) {
           return { ...i, notes: note };
         }
         return i;
@@ -341,7 +348,11 @@ const DeliveryManager = () => {
       customer_phone: order.customer_phone || order.phone || '',
       customer_address: order.customer_address || '',
       identification: order.identification || '',
-      items: [...(order.items || [])],
+      items: (order.items || []).map((item, idx) => ({
+        ...item,
+        is_new: item.is_new ?? false,
+        cartId: item.cartId || item.id || `old_${item.product || item.product_id || idx}`
+      })),
       type: 'delivery',
       notes: order.notes || ''
     });
@@ -616,7 +627,14 @@ const DeliveryManager = () => {
                                     </td>
                                     <td className="p-4 text-right space-x-2">
                                        <button onClick={(e) => { e.stopPropagation(); handleDelete(order.id); }} className="p-2 text-accent hover:bg-accent/10 transition-all"><Trash2 size={14}/></button>
-                                       <button onClick={(e) => { e.stopPropagation(); handleEditClick(order); }} className="p-2 text-primary hover:bg-primary/10 transition-all"><Edit2 size={14}/></button>
+                                       <button 
+                                          onClick={(e) => { e.stopPropagation(); handleEditClick(order); }} 
+                                          disabled={order.isPaid} 
+                                          className={`p-2 transition-all ${order.isPaid ? 'text-zinc-500 opacity-40 cursor-not-allowed' : 'text-primary hover:bg-primary/10'}`}
+                                          title={order.isPaid ? "No se puede editar un pedido pagado" : "Editar"}
+                                       >
+                                          <Edit2 size={14}/>
+                                       </button>
                                        <button className="p-2 text-text-dim hover:bg-white/5 transition-all"><Eye size={14}/></button>
                                     </td>
                                  </tr>
@@ -697,7 +715,16 @@ const DeliveryManager = () => {
                            <p className="text-[8px] font-bold text-text-dim uppercase tracking-widest text-center mb-2">Flujo de Producción</p>
                            
                            <div className="flex space-x-2">
-                               <Button variant="outline" onClick={() => handleEditClick(selectedOrder)} className="flex-1 text-[9px] border-zinc-700 py-3"><Edit2 size={14}/><span>Editar Datos</span></Button>
+                               <Button 
+                                  variant="outline" 
+                                  onClick={() => handleEditClick(selectedOrder)} 
+                                  disabled={selectedOrder.isPaid}
+                                  className={`flex-1 text-[9px] border-zinc-700 py-3 ${selectedOrder.isPaid ? 'opacity-40 cursor-not-allowed border-zinc-300 dark:border-zinc-800' : ''}`}
+                                  title={selectedOrder.isPaid ? "No se puede editar un pedido pagado" : "Editar Datos"}
+                               >
+                                  <Edit2 size={14}/>
+                                  <span>Editar Datos</span>
+                               </Button>
                                <Button 
                                   onClick={() => updateOrderStatus(selectedOrder.id, 'En Lista')}
                                   disabled={['En Lista', 'Preparando', 'Listo', 'Confirmado'].includes(selectedOrder.status)}
@@ -909,11 +936,19 @@ const DeliveryManager = () => {
                   {newOrder.items.length === 0 ? (
                     <div className="h-32 flex flex-center flex-col items-center justify-center border-2 border-dashed border-zinc-800 text-text-dim opacity-40"><ShoppingBag size={24} className="mb-2"/><p className="text-[8px] font-bold uppercase tracking-[0.2em]">Sin productos</p></div>
                   ) : (
-                    newOrder.items.map(item => {
-                      const itemId = item.id || item.product || item.product_id;
+                    newOrder.items.map((item, idx) => {
+                      const itemId = item.cartId || item.id || `item_${item.product || item.product_id || idx}`;
                       return (
                         <div key={itemId} className="flex flex-col border-b border-zinc-800 pb-4">
-                            <div className="flex justify-between items-start font-bold text-[10px] text-text-bright pr-4"><span>{item.product_name || item.name}</span><button onClick={() => removeFromCart(itemId)} className="text-accent opacity-50 hover:opacity-100"><Trash2 size={14}/></button></div>
+                            <div className="flex justify-between items-start font-bold text-[10px] text-text-bright pr-4">
+                              <span className="flex items-center">
+                                {item.product_name || item.name}
+                                {item.is_new && (
+                                  <span className="ml-2 text-[7px] bg-amber-500/20 text-amber-500 border border-amber-500/30 px-1 py-0.5 font-bold uppercase tracking-wider rounded">NUEVO</span>
+                                )}
+                              </span>
+                              <button onClick={() => removeFromCart(itemId)} className="text-accent opacity-50 hover:opacity-100"><Trash2 size={14}/></button>
+                            </div>
                             <div className="flex justify-between items-center mt-3 mb-3">
                               <div className="flex items-center space-x-3 bg-background border border-zinc-800 px-2 py-1"><button onClick={() => updateQty(itemId, -1)} className="text-primary font-bold px-2 hover:bg-primary/10 transition-colors">-</button><span className="font-mono text-xs">{item.quantity}</span><button onClick={() => updateQty(itemId, 1)} className="text-primary font-bold px-2 hover:bg-primary/10 transition-colors">+</button></div>
                               <span className="text-xs font-mono font-bold text-text-bright">${(parseFloat(String(item.price_at_order || item.price || '0').replace('$', '')) * item.quantity).toFixed(2)}</span>

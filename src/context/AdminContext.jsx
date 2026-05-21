@@ -617,7 +617,8 @@ export const AdminProvider = ({ children }) => {
         ...o, 
         status, 
         isPaid: status === 'Pagado' ? true : o.isPaid,
-        cancelReason: reason || o.cancelReason 
+        cancelReason: reason || o.cancelReason,
+        has_updates: ['Listo', 'Completado', 'Pagado', 'Servido', 'Entregado'].includes(status) ? false : o.has_updates
       } : o));
 
       // Release table only on Pagado or Cancelado
@@ -646,6 +647,16 @@ export const AdminProvider = ({ children }) => {
       const existingOrder = orders.find(o => o.id === orderId);
       if (!existingOrder) return;
 
+      // Safe guard: Do not allow editing if the order is already Paid (Pagado)
+      if (existingOrder.status === 'Pagado') {
+        addNotification({
+          type: 'ERROR',
+          title: 'Pedido Bloqueado',
+          message: 'No se puede editar un pedido que ya ha sido pagado.'
+        });
+        return;
+      }
+
       const orderData = {
         ...existingOrder,
         ...partialOrder
@@ -657,17 +668,33 @@ export const AdminProvider = ({ children }) => {
         product: item.product || item.id,
         quantity: item.quantity,
         price_at_order: String(item.price_at_order || item.price || '0').replace('$', ''),
-        notes: item.notes || ''
+        notes: item.notes || '',
+        is_new: item.is_new ? true : false
       }));
+
+      // If there are newly added items, mark it as having updates. If it was already completed, reset to Pendiente
+      const isStatusUpdateOnly = partialOrder.status && ['Pagado', 'Cancelado'].includes(partialOrder.status);
+      const hasNewItems = orderData.items.some(item => item.is_new);
+      
+      if (hasNewItems && !isStatusUpdateOnly) {
+        orderData.has_updates = true;
+        if (['Listo', 'Completado', 'Servido', 'Entregado'].includes(existingOrder.status)) {
+          orderData.status = 'Pendiente';
+        }
+      }
 
       const savedOrder = await api.updateOrder(orderId, orderData);
       setOrders(orders.map(o => o.id === orderId ? savedOrder : o));
 
-      // Release table if status changed to Pagado or Cancelado
+      // Table management
       if (savedOrder.type === 'table' && savedOrder.table) {
         if (['Pagado', 'Cancelado'].includes(savedOrder.status)) {
           setTables(prev => prev.map(t => String(t.id) === String(savedOrder.table) ? { ...t, status: 'Disponible' } : t));
           await api.updateTable(savedOrder.table, { status: 'Disponible' });
+        } else {
+          // Reactivate table if status went back to Pendiente
+          setTables(prev => prev.map(t => String(t.id) === String(savedOrder.table) ? { ...t, status: 'Ocupada' } : t));
+          await api.updateTable(savedOrder.table, { status: 'Ocupada' });
         }
       }
     } catch (err) {

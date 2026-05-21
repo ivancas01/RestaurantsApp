@@ -196,9 +196,14 @@ const OrdersManager = () => {
   };
 
   const addToCart = (product) => {
+    // Check if we are editing an existing order
+    const isEditing = !!editingOrderId;
+
     const existingIndex = newOrder.items.findIndex(i => {
       const itemId = i.id || i.product || i.product_id;
-      return String(itemId) === String(product.id) || (i.product_name === product.name || i.name === product.name);
+      const matchesProduct = String(itemId) === String(product.id) || (i.product_name === product.name || i.name === product.name);
+      // If editing, only group/sum with other new additions in this session, never with original items
+      return matchesProduct && (isEditing ? i.is_new === true : true);
     });
 
     if (existingIndex > -1) {
@@ -211,27 +216,31 @@ const OrdersManager = () => {
     } else {
       setNewOrder({
         ...newOrder,
-        items: [...newOrder.items, { ...product, product_id: product.id, quantity: 1 }]
+        items: [...newOrder.items, { 
+          ...product, 
+          product_id: product.id, 
+          product_name: product.name,
+          quantity: 1, 
+          price_at_order: product.price,
+          is_new: isEditing ? true : false,
+          cartId: `new_${Date.now()}_${product.id}`
+        }]
       });
     }
   };
 
-  const removeFromCart = (targetId) => {
+  const removeFromCart = (cartId) => {
     setNewOrder({
       ...newOrder,
-      items: newOrder.items.filter(i => {
-        const itemId = i.id || i.product || i.product_id;
-        return String(itemId) !== String(targetId);
-      })
+      items: newOrder.items.filter(i => (i.cartId || i.id || i.product || i.product_id) !== cartId)
     });
   };
 
-  const updateQty = (targetId, delta) => {
+  const updateQty = (cartId, delta) => {
     setNewOrder({
       ...newOrder,
       items: newOrder.items.map(i => {
-        const itemId = i.id || i.product || i.product_id;
-        if (String(itemId) === String(targetId)) {
+        if ((i.cartId || i.id || i.product || i.product_id) === cartId) {
           return { ...i, quantity: Math.max(1, i.quantity + delta) };
         }
         return i;
@@ -239,12 +248,11 @@ const OrdersManager = () => {
     });
   };
 
-  const updateItemNote = (targetId, note) => {
+  const updateItemNote = (cartId, note) => {
     setNewOrder({
       ...newOrder,
       items: newOrder.items.map(i => {
-        const itemId = i.id || i.product || i.product_id;
-        if (String(itemId) === String(targetId)) {
+        if ((i.cartId || i.id || i.product || i.product_id) === cartId) {
           return { ...i, notes: note };
         }
         return i;
@@ -507,7 +515,11 @@ const OrdersManager = () => {
       customer_name: order.customer_name,
       customer_phone: order.customer_phone || '',
       identification: order.identification || '',
-      items: [...order.items],
+      items: (order.items || []).map((item, idx) => ({
+        ...item,
+        is_new: item.is_new ?? false,
+        cartId: item.cartId || item.id || `old_${item.product || item.product_id || idx}`
+      })),
       type: order.type,
       table: order.table || '',
       reservationId: order.reservationId || '',
@@ -731,11 +743,19 @@ const OrdersManager = () => {
                   {newOrder.items.length === 0 ? (
                     <div className="h-32 flex flex-center flex-col items-center justify-center border-2 border-dashed border-zinc-800 text-text-dim opacity-40"><ShoppingBag size={24} className="mb-2"/><p className="text-[8px] font-bold uppercase tracking-[0.2em]">Tu pedido está vacío</p></div>
                   ) : (
-                    newOrder.items.map(item => {
-                      const itemId = item.id || item.product || item.product_id;
+                    newOrder.items.map((item, idx) => {
+                      const itemId = item.cartId || item.id || `item_${item.product || item.product_id || idx}`;
                       return (
                         <div key={itemId} className="flex flex-col border-b border-zinc-800 pb-4">
-                            <div className="flex justify-between items-start font-bold text-[10px] text-text-bright pr-4"><span>{item.product_name || item.name}</span><button onClick={() => removeFromCart(itemId)} className="text-accent opacity-50 hover:opacity-100"><Trash2 size={14}/></button></div>
+                            <div className="flex justify-between items-start font-bold text-[10px] text-text-bright pr-4">
+                              <span className="flex items-center">
+                                {item.product_name || item.name}
+                                {item.is_new && (
+                                  <span className="ml-2 text-[7px] bg-amber-500/20 text-amber-500 border border-amber-500/30 px-1 py-0.5 font-bold uppercase tracking-wider rounded">NUEVO</span>
+                                )}
+                              </span>
+                              <button onClick={() => removeFromCart(itemId)} className="text-accent opacity-50 hover:opacity-100"><Trash2 size={14}/></button>
+                            </div>
                             <div className="flex justify-between items-center mt-3 mb-3">
                               <div className="flex items-center space-x-3 bg-background border border-zinc-800 px-2 py-1"><button onClick={() => updateQty(itemId, -1)} className="text-primary font-bold px-2 hover:bg-primary/10 transition-colors">-</button><span className="font-mono text-xs">{item.quantity}</span><button onClick={() => updateQty(itemId, 1)} className="text-primary font-bold px-2 hover:bg-primary/10 transition-colors">+</button></div>
                               <span className="text-xs font-mono font-bold text-text-bright">${(parseFloat(String(item.price_at_order || item.price || '0').replace('$', '')) * item.quantity).toFixed(2)}</span>
@@ -1095,7 +1115,16 @@ const OrdersManager = () => {
                         <div className="space-y-3 pt-4 border-t border-zinc-100 dark:border-zinc-900">
                            <div className="flex space-x-2">
                               <Button onClick={() => {setLastSavedOrder(selectedOrder); setShowInvoice(true);}} variant="outline" className="flex-1 space-x-2 border-zinc-700 text-[9px]"><Printer size={14}/><span>Ticket</span></Button>
-                              <Button variant="outline" onClick={() => handleEditClick(selectedOrder)} className="flex-1 text-[9px] border-zinc-700"><Edit2 size={14}/><span>Editar</span></Button>
+                              <Button 
+                                variant="outline" 
+                                onClick={() => handleEditClick(selectedOrder)} 
+                                disabled={selectedOrder.status === 'Pagado'}
+                                className={`flex-1 text-[9px] border-zinc-700 ${selectedOrder.status === 'Pagado' ? 'opacity-40 cursor-not-allowed border-zinc-300 dark:border-zinc-800' : ''}`}
+                                title={selectedOrder.status === 'Pagado' ? "No se puede editar un pedido pagado" : "Editar"}
+                              >
+                                <Edit2 size={14}/>
+                                <span>Editar</span>
+                              </Button>
                            </div>
                            {selectedOrder.status === 'Servido' && (
                               <Button onClick={() => setPaymentModalOrder(selectedOrder)} className="w-full bg-emerald-500 hover:bg-emerald-600 shadow-xl space-x-2">

@@ -72,6 +72,12 @@ class OrderViewSet(viewsets.ModelViewSet):
             order.status = new_status
             if new_status == 'Pagado':
                 order.is_paid = True
+            
+            # Clear has_updates when the order is marked as ready or completed
+            if new_status in ['Listo', 'Completado', 'Pagado', 'Servido', 'Entregado']:
+                order.has_updates = False
+                order.items.all().update(is_new=False)
+                
             order.save()
             return Response({'status': 'status updated', 'is_paid': order.is_paid})
         return Response({'error': 'no status provided'}, status=status.HTTP_400_BAD_REQUEST)

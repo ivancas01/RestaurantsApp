@@ -35,8 +35,8 @@ const KitchenDisplay = () => {
 
   // Enhanced filtering logic
   const filteredOrders = orders.filter(o => {
-    // Domicilios (delivery) en estado 'Pendiente' no van a la cocina hasta que el administrador los confirme / envíe a 'En Lista'
-    if (o.type === 'delivery' && o.status === 'Pendiente') return false;
+    // Domicilios (delivery) en estado 'Pendiente' no van a la cocina hasta que el administrador los confirme / envíe a 'En Lista' (a menos que tenga actualizaciones)
+    if (o.type === 'delivery' && o.status === 'Pendiente' && !o.has_updates) return false;
 
     // 0. Date Filter: Show active orders from ANY date, but completed/ready orders ONLY from today
     const orderDate = new Date(o.created_at).toISOString().split('T')[0];
@@ -96,6 +96,288 @@ const KitchenDisplay = () => {
     return { label: status, icon: <Clock size={14} />, color: 'bg-zinc-500' };
   };
 
+  const updatedOrders = filteredOrders.filter(o => o.has_updates && !['Listo', 'Completado', 'Pagado', 'Servido', 'Entregado', 'Cancelado'].includes(o.status));
+  const normalOrders = filteredOrders.filter(o => !o.has_updates || ['Listo', 'Completado', 'Pagado', 'Servido', 'Entregado', 'Cancelado'].includes(o.status));
+
+  const renderOrderCard = (order, idx, isUpdate = false) => {
+    const statusInfo = getStatusLabel(order.status);
+    const orderTime = new Date(order.created_at || order.timestamp || new Date());
+    const minutesElapsed = Math.floor((new Date() - orderTime) / 60000);
+    const isDelivery = order.type === 'delivery';
+    const hasUpdates = order.has_updates;
+
+    return (
+      <motion.div
+        key={order.id}
+        layout
+        initial={{ opacity: 0, scale: 0.9, x: 50 }}
+        animate={{ opacity: 1, scale: 1, x: 0 }}
+        exit={{ opacity: 0, scale: 0.8, y: -50 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300, mass: 0.5 }}
+        className={`w-[calc(100vw-48px)] md:w-80 min-h-[450px] md:min-h-0 flex-shrink-0 bg-surface border-4 flex flex-col overflow-hidden shadow-2xl transition-all snap-center ${
+          hasUpdates 
+            ? 'border-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.25)]' 
+            : (isDelivery ? 'border-amber-500/50 scale-[0.98]' : 'border-zinc-200 dark:border-zinc-900')
+        }`}
+      >
+        <div className={`p-4 ${hasUpdates ? 'bg-amber-500 text-zinc-950 font-black' : statusInfo.color + ' text-white'} flex justify-between items-center relative overflow-hidden`}>
+          <div className="flex items-center space-x-2 relative z-10">
+             <span className={`text-[10px] font-bold italic mr-1 ${hasUpdates ? 'text-zinc-900/60' : 'text-white/50'}`}>{idx + 1}</span>
+             <span className={`font-serif text-2xl tracking-tighter ${hasUpdates ? 'text-zinc-950' : 'text-white'}`}>#{String(order.id).split('_').pop()}</span>
+             <div className={`flex items-center space-x-1 ${hasUpdates ? 'bg-black/10 text-zinc-950' : 'bg-black/20 text-white'} px-2 py-0.5 rounded text-[8px] font-bold uppercase`}>
+                {hasUpdates ? <AlertCircle size={12} className="text-zinc-950 animate-pulse" /> : statusInfo.icon}
+                <span>{hasUpdates ? 'ACTUALIZADO' : statusInfo.label}</span>
+             </div>
+          </div>
+          <div className={`flex items-center space-x-1 text-[10px] font-bold relative z-10 ${hasUpdates ? 'bg-black/5 text-zinc-900' : 'bg-black/10 text-white'} px-2 py-1 rounded`}>
+             <Clock size={12} />
+             <span>{minutesElapsed}m</span>
+          </div>
+          <div className="absolute right-[-10%] top-[-10%] opacity-10 rotate-12">
+             {isDelivery ? <ShoppingBag size={80} strokeWidth={1} /> : <Utensils size={80} strokeWidth={1} />}
+          </div>
+        </div>
+
+        <div className={`p-4 border-b border-zinc-200 dark:border-zinc-800 ${hasUpdates ? 'bg-amber-500/20' : (isDelivery ? 'bg-amber-500/10' : 'bg-zinc-50 dark:bg-black/20')} flex justify-between items-center`}>
+          <div className="flex flex-col items-start relative z-10">
+             <span className={`text-[9px] font-bold uppercase tracking-widest opacity-60 ${hasUpdates ? 'text-amber-800 dark:text-amber-300' : 'text-text-bright dark:text-white/60'}`}>Cliente</span>
+             <span className={`text-xs font-black uppercase tracking-wide ${hasUpdates ? 'text-amber-900 dark:text-amber-200' : 'text-text-bright dark:text-white'}`}>
+                {order.customer_name || 'Sin Nombre'}
+             </span>
+          </div>
+          <div className="flex flex-col items-end relative z-10">
+             <span className={`text-xs font-black uppercase tracking-widest leading-none ${hasUpdates ? 'text-amber-900 dark:text-amber-200' : 'text-text-bright dark:text-white'}`}>
+               {isDelivery ? 'Domicilio' : `Mesa ${tables.find(t => t.id === order.table)?.number || '??'}`}
+             </span>
+             {!isDelivery && (
+               <span className={`text-[8px] font-bold uppercase opacity-80 mt-1 ${hasUpdates ? 'text-amber-800/80 dark:text-amber-300/80' : 'text-text-dim dark:text-white/50'}`}>
+                 {locations.find(l => l.id === tables.find(t => t.id === order.table)?.locationId)?.name || 'General'}
+               </span>
+             )}
+          </div>
+        </div>
+
+        <div className="flex-1 p-3 md:p-4 space-y-3 md:space-y-4 overflow-y-auto scrollbar-hide bg-white dark:bg-transparent">
+           {order.notes && (
+             <div className="bg-primary/10 p-3 border-l-4 border-primary mb-4">
+                <p className="text-[8px] font-bold text-primary mb-1 uppercase tracking-widest italic">Observaciones Generales</p>
+                <p className="text-[10px] font-bold text-text-bright uppercase leading-tight">"{order.notes}"</p>
+             </div>
+           )}
+           
+           {(() => {
+             const originalItems = order.items.filter(item => !item.is_new);
+             const newItems = order.items.filter(item => item.is_new);
+             
+             if (newItems.length === 0) {
+               return order.items.map((item, index) => (
+                 <div key={index} className="pb-3 md:pb-4 border-b border-dashed border-zinc-200 dark:border-zinc-800 last:border-0">
+                    <div className="flex justify-between items-start">
+                       <span className="text-xl md:text-2xl font-serif text-primary mr-2 md:mr-3">{item.quantity}x</span>
+                       <div className="flex-1">
+                          <p className="text-xs md:text-sm font-bold text-text-bright uppercase leading-tight">{item.product_name || item.name}</p>
+                          {item.notes && (
+                             <p className="text-[8px] text-accent font-bold mt-1 uppercase italic bg-accent/10 px-1 inline-block">-- {item.notes}</p>
+                          )}
+                       </div>
+                    </div>
+                 </div>
+               ));
+             }
+
+             return (
+               <div className="space-y-4 w-full">
+                 {originalItems.length > 0 && (
+                   <div className="space-y-2.5">
+                     <div className="flex items-center space-x-2 pb-1 border-b border-zinc-100 dark:border-zinc-800/60">
+                       <span className="text-[9px] font-extrabold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
+                         Ya Pedidos
+                       </span>
+                     </div>
+                     {originalItems.map((item, index) => (
+                       <div key={`orig-${index}`} className="pb-2 border-b border-dashed border-zinc-100 dark:border-zinc-800/40 last:border-0 last:pb-0">
+                          <div className="flex justify-between items-start opacity-60">
+                             <span className="text-base md:text-lg font-serif text-zinc-500 mr-2 md:mr-3">{item.quantity}x</span>
+                             <div className="flex-1">
+                                <p className="text-xs md:text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase leading-tight">{item.product_name || item.name}</p>
+                                {item.notes && (
+                                   <p className="text-[8px] text-zinc-400 font-bold mt-1 uppercase italic bg-zinc-100 dark:bg-zinc-800/50 px-1 inline-block">-- {item.notes}</p>
+                                )}
+                             </div>
+                          </div>
+                       </div>
+                     ))}
+                   </div>
+                 )}
+
+                 {newItems.length > 0 && (
+                   <div className="space-y-2.5 pt-2 border-t border-dashed border-amber-500/20">
+                     <div className="flex items-center space-x-2 pb-1">
+                       <span className="text-[9px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest flex items-center gap-1">
+                         <AlertCircle size={10} className="animate-bounce" /> Nuevas Adiciones
+                       </span>
+                     </div>
+                     {newItems.map((item, index) => (
+                       <div key={`new-${index}`} className="pb-2.5 border-b border-dashed border-zinc-200 dark:border-zinc-800 last:border-0 last:pb-0">
+                          <div className="flex justify-between items-start">
+                             <span className="text-xl md:text-2xl font-serif text-amber-500 font-black mr-2 md:mr-3">{item.quantity}x</span>
+                             <div className="flex-1">
+                                <div className="flex items-center flex-wrap gap-1.5">
+                                   <p className="text-xs md:text-sm font-black text-text-bright dark:text-amber-200 uppercase leading-tight">{item.product_name || item.name}</p>
+                                   <span className="bg-amber-500 text-zinc-950 text-[8px] font-black tracking-widest uppercase px-1.5 py-0.5 rounded-sm animate-pulse shadow-[2px_2px_0px_0px_rgba(0,0,0,0.15)]">
+                                      NUEVO
+                                   </span>
+                                </div>
+                                {item.notes && (
+                                   <p className="text-[8px] text-accent font-bold mt-1 uppercase italic bg-accent/10 px-1 inline-block">-- {item.notes}</p>
+                                )}
+                             </div>
+                          </div>
+                       </div>
+                     ))}
+                   </div>
+                 )}
+               </div>
+             );
+           })()}
+        </div>
+
+        <div className="p-4 border-t-2 border-zinc-200 dark:border-zinc-900 grid grid-cols-2 gap-2 bg-zinc-50 dark:bg-zinc-900/50">
+           <button 
+             onClick={(e) => { e.stopPropagation(); updateOrderStatus(order.id, 'Cancelado'); }}
+             disabled={!['Pendiente', 'Confirmado', 'En Lista'].includes(order.status) || order.status === 'Pagado'}
+             className={`py-3 border-2 transition-all flex items-center justify-center rounded-none ${(!['Pendiente', 'Confirmado', 'En Lista'].includes(order.status) || order.status === 'Pagado') ? 'border-zinc-200 text-zinc-300 dark:border-zinc-800 dark:text-zinc-700 cursor-not-allowed' : 'border-accent text-accent hover:bg-accent hover:text-white'}`}
+           >
+              <XCircle size={18} />
+           </button>
+           <button
+             onClick={(e) => { e.stopPropagation(); handleNextStatus(order.id, order.status); }}
+             disabled={['Listo', 'Completado', 'Pagado'].includes(order.status)}
+             className={`py-3 transition-all flex items-center justify-center space-x-2 rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] active:shadow-none translate-y-0 active:translate-y-1 ${ (['Listo', 'Completado', 'Pagado'].includes(order.status)) ? 'bg-emerald-500 text-white opacity-80 cursor-not-allowed' : 'bg-primary text-white hover:bg-primary-dark'}`}
+           >
+              <span className="text-[10px] font-bold uppercase tracking-widest">
+                 {(order.status === 'Pendiente' || order.status === 'En Lista') ? 'Preparar' : 
+                  (order.status === 'Confirmado' ? 'Preparar' : 
+                  (order.status === 'Preparando' || order.status === 'En Cocina' ? (isDelivery ? 'Listo Envío' : 'Entregar') : 'Completado'))}
+              </span>
+              {(order.status === 'Listo' || order.status === 'Completado') ? <CheckCircle2 size={16} /> : <ChevronRight size={16} />}
+           </button>
+        </div>
+      </motion.div>
+    );
+  };
+
+  const renderMonitorCard = (order, idx, isUpdate = false) => {
+    const statusInfo = getStatusLabel(order.status);
+    const hasUpdates = order.has_updates;
+
+    return (      <div 
+        key={order.id} 
+        className={`bg-zinc-900 border-2 flex flex-col h-full shadow-2xl relative overflow-hidden transition-all duration-300 ${
+          hasUpdates 
+            ? 'border-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.25)]' 
+            : 'border-zinc-800'
+        }`}
+      >
+         <div className={`p-4 ${hasUpdates ? 'bg-amber-500 text-zinc-950 font-black' : statusInfo.color + ' text-white'} flex justify-between items-start`}>
+            <div>
+               <span className={`text-4xl font-bold leading-none ${hasUpdates ? 'text-zinc-950' : 'text-white'}`}>
+                  <span className={`text-2xl mr-2 italic ${hasUpdates ? 'text-zinc-900/60' : 'text-primary/50'}`}>#{idx + 1}</span>
+                  #{String(order.id).split('_').pop()}
+               </span>
+               <p className={`text-[10px] mt-1 uppercase font-bold tracking-widest ${hasUpdates ? 'text-zinc-900/80' : 'text-white/80'}`}>
+                  {order.type === 'table' ? `Mesa ${order.table_name || order.table}` : 'Domicilio'}
+               </p>
+               <p className={`text-[11px] mt-1 font-black uppercase tracking-wider ${hasUpdates ? 'text-zinc-950' : 'text-white'}`}>
+                  Cliente: {order.customer_name || 'Sin Nombre'}
+               </p>
+            </div>
+            <div className={`px-2 py-1 text-[10px] font-bold uppercase rounded ${hasUpdates ? 'bg-black/10 text-zinc-950 animate-pulse' : 'bg-black/20 text-white'}`}>
+               {hasUpdates ? 'ACTUALIZADO' : order.status}
+            </div>
+         </div>
+
+         <div className="p-6 space-y-4 flex-1">
+            <div className="space-y-4">
+                 {(() => {
+                   const originalItems = order.items.filter(item => !item.is_new);
+                   const newItems = order.items.filter(item => item.is_new);
+                   
+                   if (newItems.length === 0) {
+                     return order.items.map((item, i) => (
+                        <div key={i} className="flex items-start space-x-4">
+                           <span className="text-3xl font-bold text-primary">{item.quantity}x</span>
+                           <div className="flex-1">
+                              <p className="text-xl font-bold text-white uppercase leading-tight">{item.product_name || item.name}</p>
+                              {item.notes && <p className="text-[10px] text-accent font-bold mt-1 uppercase italic bg-accent/10 px-1 inline-block">! {item.notes}</p>}
+                           </div>
+                        </div>
+                     ));
+                   }
+
+                   return (
+                     <div className="space-y-6 w-full text-left">
+                       {originalItems.length > 0 && (
+                         <div className="space-y-4">
+                            <div className="flex items-center space-x-2 pb-1 border-b border-zinc-700/50">
+                              <span className="text-[10px] font-extrabold text-zinc-500 uppercase tracking-widest">
+                                Ya Pedidos
+                              </span>
+                            </div>
+                            {originalItems.map((item, i) => (
+                              <div key={`orig-${i}`} className="flex items-start space-x-4 opacity-50">
+                                 <span className="text-xl font-bold text-zinc-500">{item.quantity}x</span>
+                                 <div className="flex-1">
+                                    <p className="text-lg font-medium text-zinc-400 uppercase leading-tight">{item.product_name || item.name}</p>
+                                    {item.notes && <p className="text-[9px] text-zinc-500 font-bold mt-1 uppercase italic bg-zinc-800 px-1 inline-block">! {item.notes}</p>}
+                                 </div>
+                              </div>
+                            ))}
+                          </div>
+                       )}
+
+                        {newItems.length > 0 && (
+                          <div className="flex items-center space-x-2 pb-1 pt-4 border-t border-dashed border-amber-500/20">
+                            <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-1.5">
+                              <AlertCircle size={12} className="animate-bounce text-amber-500" /> Nuevas Adiciones
+                            </span>
+                          </div>
+                        )}
+
+                       {newItems.map((item, i) => (
+                         <div key={`new-${i}`} className="flex items-start space-x-4">
+                            <span className="text-3xl font-extrabold text-amber-500">{item.quantity}x</span>
+                            <div className="flex-1">
+                               <div className="flex items-center flex-wrap gap-2">
+                                  <p className="text-xl font-extrabold text-white uppercase leading-tight">{item.product_name || item.name}</p>
+                                  <span className="bg-amber-500 text-zinc-950 text-[10px] font-black tracking-wider uppercase px-2 py-0.5 rounded-sm animate-pulse shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)]">
+                                     NUEVO
+                                  </span>
+                               </div>
+                               {item.notes && <p className="text-[10px] text-accent font-bold mt-1 uppercase italic bg-accent/10 px-1 inline-block">! {item.notes}</p>}
+                            </div>
+                         </div>
+                       ))}
+                     </div>
+                   );
+                 })()}
+            </div>
+
+            {order.notes && (
+               <div className="mt-4 p-3 bg-zinc-800 border-l-4 border-primary">
+                  <p className="text-[10px] font-bold text-white/50 uppercase mb-1">Nota Gral:</p>
+                  <p className="text-xs text-white uppercase font-bold leading-tight italic">"{order.notes}"</p>
+               </div>
+            )}
+            <div className="mt-6 pt-4 border-t border-zinc-800 flex justify-between items-center text-[10px] font-bold text-zinc-600">
+               <span>RECIBIDO: {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+               <span>URBAN-SYSTEM</span>
+            </div>
+         </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6 md:space-y-10 min-h-[750px] md:h-[85vh] flex flex-col relative">
       
@@ -130,54 +412,30 @@ const KitchenDisplay = () => {
 
              {/* Monitor Content */}
              <div className="flex-1 p-8 overflow-y-auto custom-scrollbar bg-zinc-950">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                   {filteredOrders.filter(o => o.status !== 'Cancelado').map((order, idx) => {
-                      const statusInfo = getStatusLabel(order.status);
-                      return (
-                        <div key={order.id} className="bg-zinc-900 border-2 border-zinc-800 flex flex-col h-full shadow-2xl relative overflow-hidden">
-                           <div className={`p-4 ${statusInfo.color} flex justify-between items-start`}>
-                              <div>
-                                 <span className="text-4xl font-bold text-white leading-none">
-                                    <span className="text-primary/50 text-2xl mr-2 italic">#{idx + 1}</span>
-                                    #{String(order.id).split('_').pop()}
-                                 </span>
-                                 <p className="text-[10px] text-white/80 mt-1 uppercase font-bold tracking-widest">
-                                    {order.type === 'table' ? `Mesa ${order.table_name || order.table}` : 'Domicilio'}
-                                 </p>
-                              </div>
-                              <div className="bg-black/20 px-2 py-1 text-[10px] font-bold text-white uppercase rounded">
-                                 {order.status}
-                              </div>
-                           </div>
+                 {updatedOrders.length > 0 && (
+                    <div className="space-y-6 mb-12">
+                       <h2 className="text-xl md:text-2xl font-black uppercase tracking-widest text-amber-500 flex items-center space-x-3 bg-amber-500/10 p-4 border-l-4 border-amber-500">
+                          <AlertCircle size={24} className="text-amber-500 animate-pulse" />
+                          <span>Actualizaciones de Pedidos</span>
+                          <span className="bg-amber-500 text-zinc-950 text-xs px-2 py-0.5 rounded-full font-bold">{updatedOrders.length}</span>
+                       </h2>
+                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                          {updatedOrders.map((order, idx) => renderMonitorCard(order, idx, true))}
+                       </div>
+                    </div>
+                 )}
 
-                           <div className="p-6 space-y-4 flex-1">
-                              <div className="space-y-4">
-                                 {order.items.map((item, i) => (
-                                    <div key={i} className="flex items-start space-x-4">
-                                       <span className="text-3xl font-bold text-primary">{item.quantity}x</span>
-                                       <div className="flex-1">
-                                          <p className="text-xl font-bold text-white uppercase leading-tight">{item.product_name || item.name}</p>
-                                          {item.notes && <p className="text-[10px] text-accent font-bold mt-1 uppercase italic bg-accent/10 px-1 inline-block">! {item.notes}</p>}
-                                       </div>
-                                    </div>
-                                 ))}
-                              </div>
-
-                              {order.notes && (
-                                 <div className="mt-4 p-3 bg-zinc-800 border-l-4 border-primary">
-                                    <p className="text-[10px] font-bold text-white/50 uppercase mb-1">Nota Gral:</p>
-                                    <p className="text-xs text-white uppercase font-bold leading-tight italic">"{order.notes}"</p>
-                                 </div>
-                              )}
-                              <div className="mt-6 pt-4 border-t border-zinc-800 flex justify-between items-center text-[10px] font-bold text-zinc-600">
-                                 <span>RECIBIDO: {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                 <span>URBAN-SYSTEM</span>
-                              </div>
-                           </div>
-                        </div>
-                      );
-                   })}
-                </div>
+                 <div className="space-y-6">
+                    {updatedOrders.length > 0 && (
+                       <h2 className="text-xl md:text-2xl font-black uppercase tracking-widest text-white/50 flex items-center space-x-3 bg-zinc-900 p-4 border-l-4 border-zinc-700">
+                          <ChefHat size={24} className="text-white/50" />
+                          <span>Cola de Cocina</span>
+                       </h2>
+                    )}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                       {normalOrders.filter(o => o.status !== 'Cancelado').map((order, idx) => renderMonitorCard(order, idx + updatedOrders.length, false))}
+                    </div>
+                 </div>
                 
                 {filteredOrders.filter(o => !['Completado', 'Pagado', 'Cancelado'].includes(o.status)).length === 0 && (
                    <div className="h-full flex flex-col items-center justify-center space-y-8 opacity-20 mt-32">
@@ -274,103 +532,39 @@ const KitchenDisplay = () => {
 
       {/* Orders List */}
       <div className="flex-1 overflow-x-auto pb-6 scrollbar-hide snap-x snap-mandatory">
-        <div className="flex space-x-4 md:space-x-6 h-full px-4 md:px-2">
+        <div className="flex space-x-4 md:space-x-6 h-full px-4 md:px-2 items-stretch">
           <AnimatePresence mode="popLayout">
-            {filteredOrders.map((order, idx) => {
-              const statusInfo = getStatusLabel(order.status);
-              const orderTime = new Date(order.created_at || order.timestamp || new Date());
-              const minutesElapsed = Math.floor((new Date() - orderTime) / 60000);
-              const isDelivery = order.type === 'delivery';
+            {updatedOrders.length > 0 && (
+              <>
+                {/* Vertical Section Title */}
+                <div className="w-12 bg-amber-500/10 border-2 border-amber-500 border-dashed flex items-center justify-center relative select-none flex-shrink-0">
+                  <span className="text-amber-500 text-[10px] font-black uppercase tracking-[0.4em] rotate-90 whitespace-nowrap absolute">
+                    Actualizaciones
+                  </span>
+                </div>
+                {updatedOrders.map((order, idx) => renderOrderCard(order, idx, true))}
+                {/* Visual Separator */}
+                <div className="w-1 bg-zinc-200 dark:bg-zinc-800 self-stretch my-2 flex-shrink-0"></div>
+              </>
+            )}
 
-              return (
-                <motion.div
-                  key={order.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.9, x: 50 }}
-                  animate={{ opacity: 1, scale: 1, x: 0 }}
-                  exit={{ opacity: 0, scale: 0.8, y: -50 }}
-                  transition={{ type: 'spring', damping: 25, stiffness: 300, mass: 0.5 }}
-                  className={`w-[calc(100vw-48px)] md:w-80 min-h-[450px] md:min-h-0 flex-shrink-0 bg-surface border-4 flex flex-col overflow-hidden shadow-2xl transition-all snap-center ${isDelivery ? 'border-amber-500/50 scale-[0.98]' : 'border-zinc-200 dark:border-zinc-900'}`}
-                >
-                  <div className={`p-4 ${statusInfo.color} text-white flex justify-between items-center relative overflow-hidden`}>
-                    <div className="flex items-center space-x-2 relative z-10">
-                       <span className="text-[10px] font-bold text-white/50 italic mr-1">{idx + 1}</span>
-                       <span className="font-serif text-2xl tracking-tighter">#{String(order.id).split('_').pop()}</span>
-                       <div className="flex items-center space-x-1 bg-black/20 px-2 py-0.5 rounded text-[8px] font-bold uppercase">
-                          {statusInfo.icon}
-                          <span>{statusInfo.label}</span>
-                       </div>
-                    </div>
-                    <div className="flex items-center space-x-1 text-[10px] font-bold relative z-10 bg-black/10 px-2 py-1 rounded">
-                       <Clock size={12} />
-                       <span>{minutesElapsed}m</span>
-                    </div>
-                    <div className="absolute right-[-10%] top-[-10%] opacity-10 rotate-12">
-                       {isDelivery ? <ShoppingBag size={80} strokeWidth={1} /> : <Utensils size={80} strokeWidth={1} />}
-                    </div>
-                  </div>
-
-                  <div className={`p-4 border-b border-zinc-200 dark:border-zinc-800 ${isDelivery ? 'bg-amber-500/10' : 'bg-zinc-50 dark:bg-black/20'}`}>
-                    <div className="flex flex-col items-end relative z-10">
-                       <span className="text-[10px] font-black uppercase tracking-widest leading-none">
-                         {isDelivery ? 'Domicilio' : `Mesa ${tables.find(t => t.id === order.table)?.number || '??'}`}
-                       </span>
-                       {!isDelivery && (
-                         <span className="text-[8px] font-bold uppercase opacity-80 mt-1">
-                           {locations.find(l => l.id === tables.find(t => t.id === order.table)?.locationId)?.name || 'General'}
-                         </span>
-                       )}
-                    </div>
-                  </div>
-
-                  <div className="flex-1 p-3 md:p-4 space-y-3 md:space-y-4 overflow-y-auto scrollbar-hide bg-white dark:bg-transparent">
-                     {order.notes && (
-                       <div className="bg-primary/10 p-3 border-l-4 border-primary mb-4">
-                          <p className="text-[8px] font-bold text-primary mb-1 uppercase tracking-widest italic">Observaciones Generales</p>
-                          <p className="text-[10px] font-bold text-text-bright uppercase leading-tight">"{order.notes}"</p>
-                       </div>
-                     )}
-                     
-                     {order.items.map((item, idx) => (
-                       <div key={idx} className="pb-3 md:pb-4 border-b border-dashed border-zinc-200 dark:border-zinc-800 last:border-0">
-                          <div className="flex justify-between items-start">
-                             <span className="text-xl md:text-2xl font-serif text-primary mr-2 md:mr-3">{item.quantity}x</span>
-                             <div className="flex-1">
-                                <p className="text-xs md:text-sm font-bold text-text-bright uppercase leading-tight">{item.product_name || item.name}</p>
-                                {item.notes && (
-                                   <p className="text-[8px] text-accent font-bold mt-1 uppercase italic bg-accent/10 px-1 inline-block">-- {item.notes}</p>
-                                )}
-                             </div>
-                          </div>
-                       </div>
-                     ))}
-                  </div>
-
-                  <div className="p-4 border-t-2 border-zinc-200 dark:border-zinc-900 grid grid-cols-2 gap-2 bg-zinc-50 dark:bg-zinc-900/50">
-                     <button 
-                       onClick={(e) => { e.stopPropagation(); updateOrderStatus(order.id, 'Cancelado'); }}
-                       disabled={!['Pendiente', 'Confirmado', 'En Lista'].includes(order.status) || order.status === 'Pagado'}
-                       className={`py-3 border-2 transition-all flex items-center justify-center rounded-none ${(!['Pendiente', 'Confirmado', 'En Lista'].includes(order.status) || order.status === 'Pagado') ? 'border-zinc-200 text-zinc-300 dark:border-zinc-800 dark:text-zinc-700 cursor-not-allowed' : 'border-accent text-accent hover:bg-accent hover:text-white'}`}
-                     >
-                        <XCircle size={18} />
-                     </button>
-                     <button
-                       onClick={(e) => { e.stopPropagation(); handleNextStatus(order.id, order.status); }}
-                        disabled={['Listo', 'Completado', 'Pagado'].includes(order.status)}
-                       className={`py-3 transition-all flex items-center justify-center space-x-2 rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] active:shadow-none translate-y-0 active:translate-y-1 ${ (['Listo', 'Completado', 'Pagado'].includes(order.status)) ? 'bg-emerald-500 text-white opacity-80 cursor-not-allowed' : 'bg-primary text-white hover:bg-primary-dark'}`}
-                     >
-                        <span className="text-[10px] font-bold uppercase tracking-widest">
-                           {(order.status === 'Pendiente' || order.status === 'En Lista') ? 'Preparar' : 
-                            (order.status === 'Confirmado' ? 'Preparar' : 
-                            (order.status === 'Preparando' || order.status === 'En Cocina' ? (isDelivery ? 'Listo Envío' : 'Entregar') : 'Completado'))}
-                        </span>
-                        {(order.status === 'Listo' || order.status === 'Completado') ? <CheckCircle2 size={16} /> : <ChevronRight size={16} />}
-                     </button>
-                  </div>
-                </motion.div>
-              );
-            })}
+            {updatedOrders.length > 0 && (
+              <div className="w-12 bg-zinc-50 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 flex items-center justify-center relative select-none flex-shrink-0">
+                <span className="text-text-dim text-[10px] font-black uppercase tracking-[0.4em] rotate-90 whitespace-nowrap absolute">
+                  Cola de Cocina
+                </span>
+              </div>
+            )}
+            
+            {normalOrders.map((order, idx) => renderOrderCard(order, idx + updatedOrders.length, false))}
           </AnimatePresence>
+
+          {filteredOrders.length === 0 && (
+             <div className="flex-1 flex flex-col items-center justify-center space-y-6 opacity-30 mt-12 select-none">
+                <ChefHat size={80} className="text-text-dim" />
+                <p className="text-lg font-bold text-text-dim uppercase tracking-widest text-center">¡Cocina al día! Esperando nuevos pedidos...</p>
+             </div>
+          )}
         </div>
       </div>
     </div>

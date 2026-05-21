@@ -8,7 +8,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = OrderItem
-        fields = ['id', 'product', 'product_name', 'quantity', 'price_at_order', 'notes']
+        fields = ['id', 'product', 'product_name', 'quantity', 'price_at_order', 'notes', 'is_new']
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True)
@@ -28,7 +28,7 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'type', 'status', 'isPaid', 'isSent', 'payment_method', 'customer_name', 'customer_phone', 'identification',
             'customer_address', 'table', 'table_number', 'waiter', 'waiter_name', 'reservationId',
-            'total', 'created_at', 'updated_at', 'cancel_reason', 'notes', 'items'
+            'total', 'created_at', 'updated_at', 'cancel_reason', 'notes', 'items', 'has_updates'
         ]
         read_only_fields = ['total', 'created_at', 'updated_at']
 
@@ -55,6 +55,9 @@ class OrderSerializer(serializers.ModelSerializer):
         return order
 
     def update(self, instance, validated_data):
+        if instance.status == 'Pagado':
+            raise serializers.ValidationError("No se puede editar un pedido que ya ha sido pagado.")
+            
         items_data = validated_data.pop('items', None)
         
         # Update instance fields
