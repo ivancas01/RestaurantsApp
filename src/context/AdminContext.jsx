@@ -106,7 +106,19 @@ export const AdminProvider = ({ children }) => {
     }
   };
 
-  const [cmsData, setCmsData] = useState(DEFAULT_CMS);
+  const [cmsData, setCmsData] = useState(() => {
+    const savedTheme = localStorage.getItem('urban_brand_theme');
+    if (savedTheme) {
+      return {
+        ...DEFAULT_CMS,
+        brand: {
+          ...DEFAULT_CMS.brand,
+          theme: savedTheme
+        }
+      };
+    }
+    return DEFAULT_CMS;
+  });
 
   useEffect(() => {
     const themes = {
@@ -126,6 +138,10 @@ export const AdminProvider = ({ children }) => {
     document.documentElement.style.setProperty('--primary-shadow-10', themeColors.primary + '1a');
     document.documentElement.style.setProperty('--primary-shadow-20', themeColors.primary + '33');
     document.documentElement.style.setProperty('--primary-shadow-30', themeColors.primary + '4d');
+
+    if (cmsData?.brand?.theme) {
+      localStorage.setItem('urban_brand_theme', cmsData.brand.theme);
+    }
   }, [cmsData?.brand?.theme]);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -275,13 +291,13 @@ export const AdminProvider = ({ children }) => {
     
     const path = window.location.pathname;
     const isAdmin = path.includes('/hidden-admin');
-    const isPublic = path === '/' || path === '/menu';
+    const isPublic = path === '/' || path === '/menu' || path === '/login';
 
     const tasks = [fetchPublicBasics()];
     
     if (isAdmin) {
       tasks.push(fetchAdminCritical());
-    } else if (isPublic) {
+    } else if (isPublic && path !== '/login') {
       tasks.push(fetchCMSContent());
     }
 
@@ -313,7 +329,7 @@ export const AdminProvider = ({ children }) => {
     
     // Initial fetch only if we have a token or on public routes
     const path = window.location.pathname;
-    const isPublic = path === '/' || path === '/menu';
+    const isPublic = path === '/' || path === '/menu' || path === '/login';
     const hasToken = !!localStorage.getItem('urban_token');
 
     if (hasToken || isPublic) {
