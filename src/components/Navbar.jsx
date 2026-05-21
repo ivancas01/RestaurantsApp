@@ -119,7 +119,7 @@ const Navbar = () => {
               ))}
               
               <div className="pt-6 border-t border-white/5 flex flex-col space-y-4">
-                 <p className="text-[10px] uppercase tracking-[0.3em] text-text-dim font-bold">Urban Street // Operational Status: Online</p>
+                 <p className="text-[10px] uppercase tracking-[0.3em] text-text-dim font-bold">Urban Street // ¡Estamos abiertos y cocinando con amor!</p>
               </div>
             </div>
           </motion.div>

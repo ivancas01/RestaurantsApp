@@ -66,7 +66,7 @@ const Login = () => {
 
       {/* Decorative Text */}
       <div className="absolute top-10 left-10 text-[8rem] font-serif opacity-[0.03] select-none uppercase hidden lg:block -rotate-90 origin-top-left">
-        AUTHENTICATE
+        AUTENTICACIÓN
       </div>
 
       <motion.div
@@ -92,7 +92,7 @@ const Login = () => {
               <ShieldCheck size={32} />
             </div>
             <h1 className="text-4xl font-serif uppercase tracking-wider mb-2 text-text-bright">Acceso <br /><span className="text-primary">Personal</span></h1>
-            <p className="text-text-dim text-[10px] uppercase tracking-[0.3em] font-bold">Lumina Urban Gourmet // Staff Only</p>
+            <p className="text-text-dim text-[10px] uppercase tracking-[0.3em] font-bold">Lumina Urban Gourmet // Solo Personal</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-6">

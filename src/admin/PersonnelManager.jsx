@@ -99,7 +99,7 @@ const PersonnelManager = () => {
       showNotification(`Perfil de ${newUser.name} actualizado`);
     } else {
       await addUser(userData);
-      showNotification(`Operador ${newUser.name} registrado`);
+      showNotification(`Colaborador ${newUser.name} registrado`);
     }
     
     setNewUser({ name: '', username: '', password: '', confirmPassword: '', email: '', identification: '', phone: '', groupId: groups[0]?.id || '' });
@@ -111,7 +111,7 @@ const PersonnelManager = () => {
     if (!userToDelete) return;
     await deleteUser(userToDelete.id);
     setUserToDelete(null);
-    showNotification("Personal retirado del sistema", "warning");
+    showNotification("Colaborador retirado del sistema", "warning");
   };
 
   return (
@@ -121,7 +121,7 @@ const PersonnelManager = () => {
         isOpen={isEditingUser} 
         onClose={closeUserModal} 
         title={editingUserId ? "Editar" : "Registrar"} 
-        subtitle="Operador"
+        subtitle="Colaborador"
         maxWidth="max-w-xl"
       >
         <div className="space-y-8">
@@ -137,20 +137,20 @@ const PersonnelManager = () => {
            </div>
 
            <div className="flex flex-col space-y-2 border-t border-zinc-800 pt-6">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-primary">Grupo / Rol de Sistema</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-primary">Rol / Permisos del Sistema</label>
               <select 
                 className="w-full px-4 py-3 bg-background border-2 border-zinc-700 text-text-bright text-[10px] font-bold uppercase transition-all focus:border-primary outline-none"
                 value={newUser.groupId}
                 onChange={(e) => setNewUser({...newUser, groupId: e.target.value})}
               >
-                <option value="">Seleccionar Grupo</option>
+                <option value="">Elegir Rol</option>
                 {groups.map(g => (
                   <option key={g.id} value={g.id}>{g.name}</option>
                 ))}
               </select>
            </div>
            
-           <Button onClick={handleSaveUser} className="w-full py-4 uppercase tracking-widest font-bold text-xs">{editingUserId ? 'Actualizar Perfil' : 'Registrar Operador'}</Button>
+           <Button onClick={handleSaveUser} className="w-full py-4 uppercase tracking-widest font-bold text-xs">{editingUserId ? 'Actualizar Perfil' : 'Registrar Colaborador'}</Button>
         </div>
       </Modal>
 
@@ -158,15 +158,15 @@ const PersonnelManager = () => {
         isOpen={!!userToDelete}
         onClose={() => setUserToDelete(null)}
         onConfirm={handleDeleteUser}
-        title="Eliminar Personal"
-        message={`¿Estás seguro de que deseas retirar a ${userToDelete?.name} del sistema? Esta acción revocará todos sus accesos.`}
+        title="Eliminar Colaborador"
+        message={`¿Estás seguro de que deseas retirar a ${userToDelete?.name} del equipo? Esta acción revocará todos sus accesos.`}
       />
 
       {/* Header Area */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-l-8 border-primary pl-6 md:pl-8">
         <div>
           <h1 className="text-3xl md:text-7xl font-serif uppercase leading-none text-text-bright">
-            Control de <span className="text-primary italic">Personal</span>
+            Control de <span className="text-primary italic">Colaboradores</span>
           </h1>
           <p className="text-[10px] md:text-xs text-text-dim tracking-[0.4em] uppercase mt-2 md:mt-4 font-bold underline decoration-primary decoration-2 underline-offset-8">
             Gestión de Accesos y Seguridad
@@ -176,7 +176,7 @@ const PersonnelManager = () => {
 
       <div className="space-y-8">
         <div className="flex justify-between items-center border-b border-zinc-200 dark:border-zinc-900 pb-4">
-          <h2 className="text-xl md:text-2xl font-serif uppercase tracking-wider text-text-bright">Staff <span className="text-primary italic">Activo</span></h2>
+          <h2 className="text-xl md:text-2xl font-serif uppercase tracking-wider text-text-bright">Colaboradores <span className="text-primary italic">Activos</span></h2>
           <Button onClick={startCreateUser} className="flex items-center space-x-2 py-2 px-4">
             <Plus size={16} />
             <span className="text-[10px] md:text-xs">Nuevo</span>
@@ -215,7 +215,7 @@ const PersonnelManager = () => {
 
                 <div className="mt-6 flex items-center justify-between border-t border-zinc-100 dark:border-white/5 pt-4 relative z-10">
                   <span className="bg-primary/20 text-primary text-[8px] md:text-[10px] font-bold px-2 md:px-3 py-1 uppercase tracking-widest">
-                    {group?.name || 'Agente'}
+                    {group?.name || 'Colaborador'}
                   </span>
                   <div className="flex items-center space-x-1.5 text-[8px] md:text-[10px] uppercase tracking-widest font-bold text-green-500">
                      <CheckCircle size={10} />

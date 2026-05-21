@@ -347,9 +347,9 @@ const MenuSection = () => {
             viewport={{ once: true }}
           >
             <h2 className="mb-2 leading-none">
-              Street <span className="text-primary italic">Menu</span>
+              Nuestra <span className="text-primary italic">Carta</span>
             </h2>
-            <p className="text-text-dim tracking-[0.3em] md:tracking-[0.5em] text-[10px] md:text-sm uppercase font-bold">Curated // Urban // Bold</p>
+            <p className="text-text-dim tracking-[0.3em] md:tracking-[0.5em] text-[10px] md:text-sm uppercase font-bold">Hecho con amor // Sabor real // Para compartir</p>
           </motion.div>
           <div className="hidden md:block w-1/3 h-px bg-zinc-200 dark:bg-white/10"></div>
         </div>

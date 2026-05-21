@@ -59,9 +59,9 @@ const HeroSection = () => {
     featured_name: "The Architect",
     featured_price: "22",
     featured_desc: "Wagyu A5, Cheddar Envejecido, Cebolla al Bourbon y pan brioche artesanal.",
-    stats_label: "Trending",
+    stats_label: "¡Los más pedidos!",
     stats_value: "+124 Pedidos",
-    established: `${cmsData?.brand?.name || 'Urban Street'} // Established 2026`,
+    established: `${cmsData?.brand?.name || 'Urban Street'} // Desde 2026`,
     featured_image: DEFAULT_HERO_IMAGE
   };
 
@@ -202,7 +202,7 @@ const HeroSection = () => {
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center text-text-dim/20 p-6 text-center">
                   <ShoppingCart size={40} strokeWidth={1} className="mb-2" />
-                  <p className="text-[8px] uppercase tracking-widest font-bold">Selecciona un plato en el menú para destacar</p>
+                  <p className="text-[8px] uppercase tracking-widest font-bold">¡Elige un plato en el menú para destacarlo aquí!</p>
                 </div>
               )}
             </div>
@@ -210,7 +210,7 @@ const HeroSection = () => {
             <div className="space-y-2 lg:space-y-3">
               <div className="flex justify-between items-end">
                 <div>
-                  <p className="text-[8px] uppercase tracking-[0.2em] text-primary font-bold mb-0.5">// MOST ORDERED</p>
+                  <p className="text-[8px] uppercase tracking-[0.2em] text-primary font-bold mb-0.5">// EL MÁS PEDIDO</p>
                   <h3 className="text-2xl lg:text-3xl font-serif text-text-bright uppercase">{featured.name}</h3>
                 </div>
                 <div className="text-right">

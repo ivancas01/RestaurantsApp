@@ -205,7 +205,7 @@ const VenueManager = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-l-8 border-primary pl-8">
         <div>
           <h1 className="text-5xl md:text-7xl font-serif uppercase leading-none text-text-bright">
-            Infraestructura <span className="text-primary italic">Urbana</span>
+            Gestión de <span className="text-primary italic">Espacios</span>
           </h1>
           <p className="text-text-dim tracking-[0.4em] text-xs uppercase mt-4 font-bold underline decoration-primary decoration-2 underline-offset-8">
             Control de Disponibilidad y Mesas
@@ -215,7 +215,7 @@ const VenueManager = () => {
         <div className="flex items-center space-x-4">
            <Button onClick={() => setIsEditingLocation(true)} className="flex items-center space-x-2">
               <Plus size={16} />
-              <span>Nueva Ubicación</span>
+              <span>Nueva Zona</span>
            </Button>
         </div>
       </div>
@@ -391,7 +391,7 @@ const VenueManager = () => {
           
           <div className="w-full space-y-4">
             <div className="bg-background border-2 border-zinc-200 dark:border-zinc-800 p-4 relative group">
-               <p className="text-[8px] font-bold text-primary uppercase tracking-widest mb-1">URL de Acceso Directo</p>
+               <p className="text-[8px] font-bold text-primary uppercase tracking-widest mb-1">Enlace de Acceso Directo</p>
                <p className="text-[10px] font-mono break-all text-text-dim">{getTableQrUrl(selectedTableForQr?.id)}</p>
             </div>
             

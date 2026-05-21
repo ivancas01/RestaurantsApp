@@ -181,7 +181,7 @@ const ReservationsManager = () => {
               <Input label="Email de Contacto" value={newRes.email} onChange={(e) => setNewRes({...newRes, email: e.target.value.toLowerCase()})} />
            </div>
            <div className="space-y-6">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-primary border-b border-primary/20 pb-2">02 Detalles del Servicio</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-primary border-b border-primary/20 pb-2">02. Detalles de la Reserva</p>
               <div className="grid grid-cols-2 gap-4">
                  <Input label="Fecha" type="date" value={newRes.date} onChange={(e) => setNewRes({...newRes, date: e.target.value})} error={errors.date} />
                  <Input label="Hora" type="time" value={newRes.time} onChange={(e) => setNewRes({...newRes, time: e.target.value})} error={errors.time} />
@@ -215,8 +215,8 @@ const ReservationsManager = () => {
       <Modal
         isOpen={!!viewingResId}
         onClose={() => setViewingResId(null)}
-        title="Expediente"
-        subtitle="Reserva"
+        title="Detalles de la Reserva"
+        subtitle="Información del cliente"
         maxWidth="max-w-2xl"
       >
         {viewingRes && (
@@ -241,10 +241,10 @@ const ReservationsManager = () => {
                    <div><p className="text-[8px] font-bold text-text-dim mb-1">CONTACTO</p><p className="text-sm font-bold text-text-bright">{viewingRes.phone} // {viewingRes.email || 'SIN EMAIL'}</p></div>
                 </div>
              </div>
-             <div className="bg-background p-6 border-2 border-zinc-800"><p className="text-[8px] font-bold text-primary mb-2 tracking-[0.3em] uppercase">Notas de Cocina / Servicio</p><p className="text-xs italic leading-relaxed text-text-dim">{viewingRes.instructions || 'SIN INSTRUCCIONES ADICIONALES'}</p></div>
+             <div className="bg-background p-6 border-2 border-zinc-800"><p className="text-[8px] font-bold text-primary mb-2 tracking-[0.3em] uppercase">Notas especiales</p><p className="text-xs italic leading-relaxed text-text-dim">{viewingRes.instructions || 'SIN NOTAS ADICIONALES'}</p></div>
              <div className="pt-6 flex space-x-4">
                 <Button onClick={() => { setViewingResId(null); startEdit(viewingRes); }} className="flex-1 space-x-2"><Edit2 size={16}/><span>Editar</span></Button>
-                <Button variant="outline" onClick={() => setViewingResId(null)} className="flex-1 border-zinc-700">Cerrar Expediente</Button>
+                <Button variant="outline" onClick={() => setViewingResId(null)} className="flex-1 border-zinc-700">Cerrar Detalles</Button>
              </div>
           </div>
         )}
@@ -265,7 +265,7 @@ const ReservationsManager = () => {
             Libro de <span className="text-primary italic">Reservas</span>
           </h1>
           <p className="text-[10px] md:text-xs text-text-dim tracking-[0.4em] uppercase mt-2 md:mt-4 font-bold underline decoration-primary decoration-2 underline-offset-8">
-            Control de Aforo y Gestión de Mesa
+            Control de Reservas y Gestión de Mesas
           </p>
         </div>
         

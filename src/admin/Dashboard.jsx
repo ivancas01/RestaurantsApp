@@ -123,7 +123,7 @@ const Dashboard = () => {
             <h2 className="text-lg md:text-xl font-serif uppercase tracking-tight">Actividad <span className="text-primary italic">Reciente</span></h2>
             <div className="flex items-center space-x-2">
                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-               <span className="text-[8px] font-bold tracking-widest text-text-dim uppercase">Live Feed</span>
+               <span className="text-[8px] font-bold tracking-widest text-text-dim uppercase">Actividad en vivo</span>
             </div>
           </div>
           <div className="space-y-4 md:space-y-6 flex-1 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">

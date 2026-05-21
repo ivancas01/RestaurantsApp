@@ -8,12 +8,12 @@ const Footer = () => {
   const { cmsData, currentUser } = useAdmin();
   const brand = cmsData?.brand || { name: 'URBAN STREET' };
   const footer = cmsData?.footer || {
-    description: "Experience the city through flavor. Premium Urban Gastronomy.",
+    description: "Vive la ciudad a través del sabor. Gastronomía urbana hecha con cariño.",
     socials: [
       { name: "Instagram", url: "#" },
       { name: "Facebook", url: "#" }
     ],
-    copyright: "Digital Gastronomy"
+    copyright: "Creado con cariño"
   };
   const brandParts = brand.name.split(' ');
 

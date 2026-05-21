@@ -31,7 +31,7 @@ const OrdersManager = () => {
     }, POLL_INTERVAL);
     return () => clearInterval(intervalId);
   }, [fetchOrders, currentPage]);
-  const brand = cmsData?.brand || { name: 'URBAN STREET', tagline: 'Gourmet Command Center' };
+  const brand = cmsData?.brand || { name: 'URBAN STREET', tagline: 'Centro de Gestión de Pedidos' };
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [selectedOrderId, setSelectedOrderId] = useState(null);
@@ -598,7 +598,7 @@ const OrdersManager = () => {
               className="w-full py-5 text-lg"
               style={{ boxShadow: '10px 10px 0px 0px var(--primary-shadow-20)' }}
             >
-              Confirmar y Cerrar Comanda
+              Confirmar y Registrar Pago
            </Button>
         </div>
       </Modal>
@@ -607,16 +607,16 @@ const OrdersManager = () => {
         isOpen={isAddingOrder || !!editingOrderId} 
         onClose={() => {setIsAddingOrder(false); setEditingOrderId(null);}}
         title={editingOrderId ? 'Editar' : 'Tomar'}
-        subtitle="Comanda"
+        subtitle="Pedido"
         maxWidth="max-w-6xl"
       >
         <div className="flex flex-col lg:flex-row h-full">
             <div className="w-full lg:w-2/3 border-b lg:border-b-0 lg:border-r border-zinc-100 dark:border-zinc-900 pr-0 lg:pr-8 space-y-8 md:space-y-10 pb-10 lg:pb-0">
                 <div className="space-y-4">
-                  <div className="flex items-center space-x-3"><span className="w-8 h-px bg-primary"></span><span className="text-[10px] font-bold uppercase tracking-widest text-primary">01 Identificar Cliente</span></div>
+                  <div className="flex items-center space-x-3"><span className="w-8 h-px bg-primary"></span><span className="text-[10px] font-bold uppercase tracking-widest text-primary">01. Datos del Cliente</span></div>
                   <div className="relative">
                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-dim" size={18} />
-                      <input type="text" placeholder="BUSCAR EN RESERVAS..." value={resSearch} onChange={(e) => setResSearch(e.target.value)} className="w-full bg-background border-2 border-zinc-200 dark:border-zinc-800 p-4 pl-12 text-xs font-bold focus:border-primary outline-none" />
+                      <input type="text" placeholder="BUSCAR EN LAS RESERVAS..." value={resSearch} onChange={(e) => setResSearch(e.target.value)} className="w-full bg-background border-2 border-zinc-200 dark:border-zinc-800 p-4 pl-12 text-xs font-bold focus:border-primary outline-none" />
                       {filteredRes.length > 0 && (
                         <div className="absolute top-full left-0 right-0 z-[100] bg-surface border-2 border-primary mt-1 shadow-2xl">
                           {filteredRes.map(res => (
@@ -627,7 +627,7 @@ const OrdersManager = () => {
                                     {res.time} • {res.date} • {res.phone}
                                   </p>
                                 </div>
-                                <span className="text-[8px] bg-primary/20 text-primary px-2 py-1 font-bold uppercase">vincular</span>
+                                <span className="text-[8px] bg-primary/20 text-primary px-2 py-1 font-bold uppercase">vincular con pedido</span>
                             </button>
                           ))}
                         </div>
@@ -673,7 +673,7 @@ const OrdersManager = () => {
 
                       {customerSearchResults.length > 0 && (
                         <div className="absolute top-full left-0 right-0 z-[110] bg-surface border-2 border-primary mt-1 shadow-2xl max-h-[200px] overflow-y-auto">
-                           <div className="p-2 bg-primary/10 text-[8px] font-bold text-primary uppercase tracking-widest border-b border-primary/20">Resultados en Base de Datos</div>
+                           <div className="p-2 bg-primary/10 text-[8px] font-bold text-primary uppercase tracking-widest border-b border-primary/20">Clientes encontrados</div>
                            {customerSearchResults.map((customer, idx) => (
                              <button 
                                key={idx} 
@@ -694,7 +694,7 @@ const OrdersManager = () => {
                         onChange={e => setNewOrder({...newOrder, table: e.target.value})}
                         className="bg-background border-2 border-zinc-800 p-3 text-[10px] font-bold outline-none focus:border-primary uppercase w-full col-span-1 sm:col-span-2 md:col-span-1"
                       >
-                        <option value="">-- SELECCIONAR MESA --</option>
+                        <option value="">-- ELEGIR MESA --</option>
                         {locations.map(loc => {
                           const locationTables = tables.filter(t => (t.locationId === loc.id) && (t.status === 'Disponible' || String(t.id) === String(newOrder.table)));
                           if (locationTables.length === 0) return null;
@@ -712,7 +712,7 @@ const OrdersManager = () => {
                   </div>
                 </div>
                 <div className="space-y-6">
-                  <div className="flex items-center space-x-3"><span className="w-8 h-px bg-primary"></span><span className="text-[10px] font-bold uppercase tracking-widest text-primary">02 Seleccionar Productos</span></div>
+                  <div className="flex items-center space-x-3"><span className="w-8 h-px bg-primary"></span><span className="text-[10px] font-bold uppercase tracking-widest text-primary">02. Agregar Platos</span></div>
                   <div className="flex flex-wrap gap-2 pb-2 overflow-x-auto scrollbar-hide">
                       {menu.map(cat => (
                         <button key={cat.id} onClick={() => setActiveMenuCat(cat.id)} className={`px-4 py-2 text-[10px] font-bold border-2 transition-all whitespace-nowrap ${activeMenuCat === cat.id ? 'bg-primary border-primary text-white' : 'border-zinc-800 text-text-dim hover:border-primary'}`}>{cat.name.split('//')[0]}</button>
@@ -726,10 +726,10 @@ const OrdersManager = () => {
                 </div>
             </div>
             <div className="w-full lg:w-1/3 pl-0 lg:pl-8 flex flex-col h-full mt-8 lg:mt-0 pt-8 lg:pt-0">
-                <div className="flex items-center space-x-3 mb-6"><span className="w-8 h-px bg-primary"></span><span className="text-[10px] font-bold uppercase tracking-widest text-primary">03 Comanda Activa</span></div>
+                <div className="flex items-center space-x-3 mb-6"><span className="w-8 h-px bg-primary"></span><span className="text-[10px] font-bold uppercase tracking-widest text-primary">03. Pedido Actual</span></div>
                 <div className="flex-1 overflow-y-auto space-y-4 mb-8 pr-2 custom-scrollbar max-h-[30vh] lg:max-h-none">
                   {newOrder.items.length === 0 ? (
-                    <div className="h-32 flex flex-center flex-col items-center justify-center border-2 border-dashed border-zinc-800 text-text-dim opacity-40"><ShoppingBag size={24} className="mb-2"/><p className="text-[8px] font-bold uppercase tracking-[0.2em]">Sin productos</p></div>
+                    <div className="h-32 flex flex-center flex-col items-center justify-center border-2 border-dashed border-zinc-800 text-text-dim opacity-40"><ShoppingBag size={24} className="mb-2"/><p className="text-[8px] font-bold uppercase tracking-[0.2em]">Tu pedido está vacío</p></div>
                   ) : (
                     newOrder.items.map(item => {
                       const itemId = item.id || item.product || item.product_id;
@@ -744,7 +744,7 @@ const OrdersManager = () => {
                               type="text" 
                               value={item.notes || ''} 
                               onChange={(e) => updateItemNote(itemId, e.target.value.toUpperCase())}
-                              placeholder="NOTAS POR PRODUCTO..."
+                              placeholder="¿Alguna indicación especial?..."
                               className="w-full bg-background border border-zinc-800 p-2 text-[8px] font-bold outline-none focus:border-primary uppercase"
                             />
                         </div>
@@ -754,24 +754,24 @@ const OrdersManager = () => {
                 </div>
 
                 <div className="mt-4 mb-8 space-y-3">
-                   <div className="flex items-center space-x-2 text-[10px] font-bold text-primary uppercase tracking-widest"><MessageSquare size={14}/><span>Observaciones</span></div>
+                   <div className="flex items-center space-x-2 text-[10px] font-bold text-primary uppercase tracking-widest"><MessageSquare size={14}/><span>Notas generales</span></div>
                    <textarea 
                     value={newOrder.notes}
                     onChange={(e) => setNewOrder({...newOrder, notes: e.target.value.toUpperCase()})}
-                    placeholder="EJ: SIN CEBOLLA, TÉRMINO MEDIO..."
+                    placeholder="EJ. SIN CEBOLLA, PLATO BIEN COCIDO..."
                     className="w-full p-3 bg-background border-2 border-zinc-800 text-[10px] font-bold focus:border-primary outline-none min-h-[60px]"
                    />
                 </div>
 
                 <div className="border-t-4 border-primary pt-6 space-y-6">
-                  <div className="flex justify-between items-center text-text-bright"><span className="text-[10px] font-bold uppercase tracking-widest">Total comanda</span><span className="text-2xl md:text-3xl font-serif text-primary tracking-tighter">${calculateTotal(newOrder.items).toFixed(2)}</span></div>
+                  <div className="flex justify-between items-center text-text-bright"><span className="text-[10px] font-bold uppercase tracking-widest">Total del pedido</span><span className="text-2xl md:text-3xl font-serif text-primary tracking-tighter">${calculateTotal(newOrder.items).toFixed(2)}</span></div>
                    <Button 
                      onClick={handleSaveOrder} 
                      className="w-full text-xs font-bold uppercase tracking-[0.2em] py-5 md:py-4 hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all" 
                      style={{ boxShadow: '8px 8px 0px 0px var(--primary-shadow-20)' }}
                      disabled={newOrder.items.length === 0 || !newOrder.customer_name}
                    >
-                     {editingOrderId ? 'Guardar Cambios' : 'Procesar Pedido'}
+                     {editingOrderId ? 'Guardar Cambios' : 'Registrar Pedido'}
                    </Button>
                 </div>
             </div>
@@ -783,18 +783,18 @@ const OrdersManager = () => {
         onClose={() => {setOrderToCancel(null); setCancelReason('');}}
         onConfirm={handleCancelConfirm}
         title="Cancelar Pedido"
-        message={`¿Estás seguro de que deseas cancelar el pedido de ${tables.find(t => t.id === orderToCancel?.table)?.number || 'esta mesa'}? Esta acción anulará el servicio.`}
-        confirmLabel="Anular Servicio"
+        message={`¿Estás seguro de que deseas cancelar el pedido de la mesa ${tables.find(t => t.id === orderToCancel?.table)?.number || 'seleccionada'}? Esta acción cancelará el servicio.`}
+        confirmLabel="Confirmar Cancelación"
       >
         <div className="space-y-3">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-primary">Motivo de la Cancelación</label>
+          <label className="text-[10px] font-bold uppercase tracking-widest text-primary">Por qué se cancela el pedido</label>
           <textarea 
             className="w-full p-4 bg-background border-2 border-zinc-800 text-[10px] font-bold focus:border-primary outline-none min-h-[100px] uppercase"
-            placeholder="EJ: ERROR EN LA TOMA, CLIENTE SE RETIRÓ..."
+            placeholder="EJ. ERROR AL REGISTRAR, EL CLIENTE SE RETIRÓ..."
             value={cancelReason}
             onChange={(e) => setCancelReason(e.target.value)}
           />
-          {!cancelReason && <p className="text-[8px] font-bold text-accent animate-pulse">EL MOTIVO ES OBLIGATORIO PARA PROCEDER</p>}
+          {!cancelReason && <p className="text-[8px] font-bold text-accent animate-pulse">POR FAVOR, INGRESA EL MOTIVO PARA CONTINUAR</p>}
         </div>
       </ConfirmModal>
 
@@ -834,7 +834,7 @@ const OrdersManager = () => {
                          <div className="flex justify-between"><span>HORA INICIO:</span><span>{orderStartTime}</span></div>
                          {isPaid && <div className="flex justify-between"><span>HORA PAGO:</span><span>{orderPaymentTime}</span></div>}
                          {isPaid && <div className="flex justify-between"><span>MÉTODO PAGO:</span><span className="font-bold">{getPaymentMethodLabel(paymentMethod)}</span></div>}
-                         <div className="flex justify-between"><span>CLI:</span><span className="font-bold">{lastSavedOrder.customer_name}</span></div>
+                         <div className="flex justify-between"><span>CLIENTE:</span><span className="font-bold">{lastSavedOrder.customer_name}</span></div>
                          <div className="flex justify-between"><span>DOCUMENTO:</span><span className="font-bold">{lastSavedOrder.identification || '---'}</span></div>
                          <div className="flex justify-between"><span>CONTACTO:</span><span className="font-bold">{lastSavedOrder.customer_phone || '---'}</span></div>
                          {lastSavedOrder.waiter_name && <div className="flex justify-between"><span>ATENDIDO POR:</span><span className="font-bold">{lastSavedOrder.waiter_name.toUpperCase()}</span></div>}
@@ -877,8 +877,8 @@ const OrdersManager = () => {
 
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8 border-l-8 border-primary pl-6 md:pl-8 mb-10">
         <div>
-          <h1 className="text-4xl md:text-7xl font-serif uppercase leading-none text-text-bright">Centro de <span className="text-primary italic">Comandos</span></h1>
-          <p className="text-[10px] md:text-xs text-text-dim tracking-[0.4em] uppercase mt-2 md:mt-4 font-bold underline decoration-primary decoration-2 underline-offset-8">Gestión de Pedidos Presenciales</p>
+          <h1 className="text-4xl md:text-7xl font-serif uppercase leading-none text-text-bright">Centro de <span className="text-primary italic">Pedidos</span></h1>
+          <p className="text-[10px] md:text-xs text-text-dim tracking-[0.4em] uppercase mt-2 md:mt-4 font-bold underline decoration-primary decoration-2 underline-offset-8">Gestión de Pedidos en Mesa</p>
         </div>
         
         <div className="flex flex-col gap-4 w-full lg:w-auto">
@@ -917,7 +917,7 @@ const OrdersManager = () => {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" size={14} />
                   <input 
                      type="text" 
-                     placeholder="BUSCAR..." 
+                     placeholder="BUSCAR PEDIDO O MESA..." 
                      value={sidebarSearch}
                      onChange={(e) => setSidebarSearch(e.target.value)}
                      className="w-full bg-background border-2 border-zinc-200 dark:border-zinc-800 p-2 pl-9 text-[9px] font-bold uppercase tracking-widest outline-none focus:border-primary transition-all"
@@ -954,7 +954,7 @@ const OrdersManager = () => {
                            <tr>
                               <td colSpan="5" className="p-20 text-center opacity-30">
                                  <ClipboardList size={40} className="mx-auto mb-4" strokeWidth={0.5} />
-                                 <p className="text-[9px] tracking-[0.2em]">Sin comandas</p>
+                                 <p className="text-[9px] tracking-[0.2em]">No hay pedidos activos</p>
                               </td>
                            </tr>
                         ) : (
@@ -1033,7 +1033,7 @@ const OrdersManager = () => {
                   >
                      <div className="p-6 bg-black/5 dark:bg-white/5 border-b-2 border-zinc-200 dark:border-zinc-900 flex justify-between items-start">
                         <div className="space-y-1">
-                           <p className="text-[8px] font-bold text-primary tracking-widest">// DETALLE COMANDA</p>
+                           <p className="text-[8px] font-bold text-primary tracking-widest">// DETALLE DEL PEDIDO</p>
                            <h2 className="text-2xl font-serif text-text-bright uppercase">
                               Mesa {tables.find(t => String(t.id) === String(selectedOrder.table))?.number || '??'} 
                               <span className="text-[10px] text-primary italic ml-2">({locations.find(l => l.id === tables.find(t => String(t.id) === String(selectedOrder.table))?.locationId)?.name || 'AREA'})</span>
@@ -1063,7 +1063,7 @@ const OrdersManager = () => {
                             </div>
                             {selectedOrder.waiter_name && (
                                <div className="flex flex-col items-start bg-primary/5 px-2 py-1 border-l-2 border-primary">
-                                  <span className="text-[7px] font-bold text-primary uppercase tracking-[0.2em]">Atendido por</span>
+                                  <span className="text-[7px] font-bold text-primary uppercase tracking-[0.2em]">Registrado por</span>
                                   <span className="text-[10px] font-bold text-text-bright uppercase">{selectedOrder.waiter_name}</span>
                                 </div>
                             )}
@@ -1075,7 +1075,7 @@ const OrdersManager = () => {
 
                         {selectedOrder.notes && (
                            <div className="bg-primary/5 p-4 border-l-4 border-primary">
-                              <p className="text-[8px] font-bold text-primary mb-1 tracking-widest uppercase italic">Observaciones</p>
+                              <p className="text-[8px] font-bold text-primary mb-1 tracking-widest uppercase italic">Notas generales</p>
                               <p className="text-[10px] font-bold text-text-bright uppercase leading-tight">"{selectedOrder.notes}"</p>
                            </div>
                         )}
@@ -1100,7 +1100,7 @@ const OrdersManager = () => {
                            {selectedOrder.status === 'Servido' && (
                               <Button onClick={() => setPaymentModalOrder(selectedOrder)} className="w-full bg-emerald-500 hover:bg-emerald-600 shadow-xl space-x-2">
                                  <CreditCard size={16}/>
-                                 <span>Finalizar y Cobrar</span>
+                                 <span>Registrar Pago / Cerrar Cuenta</span>
                               </Button>
                            )}
                            {selectedOrder.status === 'Listo' && (
@@ -1131,10 +1131,10 @@ const OrdersManager = () => {
                                  </div>
                             )}
                            {['Pendiente', 'Confirmado', 'En Lista'].includes(selectedOrder.status) ? (
-                              <button onClick={() => setOrderToCancel(selectedOrder)} className="w-full py-2 text-[9px] font-bold text-accent uppercase tracking-widest hover:underline">Cancelar Comanda</button>
+                              <button onClick={() => setOrderToCancel(selectedOrder)} className="w-full py-2 text-[9px] font-bold text-accent uppercase tracking-widest hover:underline">Anular Pedido</button>
                            ) : (
                               <div className="w-full py-2 text-[8px] font-black text-text-dim/40 uppercase tracking-[0.2em] text-center border border-dashed border-zinc-800">
-                                Bloqueado: En Cocina / Pagado
+                                No editable: El pedido ya está en cocina o pagado
                               </div>
                            )}
                         </div>
@@ -1143,7 +1143,7 @@ const OrdersManager = () => {
                ) : (
                   <div className="h-full border-2 border-dashed border-zinc-200 dark:border-zinc-900 flex flex-col items-center justify-center text-center p-10 opacity-30">
                      <ClipboardList size={60} strokeWidth={0.5} className="mb-4" />
-                     <p className="text-[10px] font-bold uppercase tracking-widest">Selecciona una orden para ver detalles</p>
+                     <p className="text-[10px] font-bold uppercase tracking-widest">Elige un pedido para ver sus detalles</p>
                   </div>
                )}
             </AnimatePresence>

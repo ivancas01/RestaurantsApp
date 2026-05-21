@@ -125,16 +125,16 @@ const CMSManager = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-l-8 border-primary pl-8">
         <div>
           <h1 className="text-5xl md:text-7xl font-serif uppercase leading-none text-text-bright">
-            Gestor de <span className="text-primary italic">Contenido</span>
+            Diseño y <span className="text-primary italic">Contenidos</span>
           </h1>
           <p className="text-text-dim tracking-[0.4em] text-xs uppercase mt-4 font-bold underline decoration-primary decoration-2 underline-offset-8">
-            Modificación Visual del Sitio Público
+            Editar textos e imágenes de la página web
           </p>
         </div>
         <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 flex items-center space-x-3 max-w-sm">
            <AlertTriangle className="text-yellow-500 flex-shrink-0" size={20} />
            <p className="text-[8px] uppercase font-bold text-yellow-500 tracking-widest leading-relaxed">
-             Los cambios realizados aquí se verán reflejados inmediatamente en la página principal para todos los usuarios.
+             ¡Importante! Todo cambio guardado aquí se publicará inmediatamente en la página web para tus clientes.
            </p>
         </div>
       </div>
@@ -168,7 +168,7 @@ const CMSManager = () => {
         >
            <div className="space-y-4">
               <Input label="Nombre del Restaurante" value={brand.name} onChange={(e) => setBrand({...brand, name: e.target.value.toUpperCase()})} />
-              <Input label="Eslogan Administrativo" value={brand.tagline} onChange={(e) => setBrand({...brand, tagline: e.target.value})} />
+              <Input label="Frase del Panel de Control" value={brand.tagline} onChange={(e) => setBrand({...brand, tagline: e.target.value})} />
            </div>
            <div className="space-y-4">
               <label className="text-[10px] font-bold uppercase tracking-widest text-primary">Tema de Color de la Interfaz</label>
@@ -215,24 +215,24 @@ const CMSManager = () => {
 
         {/* Hero Section */}
         <CMSSection 
-          title="Sección Hero // Principal" 
+          title="Página de Inicio // Bienvenida" 
           icon={<Layout size={24}/>} 
           onSave={() => saveSection('hero', hero)}
           onReset={() => setHero(cmsData.hero)}
         >
            <div className="space-y-4">
-              <Input label="Título Principal" value={hero.title} onChange={(e) => setHero({...hero, title: e.target.value})} />
-              <Input label="Subtítulo" value={hero.subtitle} onChange={(e) => setHero({...hero, subtitle: e.target.value})} />
-              <Input label="Año Establecido / Texto Vertical" value={hero.established} onChange={(e) => setHero({...hero, established: e.target.value})} />
+              <Input label="Título de Bienvenida" value={hero.title} onChange={(e) => setHero({...hero, title: e.target.value})} />
+              <Input label="Subtítulo de Bienvenida" value={hero.subtitle} onChange={(e) => setHero({...hero, subtitle: e.target.value})} />
+              <Input label="Año de Fundación / Texto Vertical" value={hero.established} onChange={(e) => setHero({...hero, established: e.target.value})} />
            </div>
            <div className="space-y-4">
-              <Input label="Texto Botón Carta" value={hero.cta_menu} onChange={(e) => setHero({...hero, cta_menu: e.target.value})} />
-              <Input label="Texto Botón Reserva" value={hero.cta_reserva} onChange={(e) => setHero({...hero, cta_reserva: e.target.value})} />
+              <Input label="Texto de Botón 'Ver Carta'" value={hero.cta_menu} onChange={(e) => setHero({...hero, cta_menu: e.target.value})} />
+              <Input label="Texto de Botón 'Reservar Mesa'" value={hero.cta_reserva} onChange={(e) => setHero({...hero, cta_reserva: e.target.value})} />
            </div>
            
            <div className="border-t-2 border-zinc-100 dark:border-white/5 pt-6 md:col-span-2">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-[10px] font-bold text-primary uppercase tracking-[0.3em]">// PLATILLO DESTACADO (HERO)</h3>
+                <h3 className="text-[10px] font-bold text-primary uppercase tracking-[0.3em]">// PLATO DESTACADO EN INICIO</h3>
                 {getMostOrderedProduct() && (
                   <div className="flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1">
                     <Star size={12} className="text-emerald-500" />
@@ -244,16 +244,16 @@ const CMSManager = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-6">
                   <p className="text-[9px] uppercase font-bold text-text-dim leading-relaxed">
-                    Si no hay pedidos suficientes, se usarán estos valores como respaldo (Fallback).
+                    Si aún no tienes pedidos suficientes, mostraremos este plato como sugerido de forma predeterminada.
                   </p>
-                  <ImageUpload label="Imagen de Respaldo" value={hero.featured_image} onChange={(val) => setHero({...hero, featured_image: val})} />
-                  <Input label="Nombre de Respaldo" value={hero.featured_name} onChange={(e) => setHero({...hero, featured_name: e.target.value})} />
+                  <ImageUpload label="Foto del plato" value={hero.featured_image} onChange={(val) => setHero({...hero, featured_image: val})} />
+                  <Input label="Nombre del plato" value={hero.featured_name} onChange={(e) => setHero({...hero, featured_name: e.target.value})} />
                 </div>
                 <div className="space-y-6">
-                  <Input label="Precio de Respaldo" value={hero.featured_price} onChange={(e) => setHero({...hero, featured_price: e.target.value})} />
-                  <Input label="Descripción de Respaldo" value={hero.featured_desc} onChange={(e) => setHero({...hero, featured_desc: e.target.value})} />
-                  <Input label="Etiqueta Stats (Ej: Trending)" value={hero.stats_label} onChange={(e) => setHero({...hero, stats_label: e.target.value})} />
-                  <Input label="Valor Stats (Ej: +124 Pedidos)" value={hero.stats_value} onChange={(e) => setHero({...hero, stats_value: e.target.value})} />
+                  <Input label="Precio" value={hero.featured_price} onChange={(e) => setHero({...hero, featured_price: e.target.value})} />
+                  <Input label="Descripción" value={hero.featured_desc} onChange={(e) => setHero({...hero, featured_desc: e.target.value})} />
+                  <Input label="Etiqueta (Ej. Más pedido, Recomendado)" value={hero.stats_label} onChange={(e) => setHero({...hero, stats_label: e.target.value})} />
+                  <Input label="Información adicional (Ej. 100 vendidos)" value={hero.stats_value} onChange={(e) => setHero({...hero, stats_value: e.target.value})} />
                 </div>
               </div>
            </div>
@@ -261,7 +261,7 @@ const CMSManager = () => {
 
         {/* About Section */}
         <CMSSection 
-          title="Sección // Nosotros" 
+          title="Nuestra Historia // Quiénes Somos" 
           icon={<Type size={24}/>} 
           onSave={() => saveSection('about', about)}
           onReset={() => setAbout(cmsData.about)}
@@ -304,75 +304,75 @@ const CMSManager = () => {
 
         {/* Contact Section */}
         <CMSSection 
-          title="Información de // Contacto" 
+          title="Contacto y Horarios" 
           icon={<Phone size={24}/>} 
           onSave={() => saveSection('contact', contact)}
           onReset={() => setContact(cmsData.contact)}
         >
            <div className="space-y-4">
-              <Input label="Dirección Física" value={contact.address} onChange={(e) => setContact({...contact, address: e.target.value})} />
+              <Input label="Dirección" value={contact.address} onChange={(e) => setContact({...contact, address: e.target.value})} />
               <Input label="Teléfono de Contacto" value={contact.phone} onChange={(e) => setContact({...contact, phone: e.target.value})} />
            </div>
            <div className="space-y-4">
-              <Input label="Email Público" value={contact.email} onChange={(e) => setContact({...contact, email: e.target.value})} />
+              <Input label="Correo Electrónico" value={contact.email} onChange={(e) => setContact({...contact, email: e.target.value})} />
               <Input label="Instagram" value={contact.instagram} onChange={(e) => setContact({...contact, instagram: e.target.value})} />
-              <Input label="Indicativo WhatsApp (Ej: 57)" value={contact.whatsapp_prefix || ''} onChange={(e) => setContact({...contact, whatsapp_prefix: e.target.value})} />
+              <Input label="Indicativo de País (Ej. 57 para Colombia)" value={contact.whatsapp_prefix || ''} onChange={(e) => setContact({...contact, whatsapp_prefix: e.target.value})} />
            </div>
            <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                 <Input label="Hora Apertura" type="time" value={contact.opening_time} onChange={(e) => setContact({...contact, opening_time: e.target.value})} />
-                 <Input label="Hora Cierre" type="time" value={contact.closing_time} onChange={(e) => setContact({...contact, closing_time: e.target.value})} />
+                 <Input label="Apertura" type="time" value={contact.opening_time} onChange={(e) => setContact({...contact, opening_time: e.target.value})} />
+                 <Input label="Cierre" type="time" value={contact.closing_time} onChange={(e) => setContact({...contact, closing_time: e.target.value})} />
               </div>
-              <ImageUpload label="Imagen 'Estamos Durmiendo'" value={contact.closed_image} onChange={(val) => setContact({...contact, closed_image: val})} />
+              <ImageUpload label="Imagen de cocina cerrada" value={contact.closed_image} onChange={(val) => setContact({...contact, closed_image: val})} />
            </div>
         </CMSSection>
 
         {/* Reservations Section */}
         <CMSSection 
-          title="Sección // Reservas" 
+          title="Reservas" 
           icon={<Layout size={24}/>} 
           onSave={() => saveSection('reservations', resText)}
           onReset={() => setResText(cmsData.reservations)}
         >
            <div className="space-y-4">
-              <Input label="Título de Reserva" value={resText.title} onChange={(e) => setResText({...resText, title: e.target.value})} />
-              <Input label="Subtítulo / Slogan" value={resText.subtitle} onChange={(e) => setResText({...resText, subtitle: e.target.value})} />
+              <Input label="Título de Reservas" value={resText.title} onChange={(e) => setResText({...resText, title: e.target.value})} />
+              <Input label="Frase corta o invitación" value={resText.subtitle} onChange={(e) => setResText({...resText, subtitle: e.target.value})} />
            </div>
            <div className="space-y-4">
-              <Input label="Texto de Ayuda (Pax)" value={resText.help_text} onChange={(e) => setResText({...resText, help_text: e.target.value})} />
+              <Input label="Texto informativo para clientes" value={resText.help_text} onChange={(e) => setResText({...resText, help_text: e.target.value})} />
            </div>
         </CMSSection>
 
         {/* Footer Section */}
         <CMSSection 
-          title="Pie de Página // Footer" 
+          title="Pie de Página" 
           icon={<Monitor size={24}/>} 
           onSave={() => saveSection('footer', footer)}
           onReset={() => setFooter(cmsData.footer)}
         >
            <div className="space-y-4 md:col-span-2">
-              <Input label="Descripción Corta" value={footer.description} onChange={(e) => setFooter({...footer, description: e.target.value})} />
-              <Input label="Copyright / Créditos" value={footer.copyright} onChange={(e) => setFooter({...footer, copyright: e.target.value})} />
+              <Input label="Descripción corta de tu restaurante" value={footer.description} onChange={(e) => setFooter({...footer, description: e.target.value})} />
+              <Input label="Derechos reservados / Créditos" value={footer.copyright} onChange={(e) => setFooter({...footer, copyright: e.target.value})} />
            </div>
            
            <div className="md:col-span-2 space-y-6">
               <div className="flex justify-between items-center border-t border-zinc-100 dark:border-white/5 pt-6">
-                <h3 className="text-[10px] font-bold text-primary uppercase tracking-[0.3em]">// REDES SOCIALES</h3>
-                <Button onClick={() => setFooter({...footer, socials: [...footer.socials, { name: '', url: '' }]})} className="py-1 px-3 text-[8px]">Agregar Red</Button>
+                <h3 className="text-[10px] font-bold text-primary uppercase tracking-[0.3em]">// TUS REDES SOCIALES</h3>
+                <Button onClick={() => setFooter({...footer, socials: [...footer.socials, { name: '', url: '' }]})} className="py-1 px-3 text-[8px]">+ Añadir Red Social</Button>
               </div>
               
               <div className="grid grid-cols-1 gap-4">
                 {footer.socials.map((social, i) => (
                   <div key={i} className="flex gap-4 items-end bg-black/5 p-4 border border-zinc-200 dark:border-zinc-800">
                     <div className="flex-1">
-                      <Input label="Nombre (Ej: Instagram)" value={social.name} onChange={(e) => {
+                      <Input label="Nombre de la red (Ej. Instagram)" value={social.name} onChange={(e) => {
                         const newSocials = [...footer.socials];
                         newSocials[i].name = e.target.value;
                         setFooter({...footer, socials: newSocials});
                       }} />
                     </div>
                     <div className="flex-1">
-                      <Input label="URL / Enlace" value={social.url} onChange={(e) => {
+                      <Input label="Enlace a tu perfil (URL)" value={social.url} onChange={(e) => {
                         const newSocials = [...footer.socials];
                         newSocials[i].url = e.target.value;
                         setFooter({...footer, socials: newSocials});

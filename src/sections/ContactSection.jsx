@@ -63,7 +63,7 @@ const ContactSection = () => {
            viewport={{ once: true }}
         >
           <h2 className="mb-10 md:mb-12">
-            Base de <br /><span className="text-primary italic">Operaciones</span>
+            Dónde <br /><span className="text-primary italic">Encontrarnos</span>
           </h2>
           
           <div className="space-y-8 md:space-y-10">
@@ -72,7 +72,7 @@ const ContactSection = () => {
                 <Phone className="text-primary group-hover:text-text-bright" size={20} md:size={24} />
               </div>
               <div className="pt-1 md:pt-2">
-                <p className="text-[10px] uppercase tracking-[0.3em] text-primary mb-1 font-bold">// HOTLINE</p>
+                <p className="text-[10px] uppercase tracking-[0.3em] text-primary mb-1 font-bold">// TELÉFONO DE CONTACTO</p>
                 <p className="text-xl md:text-2xl font-serif text-text-bright uppercase">{contact.phone}</p>
               </div>
             </div>
@@ -82,7 +82,7 @@ const ContactSection = () => {
                 <Mail className="text-primary group-hover:text-text-bright" size={20} md:size={24} />
               </div>
               <div className="pt-1 md:pt-2">
-                <p className="text-[10px] uppercase tracking-[0.3em] text-primary mb-1 font-bold">// ENCRYPTED MAIL</p>
+                <p className="text-[10px] uppercase tracking-[0.3em] text-primary mb-1 font-bold">// CORREO ELECTRÓNICO</p>
                 <p className="text-xl md:text-2xl font-serif text-text-bright uppercase leading-tight break-all">{contact.email}</p>
               </div>
             </div>
@@ -92,7 +92,7 @@ const ContactSection = () => {
                 <MapPin className="text-primary group-hover:text-text-bright" size={20} md:size={24} />
               </div>
               <div className="pt-1 md:pt-2">
-                <p className="text-[10px] uppercase tracking-[0.3em] text-primary mb-1 font-bold">// SECTOR 42</p>
+                <p className="text-[10px] uppercase tracking-[0.3em] text-primary mb-1 font-bold">// NUESTRA DIRECCIÓN</p>
                 <p className="text-xl md:text-2xl font-serif text-text-bright uppercase leading-tight">{contact.address}</p>
               </div>
             </div>
@@ -109,7 +109,7 @@ const ContactSection = () => {
           {/* Form Header */}
           <div className="flex items-center space-x-4 mb-10">
             <div className="w-12 h-px bg-primary"></div>
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.4em] text-primary whitespace-nowrap">Transmisión Directa</h3>
+            <h3 className="text-[10px] font-bold uppercase tracking-[0.4em] text-primary whitespace-nowrap">Escríbenos directamente</h3>
             <div className="flex-1 h-px bg-zinc-200 dark:bg-white/10"></div>
           </div>
 
@@ -117,9 +117,9 @@ const ContactSection = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-1">
                 <Input 
-                  label="Nombre Completo" 
+                  label="¿Cómo te llamas?" 
                   name="nombre"
-                  placeholder="Ej. Marcus Vane"
+                  placeholder="Tu nombre..."
                   value={formData.nombre}
                   onChange={handleInputChange}
                   required
@@ -127,7 +127,7 @@ const ContactSection = () => {
               </div>
               <div className="space-y-1">
                 <Input 
-                  label="Número de Enlace" 
+                  label="Tu WhatsApp" 
                   name="telefono"
                   placeholder="+57 3XX..."
                   value={formData.telefono}
@@ -139,7 +139,7 @@ const ContactSection = () => {
 
             <div className="space-y-1">
               <Input 
-                label="Email (Opcional)" 
+                label="Tu correo electrónico (opcional)" 
                 name="correo"
                 type="email"
                 placeholder="vane@urban.com"
@@ -150,7 +150,7 @@ const ContactSection = () => {
 
             <div className="space-y-1">
               <Input 
-                label="Motivo de Contacto" 
+                label="¿En qué podemos ayudarte?" 
                 name="motivo"
                 placeholder="Ej. Evento privado, Sugerencia..."
                 value={formData.motivo}
@@ -160,7 +160,7 @@ const ContactSection = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 block">Descripción Rápida</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 block">Cuéntanos más detalles...</label>
               <textarea 
                 name="descripcion"
                 placeholder="Escribe tu mensaje aquí..."
@@ -172,7 +172,7 @@ const ContactSection = () => {
 
             <Button type="submit" className="w-full py-5 text-base md:text-lg flex items-center justify-center space-x-3 group">
               <Send size={18} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-              <span>ENVIAR MENSAJE VÍA WHATSAPP</span>
+              <span>¡Escribir por WhatsApp!</span>
             </Button>
           </form>
 

@@ -32,7 +32,7 @@ const AdminLayout = () => {
   const [notifOpen, setNotifOpen] = React.useState(false);
   const [userMenuOpen, setUserMenuOpen] = React.useState(false);
   const { hasPermission, PERMISSIONS, currentUser, groups, notifications, clearNotification, darkMode, setDarkMode, logout, cmsData, lastSync, isSyncing } = useAdmin();
-  const brand = cmsData?.brand || { name: 'URBAN', tagline: 'Control Center' };
+  const brand = cmsData?.brand || { name: 'URBAN', tagline: 'Centro de Gestión' };
 
   React.useEffect(() => {
     if (!currentUser && !localStorage.getItem('urban_token')) {
@@ -57,7 +57,7 @@ const AdminLayout = () => {
   );
 
   const menuItems = [
-    { name: 'Dashboard', path: '/hidden-admin', icon: <BarChart size={20} />, permission: PERMISSIONS.DASHBOARD_VIEW },
+    { name: 'Panel de Control', path: '/hidden-admin', icon: <BarChart size={20} />, permission: PERMISSIONS.DASHBOARD_VIEW },
     { name: 'Reportes', path: '/hidden-admin/reports', icon: <PieChart size={20} />, permission: PERMISSIONS.DASHBOARD_VIEW },
     { name: 'Pedidos', path: '/hidden-admin/orders', icon: <ClipboardList size={20} />, permission: PERMISSIONS.ORDERS_MANAGE },
     { name: 'Cocina', path: '/hidden-admin/kitchen', icon: <ChefHat size={20} />, permission: PERMISSIONS.KITCHEN_VIEW },
@@ -138,7 +138,7 @@ const AdminLayout = () => {
                   className="flex items-center space-x-3 text-text-dim hover:text-primary p-3 w-full transition-all uppercase tracking-widest text-[10px] font-bold"
                 >
                   <LogOut size={16} />
-                  <span>Abandonar Base</span>
+                  <span>Cerrar Sesión</span>
                 </button>
               </div>
             </motion.aside>
@@ -221,7 +221,7 @@ const AdminLayout = () => {
                      className="absolute right-0 mt-4 w-80 bg-surface border-2 border-zinc-200 dark:border-zinc-800 shadow-2xl z-[1000] overflow-hidden"
                    >
                       <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center bg-black/5">
-                         <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Operaciones Recientes</span>
+                         <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Actividad Reciente</span>
                          <span className="text-[8px] font-bold text-text-dim uppercase">{notifications.length} Alertas</span>
                       </div>
                       <div className="max-h-96 overflow-y-auto custom-scrollbar">
@@ -261,7 +261,7 @@ const AdminLayout = () => {
                 className="flex items-center space-x-3 md:space-x-4 hover:opacity-80 transition-all outline-none"
               >
                 <div className="text-right hidden sm:block border-r-2 border-zinc-200 dark:border-zinc-800 pr-4 md:pr-8">
-                  <p className="text-[8px] md:text-[10px] uppercase tracking-[0.3em] text-primary font-bold truncate max-w-[100px] md:max-w-none">{userGroup?.name || 'Agente'}</p>
+                  <p className="text-[8px] md:text-[10px] uppercase tracking-[0.3em] text-primary font-bold truncate max-w-[100px] md:max-w-none">{userGroup?.name || 'Colaborador'}</p>
                   <p className="text-xs md:text-sm text-text-bright font-bold font-serif uppercase truncate max-w-[100px] md:max-w-none">{currentUser?.name}</p>
                 </div>
                 <div className="relative">

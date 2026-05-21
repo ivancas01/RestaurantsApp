@@ -26,7 +26,7 @@ const AccessDenied = ({ permission }) => {
 
       <h2 className="text-4xl md:text-5xl font-serif text-text-bright mb-4">Acceso <span className="text-primary italic">Restringido</span></h2>
       <p className="text-[10px] md:text-xs text-text-dim tracking-[0.3em] font-bold mb-10 max-w-md leading-relaxed">
-        Tu credencial actual no posee el nivel de autorización necesario para operar este módulo: 
+        Tu cuenta no cuenta con los permisos necesarios para acceder a este módulo: 
         <span className="block text-primary mt-2">[{permission || 'GENERAL_ACCESS'}]</span>
       </p>
 
@@ -49,7 +49,7 @@ const AccessDenied = ({ permission }) => {
       </div>
       
       <div className="mt-12 opacity-20 text-[8px] font-black tracking-widest">
-        Urban Street Security Protocol // Error 403
+        Restricción de Seguridad // Código 403
       </div>
     </div>
   );

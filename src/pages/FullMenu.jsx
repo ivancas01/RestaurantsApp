@@ -111,7 +111,7 @@ const FullMenu = () => {
                 <rect width="100%" height="12" fill="url(#${patIdC})" />
               </svg>
             </div>
-            <p class="footer-prices-notice">PRECIOS EXPRESADOS EN MILES</p>
+            <p class="footer-prices-notice">Precios en miles</p>
           </div>
         </div>
       `;
@@ -355,7 +355,7 @@ const FullMenu = () => {
               <h1 className="leading-none text-text-bright">
                 La <span className="text-primary italic">Carta</span>
               </h1>
-              <p className="text-text-dim tracking-[0.3em] md:tracking-[0.4em] text-[10px] md:text-xs uppercase mt-4 font-bold">Urban Street // Operational Menu</p>
+              <p className="text-text-dim tracking-[0.3em] md:tracking-[0.4em] text-[10px] md:text-xs uppercase mt-4 font-bold">Nuestros deliciosos platos</p>
             </motion.div>
             
             <div className="flex flex-col gap-2 mt-6 md:mb-2 w-full sm:w-auto items-center sm:items-end">

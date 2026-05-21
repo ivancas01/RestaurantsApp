@@ -138,8 +138,8 @@ const CartDrawer = () => {
                   <ShoppingBag className="text-white" size={20} />
                 </div>
                 <div>
-                  <h2 className="text-xl md:text-2xl font-serif uppercase tracking-wider text-text-bright leading-none">Tu Bolsa</h2>
-                  <p className="text-[8px] uppercase tracking-widest text-text-dim mt-1 font-bold">Urban Street // Checkout</p>
+                  <h2 className="text-xl md:text-2xl font-serif uppercase tracking-wider text-text-bright leading-none">Tu Carrito</h2>
+                  <p className="text-[8px] uppercase tracking-widest text-text-dim mt-1 font-bold">Urban Street // Confirma tu Pedido</p>
                 </div>
                 <span className="bg-primary/20 text-primary text-[10px] font-bold px-2 py-0.5 rounded-none ml-2">
                   {cartCount}
@@ -168,9 +168,9 @@ const CartDrawer = () => {
                   </div>
                   
                   <div className="space-y-4">
-                    <h3 className="text-2xl md:text-3xl font-serif uppercase text-primary italic">Fuera de Servicio</h3>
+                    <h3 className="text-2xl md:text-3xl font-serif uppercase text-primary italic">Cocina en descanso</h3>
                     <p className="text-[10px] md:text-xs uppercase tracking-[0.3em] font-bold text-text-dim max-w-[280px] leading-relaxed mx-auto">
-                      Nuestra cocina está descansando en este momento. Por favor, realiza tu pedido durante nuestro horario de atención:
+                      Nuestra cocina está descansando en este momento para traerte los mejores sabores mañana. Por favor, haz tu pedido dentro de nuestro horario de atención:
                     </p>
                     <div className="bg-primary/10 border border-primary/20 p-4 inline-block">
                        <p className="text-primary font-black text-xl tracking-[0.2em]">
@@ -184,7 +184,7 @@ const CartDrawer = () => {
                   <div className="p-8 border-2 border-dashed border-white/10">
                     <ShoppingBag size={64} strokeWidth={1} />
                   </div>
-                  <p className="uppercase tracking-[0.2em] text-[10px] font-bold max-w-[200px]">Tu bolsa táctica está vacía en este momento</p>
+                  <p className="uppercase tracking-[0.2em] text-[10px] font-bold max-w-[200px]">¡Tu carrito está vacío! Agrégale sabor y empieza a pedir.</p>
                   <Button 
                     variant="outline" 
                     onClick={() => {
@@ -193,7 +193,7 @@ const CartDrawer = () => {
                     }} 
                     className="text-xs"
                   >
-                    EMPEZAR A AGREGAR
+                    ¡VER EL MENÚ!
                   </Button>
                 </div>
               ) : (
@@ -237,7 +237,7 @@ const CartDrawer = () => {
                           </div>
 
                           <div className="space-y-1">
-                            <label className="text-[8px] font-black text-primary uppercase tracking-[0.2em] ml-1">Instrucciones Especiales</label>
+                            <label className="text-[8px] font-black text-primary uppercase tracking-[0.2em] ml-1">¿Algún detalle o cambio especial?</label>
                             <div className="relative">
                               <MessageSquare size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-primary/40" />
                               <input
@@ -258,20 +258,20 @@ const CartDrawer = () => {
                   <div className="mt-8 space-y-6 pt-12 border-t-2 border-primary/20">
                     <div className="flex items-center space-x-2 mb-2">
                       <div className="w-2 h-2 bg-primary animate-pulse"></div>
-                      <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-primary">Logística de Entrega</h3>
+                      <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-primary">¿A dónde te lo llevamos?</h3>
                     </div>
 
                     <form className="space-y-4">
                       <Input
-                        label="Nombre de Contacto"
+                        label="¿A nombre de quién?"
                         name="nombre"
-                        placeholder="Quien recibe el pedido..."
+                        placeholder="Tu nombre para saludarte al entregar..."
                         value={formData.nombre}
                         onChange={handleInputChange}
                         required
                       />
                       <Input
-                        label="WhatsApp de Enlace"
+                        label="Tu número de WhatsApp"
                         name="telefono"
                         placeholder="+57..."
                         value={formData.telefono}
@@ -279,20 +279,20 @@ const CartDrawer = () => {
                         required
                       />
                       <Input
-                        label="Identificación (ID / CC)"
+                        label="Identificación (opcional)"
                         name="identificacion"
-                        placeholder="Para facturación interna..."
+                        placeholder="Opcional, por si necesitas factura..."
                         value={formData.identificacion}
                         onChange={handleInputChange}
                       />
                       <div className="flex flex-col space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-primary">Dirección de Desembarco</label>
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-primary">Dirección de entrega</label>
                         <textarea
                           name="direccion"
                           value={formData.direccion}
                           onChange={handleInputChange}
                           className="input-field min-h-[100px] text-base md:text-[11px]"
-                          placeholder="Calle, Número, Apto, Barrio..."
+                          placeholder="Calle, número de casa, apto, barrio..."
                         />
                       </div>
                     </form>
@@ -306,8 +306,8 @@ const CartDrawer = () => {
               <div className="p-6 md:p-8 border-t border-white/5 bg-background/90 backdrop-blur-md">
                 <div className="flex justify-between items-end mb-6">
                   <div>
-                    <p className="text-[9px] uppercase tracking-widest text-text-dim font-bold">Total a Transferir</p>
-                    <p className="text-[8px] text-primary font-bold uppercase tracking-tighter mt-1">Tarifa de envío según cobertura</p>
+                    <p className="text-[9px] uppercase tracking-widest text-text-dim font-bold">Total a pagar</p>
+                    <p className="text-[8px] text-primary font-bold uppercase tracking-tighter mt-1">El costo de entrega se calcula al llegar</p>
                   </div>
                   <p className="text-3xl md:text-4xl font-serif text-text-bright">${total.toFixed(2)}</p>
                 </div>
@@ -317,11 +317,11 @@ const CartDrawer = () => {
                   className="w-full py-4 sm:py-5 text-sm sm:text-xl flex items-center justify-center space-x-3 bg-[#25D366] hover:bg-[#128C7E] border-none shadow-[8px_8px_0px_0px_rgba(37,211,102,0.2)]"
                 >
                   <MessageSquare size={18} />
-                  <span>PEDIR POR WHATSAPP</span>
+                  <span>¡HACER PEDIDO POR WHATSAPP!</span>
                 </Button>
 
                 <p className="text-center mt-4 text-[7px] md:text-[8px] uppercase tracking-[0.3em] text-text-dim">
-                  Urban Street // Secure Logistical Hub
+                  Urban Street // Tu pedido está 100% seguro
                 </p>
               </div>
             )}

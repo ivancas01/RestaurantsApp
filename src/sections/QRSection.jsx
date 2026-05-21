@@ -34,7 +34,7 @@ const QRSection = () => {
                   viewport={{ once: true }}
                   className="text-primary font-bold uppercase tracking-[0.4em] text-xs mb-4"
                 >
-                  // Instant Access
+                  // Escanea y pide rápido
                 </motion.p>
                 <motion.h2 
                   initial={{ opacity: 0, y: 20 }}
@@ -64,13 +64,13 @@ const QRSection = () => {
                     <div className="w-10 h-10 border border-primary/30 flex items-center justify-center rounded-full">
                       <Smartphone size={18} className="text-primary" />
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest">Paso 1: Escanea</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Paso 1: Abre tu cámara</span>
                   </div>
                   <div className="flex items-center space-x-3 text-text-bright">
                     <div className="w-10 h-10 border border-primary/30 flex items-center justify-center rounded-full">
                       <ArrowRight size={18} className="text-primary" />
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest">Paso 2: Disfruta</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Paso 2: ¡Elige tu plato!</span>
                   </div>
                 </div>
               </motion.div>
@@ -86,7 +86,7 @@ const QRSection = () => {
               <div className="bg-white p-4 shadow-2xl relative group">
                 {/* Physical Tag UI */}
                 <div className="absolute -top-4 -left-4 bg-primary text-white text-[10px] font-bold py-2 px-4 uppercase tracking-tighter -rotate-12">
-                  Oficial // 2026
+                  Menú Oficial
                 </div>
                 
                 <div className="border-[12px] border-zinc-900 p-2 bg-white">
@@ -98,7 +98,7 @@ const QRSection = () => {
                 </div>
                 
                 <div className="mt-4 text-center">
-                  <p className="text-[10px] font-bold text-zinc-900 uppercase tracking-[0.2em]">{brandName} // Scan Me</p>
+                  <p className="text-[10px] font-bold text-zinc-900 uppercase tracking-[0.2em]">{brandName} // Escáneame</p>
                 </div>
 
                 {/* Decorative scanning line */}

@@ -130,18 +130,18 @@ const ProductsManager = () => {
         isOpen={!!isEditing} 
         onClose={() => setIsEditing(null)}
         title={isEditing?.isNew ? 'Nuevo' : 'Editar'}
-        subtitle="Producto"
+        subtitle="Plato / Producto"
         maxWidth="max-w-4xl"
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
            <div className="space-y-6">
-              <Input label="Nombre del Plato" value={editForm.name} onChange={(e) => setEditForm({...editForm, name: e.target.value.toUpperCase()})} />
+              <Input label="Nombre del plato" value={editForm.name} onChange={(e) => setEditForm({...editForm, name: e.target.value.toUpperCase()})} />
               
               <div className="flex flex-col space-y-4">
                  <Input label="Precio" value={editForm.price} onChange={(e) => setEditForm({...editForm, price: e.target.value})} />
                  
                  <div className="flex flex-col space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-primary">Imagen del Platillo</label>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-primary">Foto del plato</label>
                     <div className="flex items-center space-x-4">
                        <div className="w-20 h-20 bg-background border-2 border-zinc-800 flex items-center justify-center overflow-hidden">
                           {editForm.image_preview ? (
@@ -152,7 +152,7 @@ const ProductsManager = () => {
                        </div>
                        <label className="flex-1 border-2 border-dashed border-zinc-800 hover:border-primary transition-colors cursor-pointer flex flex-col items-center justify-center p-4">
                           <Upload size={18} className="text-primary mb-1" />
-                          <span className="text-[10px] font-bold uppercase text-text-dim">Subir desde PC</span>
+                          <span className="text-[10px] font-bold uppercase text-text-dim">Elegir foto del plato</span>
                           <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                        </label>
                     </div>
@@ -160,7 +160,7 @@ const ProductsManager = () => {
               </div>
 
               <div className="pt-4 flex flex-col space-y-4">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-primary">Disponibilidad en Carta</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-primary">¿Está disponible hoy?</label>
                 <div 
                   onClick={() => setEditForm({...editForm, is_available: !editForm.is_available})}
                   className="flex items-center space-x-4 cursor-pointer group"
@@ -173,7 +173,7 @@ const ProductsManager = () => {
                        />
                     </div>
                     <span className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${editForm.is_available !== false ? 'text-text-bright' : 'text-text-dim'}`}>
-                       {editForm.is_available !== false ? 'Disponible para Venta' : 'Fuera de Stock / Agotado'}
+                       {editForm.is_available !== false ? 'Disponible para ordenar' : 'Agotado'}
                     </span>
                 </div>
               </div>
@@ -181,7 +181,7 @@ const ProductsManager = () => {
 
            <div className="space-y-6 flex flex-col h-full">
               <div className="flex flex-col space-y-2 flex-1">
-                 <label className="text-[10px] font-bold uppercase tracking-widest text-primary">Descripción del Plato</label>
+                 <label className="text-[10px] font-bold uppercase tracking-widest text-primary">Descripción del plato (ingredientes, sabor...)</label>
                  <textarea 
                    className="w-full h-full px-4 py-3 bg-zinc-100 dark:bg-background border-2 border-zinc-200 dark:border-zinc-800 text-text-bright text-xs uppercase tracking-widest focus:outline-none focus:border-primary transition-all min-h-[150px]"
                    value={editForm.description}
@@ -194,7 +194,7 @@ const ProductsManager = () => {
                     className="text-xs font-bold uppercase tracking-[0.3em] px-20 py-4 hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all"
                     style={{ boxShadow: '10px 10px 0px 0px var(--primary-shadow-20)' }}
                   >
-                    Guardar Cambios
+                    Guardar
                  </Button>
               </div>
            </div>
@@ -205,12 +205,12 @@ const ProductsManager = () => {
       <Modal
         isOpen={!!isEditingCategory}
         onClose={() => setIsEditingCategory(null)}
-        title={isEditingCategory?.isNew ? 'Nueva' : 'Editar'}
-        subtitle="Categoría"
+        title={isEditingCategory?.isNew ? 'Nueva sección' : 'Editar sección'}
+        subtitle="Categoría de la carta"
         maxWidth="max-w-md"
       >
         <div className="space-y-6">
-           <Input label="Nombre de la Categoría" value={categoryForm.name} onChange={(e) => setCategoryForm({ name: e.target.value.toUpperCase() })} placeholder="EJ. ENTRADAS, BEBIDAS..." />
+           <Input label="Nombre de la sección" value={categoryForm.name} onChange={(e) => setCategoryForm({ name: e.target.value.toUpperCase() })} placeholder="EJ. ENTRADAS, BEBIDAS, POSTRES..." />
            <div className="flex justify-end pt-4">
              <Button onClick={saveCategory} className="text-[10px] font-bold uppercase tracking-widest px-12">{isEditingCategory?.isNew ? 'Crear' : 'Actualizar'}</Button>
            </div>
@@ -221,26 +221,26 @@ const ProductsManager = () => {
         isOpen={!!itemToDelete}
         onClose={() => setItemToDelete(null)}
         onConfirm={deleteItem}
-        title="Eliminar Producto"
-        message={`¿Estás seguro de que deseas eliminar "${itemToDelete?.name}"? Esta acción no se puede deshacer.`}
+        title="¿Quitar este plato?"
+        message={`¿Seguro que quieres quitar "${itemToDelete?.name}" de la carta? Podrás volver a añadirlo después.`}
       />
 
       <ConfirmModal
         isOpen={!!categoryToDelete}
         onClose={() => setCategoryToDelete(null)}
         onConfirm={deleteCategory}
-        title="Eliminar Categoría"
-        message={`¿Estás seguro de que deseas eliminar "${categoryToDelete?.name}"? Se eliminarán todos los productos dentro de esta categoría.`}
+        title="¿Eliminar sección?"
+        message={`¿Seguro que quieres borrar la sección "${categoryToDelete?.name}"? Se quitarán todos los platos que contiene.`}
       />
 
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-end gap-6 border-l-8 border-primary pl-8">
         <div>
           <h1 className="text-5xl md:text-7xl font-serif uppercase leading-none text-text-bright">
-            Gestor de <span className="text-primary italic">Menú</span>
+            Nuestra <span className="text-primary italic">Carta</span>
           </h1>
           <p className="text-text-dim tracking-[0.4em] text-xs uppercase mt-4 font-bold underline decoration-primary decoration-2 underline-offset-8">
-            Catálogo Gastronómico Actual
+            Gestión de platos y secciones
           </p>
         </div>
       </div>
@@ -248,7 +248,7 @@ const ProductsManager = () => {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 md:gap-10">
         {/* Categories Sidebar */}
         <div className="lg:col-span-1 space-y-3 md:space-y-4">
-          <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-primary mb-2 md:mb-6">// CATEGORÍAS</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-primary mb-2 md:mb-6">// TUS SECCIONES</p>
           <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible pb-4 lg:pb-0 scrollbar-hide">
             {menu.map((cat) => (
               <div key={cat.id} className="relative group/cat flex-shrink-0 lg:flex-shrink-1 min-w-[120px] lg:min-w-0">
@@ -273,7 +273,7 @@ const ProductsManager = () => {
               onClick={() => startEditCategory()}
               className="flex-shrink-0 lg:flex-shrink-1 px-4 py-2 text-[9px] md:text-[10px] border-dashed opacity-50 hover:opacity-100 italic border-primary text-primary"
             >
-              + Añadir
+              + Nueva sección
             </Button>
           </div>
         </div>
@@ -287,8 +287,8 @@ const ProductsManager = () => {
              {selectedCategoryId && (
                <Button onClick={() => startEdit(selectedCategoryId)} className="flex items-center space-x-2 py-2 px-4 md:py-3 md:px-6">
                   <Plus size={16} />
-                  <span className="hidden sm:inline">Agregar Platillo</span>
-                  <span className="sm:hidden text-[10px]">Agregar</span>
+                  <span className="hidden sm:inline">Nuevo plato</span>
+                  <span className="sm:hidden text-[10px]">Nuevo</span>
                </Button>
              )}
           </div>
@@ -325,7 +325,7 @@ const ProductsManager = () => {
                         className={`flex items-center space-x-2 text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] transition-colors py-2 ${item.is_available !== false ? 'text-green-500 hover:text-primary' : 'text-text-dim hover:text-green-500'}`}
                       >
                          {item.is_available !== false ? <Check size={14}/> : <X size={14}/>}
-                         <span>{item.is_available !== false ? 'Disponible' : 'Fuera de Stock'}</span>
+                         <span>{item.is_available !== false ? 'Disponible' : 'Agotado'}</span>
                       </button>
                    </div>
                 </div>
@@ -335,7 +335,7 @@ const ProductsManager = () => {
             {selectedCategory && (selectedCategory.products || []).length === 0 && (
               <div className="xl:col-span-2 h-64 border-2 border-dashed border-zinc-200 dark:border-zinc-900 flex flex-col items-center justify-center opacity-30 text-text-bright">
                 <Coffee size={48} strokeWidth={1} />
-                <p className="uppercase tracking-[0.3em] font-bold text-xs mt-4">No hay productos en esta categoría</p>
+                <p className="uppercase tracking-[0.3em] font-bold text-xs mt-4">Esta categoría está vacía en este momento. ¡Agrega tu primer plato!</p>
               </div>
             )}
           </div>

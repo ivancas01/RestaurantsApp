@@ -112,7 +112,7 @@ const KitchenDisplay = () => {
              <div className="h-20 bg-zinc-900 border-b-2 border-primary flex items-center justify-between px-10">
                 <div className="flex items-center space-x-6">
                    <div className="bg-primary p-2 text-white"><ChefHat size={32} /></div>
-                   <h1 className="text-xl md:text-3xl font-bold tracking-tighter text-white uppercase italic">Urban Kitchen // Monitor de Despacho</h1>
+                   <h1 className="text-xl md:text-3xl font-bold tracking-tighter text-white uppercase italic">Cocina // Pantalla de Pedidos</h1>
                 </div>
                 <div className="flex items-center space-x-8">
                    <div className="flex flex-col items-end">
@@ -182,7 +182,7 @@ const KitchenDisplay = () => {
                 {filteredOrders.filter(o => !['Completado', 'Pagado', 'Cancelado'].includes(o.status)).length === 0 && (
                    <div className="h-full flex flex-col items-center justify-center space-y-8 opacity-20 mt-32">
                       <ChefHat size={120} strokeWidth={0.5} className="text-white" />
-                      <p className="text-4xl font-bold text-white tracking-[0.5em] uppercase">Esperando Comandas...</p>
+                      <p className="text-4xl font-bold text-white tracking-[0.5em] uppercase">¡Cocina al día! Esperando nuevos pedidos...</p>
                    </div>
                 )}
              </div>
@@ -194,10 +194,10 @@ const KitchenDisplay = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-l-8 border-primary pl-6 md:pl-8 flex-shrink-0">
         <div>
           <h1 className="text-3xl md:text-7xl font-serif uppercase leading-none text-text-bright">
-            Línea de <span className="text-primary italic">Fuego</span>
+            Cocina en <span className="text-primary italic">Acción</span>
           </h1>
           <p className="text-[10px] md:text-xs text-text-dim tracking-[0.4em] uppercase mt-2 md:mt-4 font-bold underline decoration-primary decoration-2 underline-offset-8">
-            KDS // Kitchen Display
+            Seguimiento de Preparaciones
           </p>
         </div>
 
@@ -209,7 +209,7 @@ const KitchenDisplay = () => {
              style={{ boxShadow: '4px 4px 0px 0px var(--primary-shadow-20)' }}
            >
               <ChefHat size={14} className="text-primary" />
-              <span>Modo Monitor</span>
+              <span>Pantalla Completa</span>
            </button>
 
            <div className="flex bg-surface border-2 border-zinc-200 dark:border-zinc-800 p-1 w-full md:w-auto">

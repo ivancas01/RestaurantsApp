@@ -17,11 +17,11 @@ const AboutSection = () => {
     title: "Nuestra // Historia",
     desc_1: "Nacimos en el asfalto, inspirados por el ruido y la energía inagotable de la ciudad. No creemos en mesas con manteles blancos ni en etiquetas aburridas.",
     desc_2: "Aquí, la alta cocina se ensucia las manos. Tomamos ingredientes locales de la más alta calidad y los pasamos por el fuego puro de nuestras parrillas urbanas.",
-    years_label: "Years on the street",
+    years_label: "Años cocinando con pasión",
     years_value: "10",
-    feature_1_title: "RAW MATERIALS",
+    feature_1_title: "INGREDIENTES FRESCOS",
     feature_1_desc: "Solo ingredientes frescos y directos de origen local.",
-    feature_2_title: "URBAN SOUL",
+    feature_2_title: "ALMA URBANA",
     feature_2_desc: "Ambiente diseñado para la ciudad que nunca duerme.",
     images: RESTAURANT_PHOTOS,
     content: "Lumina Urban Gourmet nació en las calles vibrantes de la ciudad, donde el arte y la gastronomía convergen. No solo servimos comida, creamos experiencias sensoriales que desafían lo convencional."
@@ -100,7 +100,7 @@ const AboutSection = () => {
                {/* Photo Counter */}
                {about.images && about.images.length > 0 && (
                  <div className="absolute top-4 left-4 bg-background/50 backdrop-blur-sm px-3 py-1 text-[10px] font-bold uppercase tracking-widest border border-white/5 z-20">
-                   SCENE 0{currentPhoto + 1} / 0{about.images.length}
+                   IMAGEN 0{currentPhoto + 1} / 0{about.images.length}
                  </div>
                )}
                

@@ -35,7 +35,7 @@ const LocationVisualizer = ({ selectedLocation, persons, className = "" }) => (
     className={`mt-8 border-2 border-primary/30 p-4 bg-background relative group overflow-hidden ${className}`}
     style={{ boxShadow: '4px 4px 0px 0px var(--primary-shadow-10)' }}
   >
-     <div className="absolute top-0 right-0 p-2 text-[8px] font-bold text-primary opacity-50 tracking-widest uppercase">Visualizer v1.0</div>
+     <div className="absolute top-0 right-0 p-2 text-[8px] font-bold text-primary opacity-50 tracking-widest uppercase">Tu Zona</div>
      <div className="aspect-video bg-zinc-200 dark:bg-zinc-900 mb-6 overflow-hidden relative border border-white/5">
         {selectedLocation?.image ? (
           <motion.img 
@@ -48,7 +48,7 @@ const LocationVisualizer = ({ selectedLocation, persons, className = "" }) => (
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center opacity-20">
              <MapPin size={40} strokeWidth={1} />
-             <p className="text-[10px] font-bold uppercase mt-4 tracking-[0.3em]">Selecciona una Zona</p>
+             <p className="text-[10px] font-bold uppercase mt-4 tracking-[0.3em]">Elige una zona</p>
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -57,17 +57,17 @@ const LocationVisualizer = ({ selectedLocation, persons, className = "" }) => (
      <div className="space-y-3 relative z-10">
         <div className="flex justify-between items-end">
            <h4 className="text-sm md:text-lg font-serif uppercase tracking-widest text-primary leading-none">
-              {selectedLocation ? selectedLocation.name : 'Sector No Asignado'}
+              {selectedLocation ? selectedLocation.name : 'Elige una zona'}
            </h4>
            {selectedLocation && (
-             <span className="text-[8px] font-bold text-green-500 uppercase tracking-tighter animate-pulse">● En Línea</span>
+             <span className="text-[8px] font-bold text-green-500 uppercase tracking-tighter animate-pulse">● Disponible</span>
            )}
         </div>
         <div className="h-px bg-primary/20 w-full"></div>
         <p className="text-[10px] text-text-dim uppercase tracking-widest leading-relaxed">
            {selectedLocation 
-             ? `Ubicación verificada. Capacidad táctica optimizada para ${persons} agentes.` 
-             : 'Pendiente de selección de zona para visualización de coordenadas.'}
+             ? `¡Excelente elección! Espacio perfecto para ${persons} personas.` 
+             : 'Elige la zona donde te gustaría sentarte para ver la foto.'}
         </p>
      </div>
   </div>
@@ -180,7 +180,7 @@ const ReservationSection = () => {
                   />
 
                 <div className="mt-8 md:mt-12 space-y-4 hidden lg:block">
-                  <p className="text-sm font-bold text-primary uppercase tracking-[0.2em] underline decoration-2 underline-offset-8">Información // SOPORTE</p>
+                  <p className="text-sm font-bold text-primary uppercase tracking-[0.2em] underline decoration-2 underline-offset-8">¿Grupos grandes?</p>
                   <p className="text-xs text-text-dim max-w-[250px]">
                     {cmsReservations.help_text}
                   </p>
@@ -191,14 +191,14 @@ const ReservationSection = () => {
                 <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 md:gap-y-8">
                   {/* Personal Info */}
                   <div className="md:col-span-2 flex items-center space-x-4 mb-2">
-                     <span className="text-[10px] font-bold text-primary tracking-[0.4em] uppercase whitespace-nowrap">// 01 INFO PERSONAL</span>
+                     <span className="text-[10px] font-bold text-primary tracking-[0.4em] uppercase whitespace-nowrap">// 1. Tus Datos</span>
                      <div className="flex-1 h-px bg-zinc-200 dark:bg-white/10"></div>
                   </div>
                   
                   <div className="space-y-1">
                     <Input 
-                      label="Nombre Completo" 
-                      placeholder="Ej. Alexander Pierce" 
+                      label="¿Cómo te llamas?" 
+                      placeholder="Tu nombre..." 
                       value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
                     />
@@ -207,8 +207,8 @@ const ReservationSection = () => {
 
                   <div className="space-y-1">
                     <Input 
-                      label="Identificación / ID" 
-                      placeholder="Ej. 10203040" 
+                      label="Identificación (CC)" 
+                      placeholder="Tu número de documento..." 
                       value={formData.identification}
                       onChange={(e) => setFormData({...formData, identification: e.target.value})}
                     />
@@ -217,8 +217,8 @@ const ReservationSection = () => {
 
                   <div className="space-y-1">
                     <Input 
-                      label="Teléfono Móvil" 
-                      placeholder="+57 3XX XXX XXXX" 
+                      label="Tu WhatsApp o Teléfono" 
+                      placeholder="Escribe tu celular..." 
                       value={formData.phone}
                       onChange={(e) => setFormData({...formData, phone: e.target.value})}
                     />
@@ -227,9 +227,9 @@ const ReservationSection = () => {
 
                   <div className="space-y-1">
                     <Input 
-                      label="Email (Opcional)" 
+                      label="Tu correo electrónico (opcional)" 
                       type="email" 
-                      placeholder="ejemplo@urban.com" 
+                      placeholder="ejemplo@correo.com" 
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
                     />
@@ -238,7 +238,7 @@ const ReservationSection = () => {
 
                   {/* Booking Details */}
                   <div className="md:col-span-2 flex items-center space-x-4 mt-4 md:mt-6 mb-2">
-                     <span className="text-[10px] font-bold text-primary tracking-[0.4em] uppercase whitespace-nowrap">// 02 DETALLES RESERVA</span>
+                     <span className="text-[10px] font-bold text-primary tracking-[0.4em] uppercase whitespace-nowrap">// 2. Detalles de tu Mesa</span>
                      <div className="flex-1 h-px bg-zinc-200 dark:bg-white/10"></div>
                   </div>
 
@@ -264,7 +264,7 @@ const ReservationSection = () => {
 
                   <div className="space-y-1">
                     <Select 
-                      label="Escuadrón (Pax)"
+                      label="¿Cuántas personas vienen?"
                       value={formData.persons}
                       onChange={(e) => setFormData({...formData, persons: parseInt(e.target.value)})}
                     >
@@ -276,7 +276,7 @@ const ReservationSection = () => {
 
                   <div className="space-y-1">
                     <Select 
-                      label="Zona de Desembarco"
+                      label="¿Dónde te gustaría sentarte?"
                       value={formData.locationId}
                       onChange={(e) => setFormData({...formData, locationId: e.target.value})}
                     >
@@ -298,10 +298,10 @@ const ReservationSection = () => {
 
                   <div className="md:col-span-2">
                     <div className="flex flex-col space-y-2 mt-2">
-                      <label className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-primary">Instrucciones Especiales</label>
+                      <label className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-primary">¿Algún detalle o cambio especial?</label>
                       <textarea 
                         className="input-field min-h-[100px] py-4"
-                        placeholder="Alergias, cumpleaños o peticiones de zona..." 
+                        placeholder="Cuéntanos aquí si celebras algo o tienes alguna preferencia..." 
                         value={formData.instructions}
                         onChange={(e) => setFormData({...formData, instructions: e.target.value})}
                       />
@@ -311,7 +311,7 @@ const ReservationSection = () => {
                   <div className="md:col-span-2 mt-6 md:mt-10">
                     {errors.submit && <p className="text-[10px] text-primary font-bold uppercase tracking-widest mb-4 text-center animate-pulse">{errors.submit}</p>}
                     <Button type="submit" className="w-full text-lg md:text-xl py-6">
-                       <span>CONFIRMAR DESEMBARCO</span>
+                       <span>¡Reservar mi mesa!</span>
                     </Button>
                   </div>
                 </form>
@@ -327,9 +327,9 @@ const ReservationSection = () => {
                <div className="w-20 h-20 md:w-24 md:h-24 border-2 border-primary flex items-center justify-center text-primary mb-4">
                   <CheckCircle size={40} md:size={48} strokeWidth={1} />
                </div>
-               <h3 className="text-4xl md:text-5xl font-serif uppercase text-text-bright">Operación <span className="text-primary italic">Exitosa</span></h3>
+               <h3 className="text-4xl md:text-5xl font-serif uppercase text-text-bright">¡Tu mesa está <span className="text-primary italic">reservada!</span></h3>
                <p className="text-text-dim uppercase tracking-[0.2em] md:tracking-[0.3em] font-bold max-w-lg text-xs md:text-sm">
-                  Hemos registrado tu reserva. Nuestro equipo táctico verificará la disponibilidad y te contactará en breve.
+                  ¡Listo! Recibimos tu reserva. Nos pondremos en contacto contigo muy pronto para confirmar todo.
                </p>
                <Button onClick={() => setSubmitted(false)} variant="outline">Hacer otra reserva</Button>
             </motion.div>

@@ -102,7 +102,7 @@ const CustomersManager = () => {
            
            <div className="flex-1 overflow-y-auto custom-scrollbar" onScroll={handleScroll}>
               {loading ? (
-                 <div className="p-10 text-center animate-pulse text-text-dim text-[10px] font-bold uppercase tracking-widest">Sincronizando base de datos...</div>
+                 <div className="p-10 text-center animate-pulse text-text-dim text-[10px] font-bold uppercase tracking-widest">Cargando información de clientes...</div>
               ) : filteredCustomers.length === 0 ? (
                  <div className="p-10 text-center text-text-dim text-[10px] font-bold uppercase tracking-widest opacity-40">No hay registros coincidentes</div>
               ) : (
@@ -142,7 +142,7 @@ const CustomersManager = () => {
                   className="space-y-8"
                 >
                    {statsLoading ? (
-                      <div className="h-64 flex items-center justify-center border-2 border-dashed border-zinc-800 text-text-dim text-[10px] font-bold tracking-widest animate-pulse">GENERANDO ANALÍTICA...</div>
+                      <div className="h-64 flex items-center justify-center border-2 border-dashed border-zinc-800 text-text-dim text-[10px] font-bold tracking-widest animate-pulse">CARGANDO INFORMACIÓN...</div>
                    ) : stats ? (
                      <>
                         {/* Profile Card */}
@@ -190,7 +190,7 @@ const CustomersManager = () => {
                            <div className="bg-surface border-2 border-zinc-200 dark:border-zinc-900 p-6 flex flex-col justify-between">
                               <Clock size={24} className="text-primary mb-4" />
                               <div>
-                                 <p className="text-[8px] font-bold text-text-dim uppercase tracking-[0.2em]">Última Operación</p>
+                                 <p className="text-[8px] font-bold text-text-dim uppercase tracking-[0.2em]">Último Pedido / Visita</p>
                                  <p className="text-[10px] font-serif text-text-bright">{new Date(stats.last_visit).toLocaleDateString()} {new Date(stats.last_visit).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
                               </div>
                            </div>
@@ -205,7 +205,7 @@ const CustomersManager = () => {
                               <div className="flex items-center space-x-4">
                                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary"><Calendar size={20} /></div>
                                  <div>
-                                    <p className="text-[10px] font-bold text-text-bright uppercase tracking-widest">Últimas 5 Operaciones</p>
+                                    <p className="text-[10px] font-bold text-text-bright uppercase tracking-widest">Últimas 5 Visitas / Pedidos</p>
                                     <p className="text-[8px] text-text-dim uppercase tracking-widest mt-1">{showHistory ? 'Ocultar Actividad' : 'Ver Línea de Tiempo'}</p>
                                  </div>
                               </div>
@@ -250,8 +250,8 @@ const CustomersManager = () => {
                 <div className="h-full flex flex-col items-center justify-center border-2 border-dashed border-zinc-800 p-20 text-center space-y-6 opacity-30">
                    <div className="w-20 h-20 rounded-full border-2 border-text-dim flex items-center justify-center"><User size={40} /></div>
                    <div className="space-y-2">
-                      <p className="text-xs font-bold uppercase tracking-[0.3em]">Seleccione un perfil para ver inteligencia de cliente</p>
-                      <p className="text-[8px] uppercase tracking-[0.2em]">Análisis de frecuencia, preferencias y última actividad</p>
+                      <p className="text-xs font-bold uppercase tracking-[0.3em]">Selecciona un cliente para ver su historial y preferencias</p>
+                      <p className="text-[8px] uppercase tracking-[0.2em]">Análisis de frecuencia, platos favoritos y última actividad</p>
                    </div>
                 </div>
               )}

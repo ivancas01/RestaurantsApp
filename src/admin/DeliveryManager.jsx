@@ -22,7 +22,7 @@ const DeliveryManager = () => {
     }, POLL_INTERVAL);
     return () => clearInterval(intervalId);
   }, [fetchOrders]);
-  const brand = cmsData?.brand || { name: 'URBAN STREET', tagline: 'Gourmet Command Center' };
+  const brand = cmsData?.brand || { name: 'URBAN STREET', tagline: 'Centro de Gestión de Domicilios' };
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [showInvoice, setShowInvoice] = useState(false);
@@ -484,13 +484,13 @@ const DeliveryManager = () => {
       {/* Header Area */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8 border-l-8 border-primary pl-6 md:pl-8 mb-10">
         <div>
-          <h1 className="text-4xl md:text-7xl font-serif uppercase leading-none text-text-bright">Logística <span className="text-primary italic">Web</span></h1>
-          <p className="text-[10px] md:text-xs text-text-dim tracking-[0.4em] uppercase mt-2 md:mt-4 font-bold underline decoration-primary decoration-2 underline-offset-8">Rastreo de Pedidos WhatsApp</p>
+          <h1 className="text-4xl md:text-7xl font-serif uppercase leading-none text-text-bright">Gestión de <span className="text-primary italic">Domicilios</span></h1>
+          <p className="text-[10px] md:text-xs text-text-dim tracking-[0.4em] uppercase mt-2 md:mt-4 font-bold underline decoration-primary decoration-2 underline-offset-8">Pedidos recibidos por WhatsApp</p>
         </div>
         
         <div className="flex flex-col gap-4 w-full lg:w-auto">
            <div className="bg-surface border-2 border-zinc-200 dark:border-zinc-800 p-4 flex flex-col items-center md:items-start min-w-[200px]">
-              <span className="text-[8px] font-bold text-primary tracking-widest uppercase">Entregas Activas</span>
+              <span className="text-[8px] font-bold text-primary tracking-widest uppercase">Domicilios Pendientes</span>
               <span className="text-2xl font-serif text-text-bright">{deliveryOrders.filter(o => !o.isPaid).length}</span>
            </div>
             <Button 
@@ -526,9 +526,9 @@ const DeliveryManager = () => {
                      <thead>
                         <tr className="bg-black/5 dark:bg-white/5 border-b-2 border-zinc-200 dark:border-zinc-800 uppercase tracking-widest text-[9px] font-bold text-primary">
                            <th className="p-4">Cliente / Contacto</th>
-                           <th className="p-4">Ruta de Desembarco</th>
-                           <th className="p-4">Cocina</th>
-                           <th className="p-4">Logística</th>
+                           <th className="p-4">Dirección de Entrega</th>
+                           <th className="p-4">Estado Cocina</th>
+                           <th className="p-4">Envío</th>
                            <th className="p-4">Pago</th>
                            <th className="p-4 text-right">Acción</th>
                         </tr>
@@ -642,7 +642,7 @@ const DeliveryManager = () => {
                   >
                      <div className="p-6 bg-black/5 dark:bg-white/5 border-b-2 border-zinc-200 dark:border-zinc-900 flex justify-between items-start">
                         <div className="space-y-1">
-                           <p className="text-[8px] font-bold text-primary tracking-widest">// EXPEDIENTE WEB</p>
+                           <p className="text-[8px] font-bold text-primary tracking-widest">// DETALLES DEL PEDIDO</p>
                            <h2 className="text-2xl font-serif text-text-bright uppercase">{selectedOrder.customer_name}</h2>
                            <p className="text-[10px] text-text-dim font-bold tracking-tighter">ID: {selectedOrder.id}</p>
                            {selectedOrder.waiter_name && (
@@ -664,7 +664,7 @@ const DeliveryManager = () => {
                            <div className="flex items-start space-x-3">
                               <Phone size={16} className="text-primary flex-shrink-0 mt-1" />
                               <div className="space-y-1">
-                                 <p className="text-[8px] font-bold text-text-dim uppercase tracking-widest">Canal de Enlace</p>
+                                 <p className="text-[8px] font-bold text-text-dim uppercase tracking-widest">WhatsApp de Contacto</p>
                                  <a 
                                     href={`https://wa.me/${(selectedOrder.customer_phone || selectedOrder.phone || '').replace(/\D/g, '').length > 10 ? (selectedOrder.customer_phone || selectedOrder.phone || '').replace(/\D/g, '') : '57' + (selectedOrder.customer_phone || selectedOrder.phone || '').replace(/\D/g, '')}`} 
                                     target="_blank" 
@@ -714,7 +714,7 @@ const DeliveryManager = () => {
                                </Button>
                             </div>
 
-                           <p className="text-[8px] font-bold text-text-dim uppercase tracking-widest text-center mt-6 mb-2">Acciones de Logística</p>
+                           <p className="text-[8px] font-bold text-text-dim uppercase tracking-widest text-center mt-6 mb-2">Acciones de Envío</p>
                            <div className="grid grid-cols-2 gap-2">
                                <Button 
                                   onClick={() => updateOrder(selectedOrder.id, { isSent: true })}
@@ -886,7 +886,7 @@ const DeliveryManager = () => {
                       <input type="text" placeholder="NOMBRE CLIENTE" value={newOrder.customer_name} onChange={e => setNewOrder({...newOrder, customer_name: e.target.value.toUpperCase()})} className="bg-background border-2 border-zinc-800 p-3 text-[10px] font-bold outline-none focus:border-primary w-full" />
                       <input type="text" placeholder="IDENTIFICACIÓN / ID" value={newOrder.identification} onChange={e => setNewOrder({...newOrder, identification: e.target.value})} className="bg-background border-2 border-zinc-800 p-3 text-[10px] font-bold outline-none focus:border-primary w-full" />
                       <input type="text" placeholder="TELÉFONO" value={newOrder.customer_phone} onChange={e => setNewOrder({...newOrder, customer_phone: e.target.value})} className="bg-background border-2 border-zinc-800 p-3 text-[10px] font-bold outline-none focus:border-primary w-full" />
-                      <input type="text" placeholder="DIRECCIÓN DE DESEMBARCO" value={newOrder.customer_address} onChange={e => setNewOrder({...newOrder, customer_address: e.target.value.toUpperCase()})} className="bg-background border-2 border-zinc-800 p-3 text-[10px] font-bold outline-none focus:border-primary w-full sm:col-span-2" />
+                      <input type="text" placeholder="DIRECCIÓN DE ENTREGA" value={newOrder.customer_address} onChange={e => setNewOrder({...newOrder, customer_address: e.target.value.toUpperCase()})} className="bg-background border-2 border-zinc-800 p-3 text-[10px] font-bold outline-none focus:border-primary w-full sm:col-span-2" />
                   </div>
                 </div>
                 <div className="space-y-6">
